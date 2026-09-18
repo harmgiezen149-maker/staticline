@@ -130,6 +130,42 @@ export type Copy = {
     note: string;
   };
 
+  /**
+   * De pagina waar de bevestigingslink uit de nieuwsbriefmail op uitkomt.
+   * Vier uitkomsten, want een kapotte link hoort iets anders te zeggen dan een
+   * link die al gebruikt is.
+   */
+  confirm: {
+    title: string;
+    ok: string;
+    unknown: string;
+    noToken: string;
+    error: string;
+    home: string;
+  };
+
+  /**
+   * De teksten van de uitgaande mail.
+   *
+   * Als regels, niet als één lap tekst: lib/mail.ts maakt er zowel platte tekst
+   * als HTML van, en een lege string is een witregel. Alles met {haakjes} wordt
+   * ingevuld door de aanroeper.
+   */
+  mail: {
+    /** Bevestiging aan wie een boeking of vraag instuurde. */
+    bookingSubject: string;
+    bookingGreeting: string;
+    bookingBooking: string;
+    bookingQuestion: string;
+    bookingCopy: string;
+    /** Dubbele opt-in voor de nieuwsbrief. */
+    newsletterSubject: string;
+    newsletterGreeting: string;
+    newsletterBody: string;
+    newsletterIgnore: string;
+    signature: string;
+  };
+
   /** De nieuwsbriefstrip. */
   newsletter: {
     title: string;

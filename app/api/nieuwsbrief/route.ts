@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 
+import { getCopy } from "@/content";
 import { looksLikeEmail } from "@/lib/booking";
 import { getDb } from "@/lib/db";
-import { isLocale } from "@/lib/i18n";
+import { isLocale, localePath } from "@/lib/i18n";
+import { sendMail } from "@/lib/mail";
 import { makeLimiter } from "@/lib/rate-limit";
+import { siteUrl } from "@/lib/site";
 
 /**
  * Aanmelding voor de nieuwsbrief.
@@ -14,9 +17,9 @@ import { makeLimiter } from "@/lib/rate-limit";
  * een vreemde. De aanmelding wordt opgeslagen met `confirmed_at` leeg; pas na een
  * klik op de link uit de bevestigingsmail telt hij mee.
  *
- * Die mail kan nog niet verstuurd worden — er is geen mailkoppeling. De sleutel
- * staat wel al in de database en /api/nieuwsbrief/bevestigen werkt, dus zodra er
- * mail is, is de keten rond zonder dat hier iets hoeft te veranderen.
+ * De bevestigingsmail gaat via Resend, in de taal waarin iemand zich aanmeldde.
+ * De link erin komt uit op /nieuwsbrief/bevestigen, een echte pagina — een link
+ * in een mail wordt door een mens aangeklikt en die hoort geen JSON te zien.
  */
 export const dynamic = "force-dynamic";
 
@@ -70,11 +73,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "server" }, { status: 500 });
   }
 
-  // TODO zodra er een mailkoppeling is: stuur de bevestigingsmail met een link
-  // naar /nieuwsbrief/bevestigen?token=<token>.
-  console.warn(
-    "[nieuwsbrief] geen mailkoppeling — bevestigingsmail niet verstuurd",
-  );
+  const copy = getCopy(locale).mail;
+  const link = `${siteUrl()}${localePath(locale, "/nieuwsbrief/bevestigen")}?token=${token}`;
+
+  // Of de mail aankomt bepaalt het antwoord niet: de aanmelding staat al in de
+  // database. Mislukt hij, dan meldt lib/mail.ts dat in het log en kan dezelfde
+  // persoon het zo opnieuw proberen — dat levert een nieuwe sleutel op.
+  await sendMail({
+    to: email,
+    subject: copy.newsletterSubject,
+    lines: [
+      copy.newsletterGreeting,
+      "",
+      copy.newsletterBody,
+      "",
+      link,
+      "",
+      copy.newsletterIgnore,
+      "",
+      copy.signature,
+    ],
+  });
 
   return NextResponse.json({ ok: true });
 }

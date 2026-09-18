@@ -92,21 +92,95 @@ Vernieuw je de sleutel in de Band App, dan moet deze variabele mee.
 
 ---
 
-## 4. Mail
+## 4. Mail — `RESEND_API_KEY`
 
-Waarvoor: de bevestigingsmail aan iemand die een boeking indient, en de
-bevestigingsmail voor de nieuwsbrief. Zonder mail ziet een aanvrager alleen de
-bevestiging op het scherm, en blijven nieuwsbriefaanmeldingen onbevestigd staan.
+Waarvoor: de bevestigingsmail aan wie een boeking indient, en de bevestigingsmail
+voor de nieuwsbrief. Zonder mail ziet een aanvrager alleen de bevestiging op het
+scherm, en blijven nieuwsbriefaanmeldingen voorgoed onbevestigd staan — die tellen
+dan dus niet mee.
 
-Dit is nog niet gebouwd — er is eerst een keuze te maken:
+Het is Resend geworden. Gratis tot 3.000 mails per maand en 100 per dag; deze site
+zit daar ruim onder.
 
-- **Resend** of **Postmark**, zoals `docs/02-architecture.md` voorstelt. Eigen
-  domein instellen met SPF en DKIM, anders belandt de post in de spam.
-- **Gmail SMTP**, zoals de Band App het al doet (`SMTP_USER` / `SMTP_PASS` met een
-  app-wachtwoord). Minder werk, want het draait al ergens.
+### 4.1 Account en domein
 
-De code kijkt nu naar `SMTP_USER` en `RESEND_API_KEY` om te bepalen of er mail is;
-welke van de twee het wordt, bepaalt wat er gebouwd wordt.
+1. Maak een account op [resend.com](https://resend.com). Een creditcard is niet
+   nodig.
+2. **Domains → Add Domain** → `staticline.nl`.
+3. Kies bij Region **EU (Ireland)**. Dat houdt de mailgegevens binnen de EU en
+   scheelt latentie. Dit is niet achteraf te wijzigen zonder het domein opnieuw
+   toe te voegen.
+
+### 4.2 De DNS-records bij mijn.host
+
+Resend toont drie records. Zet ze bij de registrar, náást wat er al staat:
+
+| Type | Naam | Waarde |
+| --- | --- | --- |
+| `MX` | `send` | `feedback-smtp.eu-west-1.amazonses.com`, prioriteit `10` |
+| `TXT` | `send` | `v=spf1 include:amazonses.com ~all` |
+| `TXT` | `resend._domainkey` | de lange sleutel die Resend toont |
+
+Neem de waarden over uit het scherm van Resend, niet uit deze tabel — de
+DKIM-sleutel is per domein anders en de regio staat in de MX-waarde.
+
+**Je bestaande mail blijft ongemoeid, en dat is geen toeval.** Resend verstuurt
+onder `send.staticline.nl`, niet onder `staticline.nl` zelf. Daardoor:
+
+- De `MX` op `send` staat naast je gewone `MX` op de apex, niet in plaats daarvan.
+  `boeking@staticline.nl` blijft binnenkomen bij mijn.host.
+- Het `SPF`-record van je domein hoeft **niet** aangepast te worden. SPF kijkt naar
+  het envelopadres, en dat is `send.staticline.nl`.
+- Het DKIM-record krijgt een eigen selector, `resend._domainkey`, die niet botst
+  met die van mijn.host.
+
+Raak dus je bestaande `MX`-records, je `SPF` en je `_dmarc` niet aan.
+
+Klik daarna in Resend op **Verify**. Meestal binnen een paar minuten groen; de TTL
+bij mijn.host is een kwartier.
+
+### 4.3 De sleutel
+
+1. **API Keys → Create API Key**, met permissie **Sending access** en beperkt tot
+   het domein `staticline.nl`. Geen full access: deze sleutel hoeft alleen te
+   versturen.
+2. Je ziet hem één keer. Zet hem meteen in Vercel als `RESEND_API_KEY`.
+
+### 4.4 In Vercel
+
+| Variabele | Waarde |
+| --- | --- |
+| `RESEND_API_KEY` | de sleutel uit 4.3 |
+| `SITE_URL` | `https://www.staticline.nl` |
+
+`SITE_URL` staat los van Resend maar hoort erbij: de bevestigingslink in de
+nieuwsbriefmail moet een volledig adres zijn. Zonder deze variabele valt de code
+terug op `https://www.staticline.nl`, dus in productie klopt het ook zonder — maar
+op een previewdeploy wijst de link dan naar productie.
+
+Twee variabelen zijn optioneel en hebben een verstandige standaard:
+
+| Variabele | Standaard | Waarvoor |
+| --- | --- | --- |
+| `MAIL_FROM` | `Static Line <boeking@staticline.nl>` | de afzender |
+| `MAIL_REPLY_TO` | `boeking@staticline.nl` | waar een antwoord heen gaat |
+
+Het adres in `MAIL_FROM` moet op het geverifieerde domein staan. Een antwoord op
+een bevestigingsmail komt via `MAIL_REPLY_TO` gewoon in je mailbox bij mijn.host
+terecht.
+
+### 4.5 Controleren
+
+1. Vul op `/boeken` het formulier in met je eigen adres. Je hoort binnen een minuut
+   een bevestiging te krijgen.
+2. Open die mail en bekijk de details (in Gmail: **Originele tekst weergeven**).
+   Er hoort `SPF: PASS`, `DKIM: PASS` en `DMARC: PASS` te staan.
+3. Lukt het niet, kijk dan in Resend onder **Logs**. Daar staat per mail wat er
+   gebeurd is. De code logt het antwoord van Resend ook in de Vercel-logs, met
+   `[mail]` ervoor.
+
+Staat de mail in de spam terwijl alle drie op PASS staan? Dan ligt het aan
+reputatie, niet aan instellingen — dat trekt vanzelf bij zodra er wat volume is.
 
 ---
 
@@ -120,13 +194,21 @@ Band App ooit verhuist — bijvoorbeeld naar `app.staticline.nl`.
 
 ## Het domein
 
-`staticline.nl` hangt nog nergens aan. Zodra je zover bent:
+Dit is gedaan. `staticline.nl` en `www.staticline.nl` hangen allebei aan het
+project; de apex stuurt met een 308 door naar `www`, dat het canonieke adres is.
 
-1. Vercel: **Project `staticline` → Settings → Domains → Add** → `staticline.nl`.
-2. Vercel toont een A-record voor de apex en een CNAME voor `www`. Zet die bij de
-   registrar waar het domein staat.
-3. **Laat DNS bij de registrar staan**, niet bij Vercel — dan blijven de
-   mailrecords op één plek. Zo staat het ook in `docs/02-architecture.md`.
-4. SSL regelt Vercel zelf.
+Wat er onderweg misging is het noteren waard, want het kan terugkomen bij
+`app.staticline.nl`: de apex had naast het A-record van Vercel ook nog het
+oorspronkelijke A-record van de registrar én een AAAA-record. Browsers geven IPv6
+voorrang, dus vrijwel iedereen kwam op de verkeerde server uit terwijl `www` het
+gewoon deed. Zet bij een nieuw subdomein dus altijd álle records die de registrar
+er standaard neerzet weg, niet alleen het record met hetzelfde type.
 
-Vergeet daarna niet het domein toe te voegen bij Turnstile (stap 2).
+Let ook op de wildcard `*`: die wijst nog naar de registrar en vult elk subdomein
+in waar niets expliciets voor staat.
+
+DNS blijft bij de registrar, niet bij Vercel — dan staan de mailrecords op één
+plek. Zo staat het ook in `docs/02-architecture.md`. SSL regelt Vercel zelf.
+
+Vergeet niet het domein toe te voegen bij Turnstile (stap 2) en bij Resend
+(stap 4).

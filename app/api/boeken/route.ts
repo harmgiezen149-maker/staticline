@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
+import { getCopy } from "@/content";
 import { bookingToText, readBooking, type Booking } from "@/lib/booking";
 import { getDb } from "@/lib/db";
+import { isLocale, type Locale } from "@/lib/i18n";
+import { sendMail } from "@/lib/mail";
 import { makeLimiter } from "@/lib/rate-limit";
 import { verifyTurnstile } from "@/lib/turnstile";
 
@@ -18,11 +21,15 @@ import { verifyTurnstile } from "@/lib/turnstile";
  * 4. Opslaan in de eigen database van de website. Daar staat de volledige,
  *    gestructureerde aanvraag met alle elf velden — de Band App kent er zes. Is
  *    er geen database ingesteld, dan wordt dit overgeslagen met een logregel.
- * 5. Bevestigingsmail naar de afzender, zodra mail ingesteld is.
+ * 5. Bevestigingsmail naar de afzender, in zijn eigen taal.
  *
  * Stap 3 en 4 zijn los van elkaar: mislukt het doorsturen, dan wordt de aanvraag
  * nog steeds opgeslagen. Andersom ook. Een aanvraag die maar half aankomt is
  * beter dan een aanvraag die verdwijnt.
+ *
+ * Stap 5 telt helemaal niet mee voor het antwoord aan de bezoeker. Die heeft zijn
+ * aanvraag verstuurd; of onze mailprovider het aankan is niet zijn probleem, en
+ * hij ziet de bevestiging al op het scherm staan.
  */
 export const dynamic = "force-dynamic";
 
@@ -71,11 +78,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "upstream" }, { status: 502 });
   }
 
-  // TODO zodra er een mailkoppeling is: bevestiging naar de afzender. Tot die
-  // tijd ziet die alleen de bevestiging op het scherm.
-  if (!process.env.SMTP_USER && !process.env.RESEND_API_KEY) {
-    console.warn("[boeken] geen mailkoppeling — geen bevestiging verstuurd");
-  }
+  const rawLocale = String(body.locale ?? "");
+  await confirmToSender(booking, isLocale(rawLocale) ? rawLocale : "nl");
 
   return NextResponse.json({ ok: true });
 }
@@ -143,4 +147,37 @@ async function store(booking: Booking, forwarded: boolean): Promise<boolean> {
     console.error("[boeken] opslaan mislukt:", error);
     return false;
   }
+}
+
+/**
+ * Bevestiging aan degene die het formulier invulde.
+ *
+ * Met een kopie van wat hij instuurde erbij. Dat is niet alleen netjes: het is
+ * het enige bewijs dat hij heeft van wat hij gevraagd heeft, en het geeft hem de
+ * kans te zien dat hij een datum verkeerd heeft ingetikt.
+ *
+ * `reply_to` staat in lib/mail.ts op de echte mailbox van de band, dus een
+ * antwoord op deze mail komt gewoon aan.
+ */
+async function confirmToSender(booking: Booking, locale: Locale) {
+  const copy = getCopy(locale).mail;
+
+  const lines = [
+    copy.bookingGreeting.replace("{name}", booking.name),
+    "",
+    booking.kind === "booking" ? copy.bookingBooking : copy.bookingQuestion,
+  ];
+
+  const summary = bookingToText(booking).trim();
+  if (summary) {
+    lines.push("", copy.bookingCopy, "", ...summary.split("\n"));
+  }
+
+  lines.push("", copy.signature);
+
+  await sendMail({
+    to: booking.email,
+    subject: copy.bookingSubject,
+    lines,
+  });
 }

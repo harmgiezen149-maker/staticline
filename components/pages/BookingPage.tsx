@@ -24,6 +24,7 @@ export async function BookingPage({ locale }: { locale: Locale }) {
     >
       <BookingForm
         copy={copy.booking}
+        locale={locale}
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
       />
 

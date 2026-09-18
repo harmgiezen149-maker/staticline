@@ -178,7 +178,8 @@ sleutel ontbreekt.
 | `DATABASE_URL` | eigen Neon-database voor boekingen en nieuwsbriefabonnees; zonder deze worden aanvragen alleen doorgestuurd |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` | captcha op het boekingsformulier; zonder deze blijft alleen de honeypot over |
 | `BAND_APP_RIDER_URL` | de deelbare riderlink uit de Band App, voor de boekingspagina |
-| mailkoppeling | bevestigingsmail aan de afzender |
+| `RESEND_API_KEY` | bevestigingsmail aan de afzender en de dubbele opt-in van de nieuwsbrief |
+| `SITE_URL` | het volledige adres voor links in die mails; standaard `https://www.staticline.nl` |
 
 Waar je die waarden vandaan haalt en wat elke keuze betekent, staat stap voor stap
 in **`docs/07-instellen.md`**.

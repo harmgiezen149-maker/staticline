@@ -124,6 +124,33 @@ export const nl: Copy = {
     note: "Wordt pas geladen als je erop klikt — anders zet {service} cookies bij iedereen die langskomt.",
   },
 
+  confirm: {
+    title: "Aanmelding bevestigd",
+    ok: "Gelukt. Je staat op de lijst en krijgt een mail zodra er een show bij komt.",
+    unknown:
+      "Deze link werkt niet meer. Meld je opnieuw aan, dan sturen we een nieuwe.",
+    noToken: "Er staat geen sleutel in deze link. Kopieer hem nog eens uit de mail.",
+    error: "Er ging iets mis aan onze kant. Probeer het zo nog eens.",
+    home: "Naar de site",
+  },
+
+  mail: {
+    bookingSubject: "We hebben je bericht binnen — Static Line",
+    bookingGreeting: "Hoi {name},",
+    bookingBooking:
+      "Bedankt voor je boekingsaanvraag. We hebben hem binnen en komen erop terug, meestal binnen een paar dagen.",
+    bookingQuestion:
+      "Bedankt voor je bericht. We hebben het gelezen en komen erop terug, meestal binnen een paar dagen.",
+    bookingCopy: "Dit is wat je ons stuurde:",
+    newsletterSubject: "Bevestig je aanmelding — Static Line",
+    newsletterGreeting: "Hoi,",
+    newsletterBody:
+      "Klik op deze link om je aanmelding voor de nieuwsbrief te bevestigen:",
+    newsletterIgnore:
+      "Heb je je niet aangemeld? Dan hoef je niets te doen. Zonder deze klik sturen we je niets.",
+    signature: "Static Line · Nijmegen · staticline.nl",
+  },
+
   newsletter: {
     title: "Blijf op de hoogte",
     body: "Een mail als er een show bij komt. Niet vaker.",

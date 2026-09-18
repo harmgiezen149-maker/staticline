@@ -105,6 +105,33 @@ export const en: Copy = {
     note: "Only loads once you click — otherwise {service} sets cookies for everyone who passes by.",
   },
 
+  confirm: {
+    title: "Sign-up confirmed",
+    ok: "Done. You are on the list and will get an email whenever a show is added.",
+    unknown:
+      "This link no longer works. Sign up again and we will send you a new one.",
+    noToken: "There is no key in this link. Try copying it from the email again.",
+    error: "Something went wrong on our end. Try again in a moment.",
+    home: "Go to the site",
+  },
+
+  mail: {
+    bookingSubject: "We got your message — Static Line",
+    bookingGreeting: "Hi {name},",
+    bookingBooking:
+      "Thanks for your booking request. We have it and will get back to you, usually within a few days.",
+    bookingQuestion:
+      "Thanks for your message. We have read it and will get back to you, usually within a few days.",
+    bookingCopy: "Here is what you sent us:",
+    newsletterSubject: "Confirm your sign-up — Static Line",
+    newsletterGreeting: "Hi,",
+    newsletterBody:
+      "Click this link to confirm your newsletter sign-up:",
+    newsletterIgnore:
+      "Did not sign up? Then do nothing. Without this click we will not send you anything.",
+    signature: "Static Line · Nijmegen · staticline.nl",
+  },
+
   newsletter: {
     title: "Stay posted",
     body: "One email when a show is added. No more than that.",

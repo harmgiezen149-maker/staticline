@@ -5,6 +5,7 @@ import Script from "next/script";
 
 import type { Copy } from "@/content";
 import type { BookingKind } from "@/lib/booking";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * Het boekingsformulier.
@@ -27,12 +28,14 @@ import type { BookingKind } from "@/lib/booking";
  */
 type Props = {
   copy: Copy["booking"];
+  /** Bepaalt in welke taal de bevestigingsmail teruggaat. */
+  locale: Locale;
   siteKey?: string;
 };
 
 type State = "idle" | "sending" | "ok" | "error";
 
-export function BookingForm({ copy, siteKey }: Props) {
+export function BookingForm({ copy, locale, siteKey }: Props) {
   const [kind, setKind] = useState<BookingKind>("booking");
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState<string>("");
@@ -56,7 +59,7 @@ export function BookingForm({ copy, siteKey }: Props) {
       const res = await fetch("/api/boeken", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, kind }),
+        body: JSON.stringify({ ...data, kind, locale }),
       });
 
       if (res.ok) {
