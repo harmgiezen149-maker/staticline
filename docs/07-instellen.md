@@ -117,12 +117,34 @@ Resend toont drie records. Zet ze bij de registrar, náást wat er al staat:
 
 | Type | Naam | Waarde |
 | --- | --- | --- |
-| `MX` | `send` | `feedback-smtp.eu-west-1.amazonses.com`, prioriteit `10` |
+| `MX` | `send` | `10 feedback-smtp.eu-west-1.amazonses.com` |
 | `TXT` | `send` | `v=spf1 include:amazonses.com ~all` |
 | `TXT` | `resend._domainkey` | de lange sleutel die Resend toont |
 
 Neem de waarden over uit het scherm van Resend, niet uit deze tabel — de
 DKIM-sleutel is per domein anders en de regio staat in de MX-waarde.
+
+**Let op bij het MX-record.** mijn.host draait PowerDNS en neemt het waardeveld
+ongewijzigd over. Daar hoort de prioriteit vóór de hostnaam te staan, met een
+spatie ertussen en verder niets:
+
+```
+10 feedback-smtp.eu-west-1.amazonses.com
+```
+
+Resend toont de prioriteit in een eigen kolom. Neem dat niet letterlijk over —
+`feedback-smtp.eu-west-1.amazonses.com, prioriteit 10` levert deze fout op:
+
+```
+expected digits at position 0
+```
+
+De punt aan het eind zet mijn.host er zelf bij. Heeft het formulier wél een apart
+veld voor prioriteit, zet `10` daar dan neer en alleen de hostnaam in de waarde.
+
+Krijg je bij een van de twee TXT-records een vergelijkbare parseerfout, zet de
+waarde dan tussen dubbele aanhalingstekens: `"v=spf1 include:amazonses.com ~all"`.
+Zonder foutmelding niet doen — dan komen de aanhalingstekens in de waarde terecht.
 
 **Je bestaande mail blijft ongemoeid, en dat is geen toeval.** Resend verstuurt
 onder `send.staticline.nl`, niet onder `staticline.nl` zelf. Daardoor:
