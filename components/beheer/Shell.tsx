@@ -19,6 +19,7 @@ type Props = {
 const LINKS = [
   { href: "/beheer", label: "Overzicht" },
   { href: "/beheer/boekingen", label: "Boekingen" },
+  { href: "/beheer/nieuwsbrief", label: "Nieuwsbrief" },
   { href: "/beheer/database", label: "Database" },
 ] as const;
 
