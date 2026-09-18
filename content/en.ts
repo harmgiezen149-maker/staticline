@@ -78,6 +78,7 @@ export const en: Copy = {
       "The band text is still being written. Until then: four of us, guitars too loud, and a weakness for nineties songs that still hurt.",
     membersEmpty: "The line-up is still being filled in.",
     noRole: "Band member",
+    more: "More about the band",
   },
 
   music: {

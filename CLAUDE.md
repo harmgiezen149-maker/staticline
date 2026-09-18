@@ -148,6 +148,9 @@ bestaande tokens en patronen; er zijn geen nieuwe kleuren, radii, schaduwen of
 bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
 
 - Het mobiele menupaneel (`components/MobileNav.tsx`)
+- De bandsectie op de homepage (`components/BandSection.tsx`), tussen de agenda
+  en de foto's — volgt de sectiepatronen van `ShowList` en de ledenkaarten van
+  `/band`, alleen compacter
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

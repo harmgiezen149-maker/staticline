@@ -95,6 +95,7 @@ export const nl: Copy = {
       "De bandtekst wordt nog geschreven. Tot die tijd: vier man, gitaren te hard, en een voorkeur voor nummers uit de jaren negentig die nog steeds pijn doen.",
     membersEmpty: "De bezetting wordt nog ingevuld.",
     noRole: "Bandlid",
+    more: "Meer over de band",
   },
 
   music: {

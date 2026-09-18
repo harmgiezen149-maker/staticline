@@ -97,6 +97,8 @@ export type Copy = {
     membersEmpty: string;
     /** Label onder een lid zonder eigen tekst. */
     noRole: string;
+    /** Link van de bandsectie op de homepage naar de volledige pagina. */
+    more: string;
   };
 
   /** De muziekpagina. */

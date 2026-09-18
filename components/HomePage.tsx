@@ -1,3 +1,4 @@
+import { BandSection } from "@/components/BandSection";
 import { Hero } from "@/components/Hero";
 import { Newsletter } from "@/components/Newsletter";
 import { NextShow } from "@/components/NextShow";
@@ -8,6 +9,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { Locale } from "@/lib/i18n";
 import { getCopy } from "@/content";
+import { fetchBandAppPublic } from "@/lib/band-app";
 import { getShows } from "@/lib/shows";
 
 /**
@@ -23,6 +25,9 @@ export async function HomePage({ locale }: { locale: Locale }) {
   // pagina er gewoon: geen agenda is beter dan een foutmelding op de plek waar
   // iemand net een QR-code voor gescand heeft.
   const { upcoming, next, hasPlayed } = await getShows();
+  // Dezelfde aanroep die getShows() doet. Next hergebruikt het antwoord binnen
+  // één paginaweergave, dus dit is één verzoek aan de Band App en niet twee.
+  const bandApp = await fetchBandAppPublic();
   const copy = getCopy(locale);
 
   return (
@@ -32,6 +37,11 @@ export async function HomePage({ locale }: { locale: Locale }) {
         <Hero locale={locale} next={next} hasPlayed={hasPlayed} />
         <NextShow locale={locale} show={next} />
         <ShowList locale={locale} shows={upcoming} />
+        <BandSection
+          locale={locale}
+          bio={bandApp?.band.bio?.trim() ?? ""}
+          members={bandApp?.members ?? []}
+        />
         <PhotoGrid locale={locale} photos={photos} />
         <Newsletter locale={locale} copy={copy.newsletter} />
       </main>
