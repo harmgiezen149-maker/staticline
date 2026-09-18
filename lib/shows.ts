@@ -26,6 +26,9 @@ export type Show = {
   ticketUrl: string | null;
   /** Korte regel onder de zaalnaam in de volgende-show-balk. */
   note: string;
+  /** Voor de kaart op de agendapagina. Null als er geen coördinaten bekend zijn. */
+  lat: number | null;
+  lng: number | null;
 };
 
 /** Alleen bij deze twee statussen is de rij aanklikbaar — uit de design-handoff. */
@@ -62,12 +65,21 @@ function splitVenue(title: string): { venue: string; city: string } {
   };
 }
 
+/**
+ * De velden die de Band App erbij levert zodra de uitbreiding daar gemerged is.
+ *
+ * Allemaal optioneel, zodat deze site het doet met of zonder. Zolang ze er niet
+ * zijn, leidt `toShow()` zaal en plaats af uit de titel en staat de status op
+ * "aangekondigd".
+ */
 type MaybeExtended = BandAppGig & {
   venue?: string;
   city?: string;
   status?: string;
   ticketUrl?: string | null;
-  sub?: string;
+  note?: string;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 function toShow(gig: MaybeExtended): Show | null {
@@ -85,7 +97,9 @@ function toShow(gig: MaybeExtended): Show | null {
     city: gig.city?.trim() || derived.city,
     status: readStatus(gig.status),
     ticketUrl: gig.ticketUrl || null,
-    note: gig.sub?.trim() || "",
+    lat: gig.lat ?? null,
+    lng: gig.lng ?? null,
+    note: gig.note?.trim() || "",
   };
 }
 
