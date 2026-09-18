@@ -43,7 +43,7 @@ export function PhotoGrid({ locale, photos = [], heading = true }: Props) {
   return (
     <section
       id="photos"
-      className="relative bg-surface px-5 py-8 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
+      className="onthul relative bg-surface px-5 py-8 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
     >
       <div className="grain-overlay opacity-35" aria-hidden="true" />
 

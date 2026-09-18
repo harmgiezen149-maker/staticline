@@ -28,7 +28,7 @@ export function Page({ locale, path, title, intro, children }: Props) {
     <>
       <SiteHeader locale={locale} path={path} />
       <main className="px-5 py-8 sm:px-8 sm:py-12 lg:px-12 lg:py-16">
-        <header className="flex flex-col gap-3 border-b-2 border-primary pb-2 sm:pb-3">
+        <header className="streep flex flex-col gap-3 border-b-2 border-primary pb-2 [--streep-dikte:2px] [--streep-kleur:var(--color-primary)] sm:pb-3">
           <h1 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
             {title}
           </h1>
@@ -65,8 +65,8 @@ export function Section({
   id?: string;
 }) {
   return (
-    <section id={id} className="flex flex-col gap-4 sm:gap-6">
-      <div className="flex flex-col gap-1 border-b border-line pb-2">
+    <section id={id} className="onthul flex flex-col gap-4 sm:gap-6">
+      <div className="streep flex flex-col gap-1 border-b border-line pb-2 [--streep-kleur:var(--color-line)]">
         <h2 className="font-display text-22 leading-[1.2] font-semibold tracking-tight4 uppercase sm:text-30">
           {title}
         </h2>

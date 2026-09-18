@@ -66,7 +66,16 @@ Die komen uit besluiten die al genomen zijn. Niet opnieuw openen in code.
 - **Border radius is overal 0**, zonder uitzondering.
 - **Geen schaduwen** behalve de ene drop-shadow op het wordmark in de hero. Geen
   decoratieve verlopen — het enige verloop is de leesbaarheidsoverlay in de hero.
-- **Geen scroll- of entree-animaties.** Alleen de kleurovergangen van 120ms.
+- **Eén beweging bij het scrollen, en niet meer.** De regel was "geen scroll- of
+  entree-animaties"; die is bewust verruimd tot precies dit: een blok komt 6px
+  omhoog in 160ms, en de lijn onder een sectiekop tekent zichzelf in 180ms. Klasse
+  `onthul` en `streep`, allebei in `globals.css`. Verder alleen de
+  kleurovergangen van 120ms. Geen stagger per rij, geen hero, geen besloten deel,
+  geen formuliervelden — dat is precies het handschrift waar de eerste mockup op
+  afgerekend werd. Het gaat via scroll-gestuurde CSS en niet via een
+  IntersectionObserver: nul kilobyte JavaScript, en elke sectie blijft een
+  servercomponent. Zet nergens `opacity: 0` in een basisstijl; zonder
+  ondersteuning hoort de pagina er te staan zoals hij er zonder dit alles uitziet.
 - **Het wordmark is definitief.** Nooit hertekenen, herkleuren, uitrekken of
   opnieuw natrekken. Gebruik de aangeleverde bestanden zoals ze zijn.
 - **Ruimte komt uit de schaal** (4/8/12/16/24/32/48/64/96). Dat is precies de

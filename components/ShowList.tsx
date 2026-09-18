@@ -36,9 +36,9 @@ export function ShowList({ locale, shows }: Props) {
   return (
     <section
       id="shows"
-      className="flex flex-col gap-3 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
+      className="onthul flex flex-col gap-3 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
     >
-      <div className="flex items-baseline gap-4 border-b-2 border-primary pb-2 sm:pb-3">
+      <div className="streep flex items-baseline gap-4 border-b-2 border-primary pb-2 [--streep-dikte:2px] [--streep-kleur:var(--color-primary)] sm:pb-3">
         <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
           {copy.shows.heading}
         </h2>
