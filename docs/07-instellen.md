@@ -113,53 +113,52 @@ zit daar ruim onder.
 
 ### 4.2 De DNS-records bij mijn.host
 
-Resend toont drie records. Zet ze bij de registrar, náást wat er al staat:
+Resend toont drie records: één TXT en twee CNAME's. **Geen MX.** Zet ze bij de
+registrar, náást wat er al staat.
 
 | Type | Naam | Waarde |
 | --- | --- | --- |
-| `MX` | `send` | `10 feedback-smtp.eu-west-1.amazonses.com` |
-| `TXT` | `send` | `v=spf1 include:amazonses.com ~all` |
-| `TXT` | `resend._domainkey` | de lange sleutel die Resend toont |
+| `TXT` | `resend._domainkey` | `p=MIGfMA0GCSqG…` — de lange sleutel |
+| `CNAME` | `rsend` | `rsend-euw1.forge.rmta.net` |
+| `CNAME` | `send` | `send.forge.rmta.net` |
 
-Neem de waarden over uit het scherm van Resend, niet uit deze tabel — de
-DKIM-sleutel is per domein anders en de regio staat in de MX-waarde.
+Neem de waarden over uit het scherm van Resend, niet uit deze tabel: de
+DKIM-sleutel is per domein anders, en de regio zit verwerkt in `rsend-euw1`.
 
-**Let op bij het MX-record.** mijn.host draait PowerDNS en neemt het waardeveld
-ongewijzigd over. Daar hoort de prioriteit vóór de hostnaam te staan, met een
-spatie ertussen en verder niets:
+Gebruik voor de DKIM-sleutel de kopieerknop. Overtypen gaat een keer mis en een
+sleutel met één teken verschil staat er wel maar werkt niet — verificatie blijft
+dan rood zonder te zeggen waarom.
 
-```
-10 feedback-smtp.eu-west-1.amazonses.com
-```
+**Een CNAME mag als enige record op een naam staan.** Dat is geen eigenaardigheid
+van mijn.host maar hoe DNS werkt. Staat er nog iets anders op `send` of `rsend` —
+bijvoorbeeld een TXT uit een eerdere poging — haal dat er dan eerst af, anders
+weigert PowerDNS de CNAME met een melding die iets heel anders lijkt te zeggen.
 
-Resend toont de prioriteit in een eigen kolom. Neem dat niet letterlijk over —
-`feedback-smtp.eu-west-1.amazonses.com, prioriteit 10` levert deze fout op:
-
-```
-expected digits at position 0
-```
-
-De punt aan het eind zet mijn.host er zelf bij. Heeft het formulier wél een apart
-veld voor prioriteit, zet `10` daar dan neer en alleen de hostnaam in de waarde.
-
-Krijg je bij een van de twee TXT-records een vergelijkbare parseerfout, zet de
-waarde dan tussen dubbele aanhalingstekens: `"v=spf1 include:amazonses.com ~all"`.
-Zonder foutmelding niet doen — dan komen de aanhalingstekens in de waarde terecht.
+De punt aan het eind van een CNAME-waarde zet mijn.host er zelf bij.
 
 **Je bestaande mail blijft ongemoeid, en dat is geen toeval.** Resend verstuurt
 onder `send.staticline.nl`, niet onder `staticline.nl` zelf. Daardoor:
 
-- De `MX` op `send` staat naast je gewone `MX` op de apex, niet in plaats daarvan.
+- Er komt **geen** `MX` bij. Die van jou op de apex blijft de enige, dus
   `boeking@staticline.nl` blijft binnenkomen bij mijn.host.
 - Het `SPF`-record van je domein hoeft **niet** aangepast te worden. SPF kijkt naar
-  het envelopadres, en dat is `send.staticline.nl`.
+  het envelopadres, en dat is `send.staticline.nl` — waar via de CNAME het
+  SPF-record van Resend zelf achter hangt.
 - Het DKIM-record krijgt een eigen selector, `resend._domainkey`, die niet botst
   met die van mijn.host.
 
 Raak dus je bestaande `MX`-records, je `SPF` en je `_dmarc` niet aan.
 
+Laat "Enable Receiving" in Resend uit staan. Inkomende mail loopt via mijn.host;
+Resend hoeft alleen te versturen.
+
 Klik daarna in Resend op **Verify**. Meestal binnen een paar minuten groen; de TTL
 bij mijn.host is een kwartier.
+
+> Resend draaide vroeger op Amazon SES, met een `MX` naar
+> `feedback-smtp.<regio>.amazonses.com` en een los SPF-record op `send`. Die opzet
+> staat nog in veel handleidingen, deze inbegrepen tot september 2026. Kom je hem
+> tegen: het scherm in je eigen Resend-account is leidend, niet de handleiding.
 
 ### 4.3 De sleutel
 
