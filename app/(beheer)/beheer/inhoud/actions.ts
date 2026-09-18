@@ -7,6 +7,7 @@ import { log } from "@/lib/portal/audit";
 import {
   CONTENT_TAG,
   addMedia,
+  loadContent,
   removeMedia,
   saveContent,
 } from "@/lib/portal/content";
@@ -17,6 +18,10 @@ import {
   isImageSlot,
 } from "@/lib/portal/content-keys";
 import { getSession } from "@/lib/portal/session";
+import { codeText } from "@/lib/portal/copy-text";
+import { dutchText, siteHashKey, siteTextStale } from "@/lib/portal/site-texts";
+import { translate } from "@/lib/portal/translate";
+import { hashSource } from "@/lib/portal/translation-keys";
 import { youtubeId } from "@/lib/portal/youtube";
 
 export type SaveState = { ok: boolean; message: string } | null;
@@ -75,14 +80,33 @@ export async function saveAll(
   const read = (name: string) =>
     String(formData.get(name) ?? "").trim().slice(0, MAX_LENGTH);
 
+  const content = await loadContent();
+
   const entries = [
-    ...TEXT_KEYS.flatMap((field) =>
-      LOCALES.map((locale) => ({
-        key: field.key,
-        locale,
-        value: read(`${field.key}|${locale}`),
-      })),
-    ),
+    ...TEXT_KEYS.flatMap((field) => {
+      const rows: { key: string; locale: string; value: string }[] =
+        LOCALES.map((locale) => ({
+          key: field.key,
+          locale,
+          value: read(`${field.key}|${locale}`),
+        }));
+
+      // De bronhash meeschrijven. Wie hier opslaat, ziet het Nederlands en het
+      // Engels onder elkaar staan en bevestigt daarmee dat ze bij elkaar horen —
+      // ook als hij de Engelse tekst zelf heeft aangepast. Zonder dit zou een
+      // eigen correctie daarna alsnog als verouderd gelden.
+      const dutch = rows.find((row) => row.locale === "nl")?.value || "";
+      const english = rows.find((row) => row.locale === "en")?.value || "";
+      const source = dutch || dutchText(field.key, content, codeText(field.key, "nl"));
+
+      rows.push({
+        key: siteHashKey(field.key),
+        locale: "",
+        value: english ? hashSource(source) : "",
+      });
+
+      return rows;
+    }),
     ...[...SOCIAL_KEYS, ...SPOTIFY_KEYS].map((field) => ({
       key: field.key,
       locale: "",
@@ -285,4 +309,69 @@ export async function deleteMedia(
   refreshPublicPages();
 
   return { ok: true, message: "Verwijderd." };
+}
+
+const TRANSLATE_REASONS: Record<string, string> = {
+  "not-configured":
+    "Er is geen ANTHROPIC_API_KEY ingesteld. Zonder die sleutel kan er niet vertaald worden.",
+  failed: "Het vertalen lukte niet. De logs van Vercel zeggen wat er misging.",
+  shape:
+    "Er kwam een onverwacht antwoord terug. Er is niets opgeslagen — een vertaling die \u00e9\u00e9n plek is opgeschoven is erger dan geen vertaling.",
+};
+
+/**
+ * De Nederlandse teksten van de site naar het Engels zetten.
+ *
+ * Werkt op wat er opgeslagen staat, niet op wat er in het formulier getypt is:
+ * een server action krijgt het formulier niet te zien als hij niet bij dat
+ * formulier hoort. Sla je wijzigingen dus eerst op.
+ *
+ * Alleen wat leeg of verouderd is. Een Engelse tekst die je zelf getypt hebt
+ * blijft staan — die overschrijven is precies het werk dat je niet nog eens wilt
+ * doen.
+ */
+export async function translateSiteTexts(): Promise<SaveState> {
+  const { error, session } = await admin();
+  if (error) return { ok: false, message: error };
+
+  const content = await loadContent();
+
+  const todo = TEXT_KEYS.map((field) => ({
+    key: field.key,
+    source: dutchText(field.key, content, codeText(field.key, "nl")),
+    english: (content[`${field.key}|en`] ?? "").trim(),
+    stale: siteTextStale(field.key, content, codeText(field.key, "nl")),
+  })).filter((item) => item.source && (!item.english || item.stale));
+
+  if (todo.length === 0) {
+    return { ok: true, message: "Alle Engelse teksten zijn ingevuld en actueel." };
+  }
+
+  const result = await translate(todo.map((item) => item.source));
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: TRANSLATE_REASONS[result.error] ?? "Vertalen mislukt.",
+    };
+  }
+
+  const rows = todo.flatMap((item, index) => [
+    { key: item.key, locale: "en", value: result.translations[index].trim() },
+    { key: siteHashKey(item.key), locale: "", value: hashSource(item.source) },
+  ]);
+
+  const saved = await saveContent(rows, session.email);
+  if (!saved) return { ok: false, message: "Vertaald, maar opslaan mislukte." };
+
+  await log({
+    actor: session.email,
+    action: "translate.site",
+    detail: `${todo.length} teksten`,
+  });
+  refreshPublicPages();
+
+  return {
+    ok: true,
+    message: `${todo.length} ${todo.length === 1 ? "tekst" : "teksten"} vertaald. Loop ze even na.`,
+  };
 }

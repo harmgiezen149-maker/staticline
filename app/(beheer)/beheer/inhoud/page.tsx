@@ -4,12 +4,14 @@ import { redirect } from "next/navigation";
 import { ContentForm } from "@/components/beheer/ContentForm";
 import { ImageManager, type SlotState } from "@/components/beheer/ImageManager";
 import { PhotoManager } from "@/components/beheer/PhotoManager";
+import { SiteTextTranslator } from "@/components/beheer/SiteTextTranslator";
 import { VideoManager } from "@/components/beheer/VideoManager";
 import { Shell } from "@/components/beheer/Shell";
-import { getCopy } from "@/content";
 import { loadContent, loadMedia } from "@/lib/portal/content";
 import { IMAGE_SLOTS, TEXT_KEYS, storageKey } from "@/lib/portal/content-keys";
 import { getSession } from "@/lib/portal/session";
+import { codeText } from "@/lib/portal/copy-text";
+import { dutchText, siteTextStale } from "@/lib/portal/site-texts";
 import { getHeroBackground, getWordmark } from "@/lib/site-content";
 
 export const metadata: Metadata = { title: "Inhoud" };
@@ -53,11 +55,23 @@ export default async function InhoudPage() {
   const values: Record<string, string> = { ...content };
   for (const field of TEXT_KEYS) {
     for (const locale of ["nl", "en"] as const) {
-      const copy = getCopy(locale) as unknown as Record<string, Record<string, string>>;
-      const [group, name] = field.key.split(".");
-      values[`fallback:${storageKey(field.key, locale)}`] =
-        copy[group]?.[name] ?? "";
+      values[`fallback:${storageKey(field.key, locale)}`] = codeText(
+        field.key,
+        locale,
+      );
     }
+  }
+
+  // Welke Engelse teksten ontbreken of niet meer bij het Nederlands horen. Dat
+  // eerste telt alleen als er Nederlands staat om van te vertalen.
+  const stale: Record<string, boolean> = {};
+  let toTranslate = 0;
+  for (const field of TEXT_KEYS) {
+    const nl = codeText(field.key, "nl");
+    const isStale = siteTextStale(field.key, content, nl);
+    stale[field.key] = isStale;
+    const english = (content[storageKey(field.key, "en")] ?? "").trim();
+    if (dutchText(field.key, content, nl) && (!english || isStale)) toTranslate += 1;
   }
 
   const videos = media
@@ -76,7 +90,8 @@ export default async function InhoudPage() {
   return (
     <Shell session={session} title="Inhoud">
       <div className="flex flex-col gap-10">
-        <ContentForm values={values} />
+        <ContentForm values={values} stale={stale} />
+        <SiteTextTranslator todo={toTranslate} />
         <ImageManager slots={slots} />
         <PhotoManager photos={photos} />
         <VideoManager videos={videos} />

@@ -450,6 +450,23 @@ Zo goed als niets. Het gaat om een bandbio en vier ledenteksten, en alleen wat
 ontbreekt of verouderd is wordt opnieuw vertaald. De hele band in één keer zit in
 de orde van twee cent.
 
+### Twee plekken
+
+| Waar | Wat |
+| --- | --- |
+| **Vertalingen** | De bandbio en de teksten per lid, die uit de Band App komen |
+| **Inhoud → Engels bijwerken** | De hero-ondertitels en de voettekst, die de site zelf bezit |
+
+Die twee gedragen zich bij een verouderde vertaling met opzet verschillend. Bij de
+Band App-teksten valt de site terug op het Nederlands: die staan in een andere
+applicatie, je ziet ze niet naast elkaar en je zou het verschil nooit opmerken.
+Bij de siteteksten staan beide talen onder elkaar op hetzelfde scherm, dus daar
+blijft het Engels staan en krijg je alleen een melding. Stil van taal wisselen op
+een gepubliceerde pagina is erger dan een waarschuwing die je ziet.
+
+De knop bij de siteteksten werkt op wat er **opgeslagen** staat. Sla je
+wijzigingen dus eerst op, anders vertaalt hij de vorige versie.
+
 ### Hoe het werkt
 
 Bij elke vertaling wordt een hash van de Nederlandse brontekst bewaard. Pas je

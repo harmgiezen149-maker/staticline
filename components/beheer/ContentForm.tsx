@@ -19,7 +19,14 @@ import {
  * Elk veld toont als plaatshouder wat er nu op de site staat. Leeg laten
  * betekent dan letterlijk "houd wat er staat", en dat is precies wat er gebeurt.
  */
-export function ContentForm({ values }: { values: Record<string, string> }) {
+export function ContentForm({
+  values,
+  stale,
+}: {
+  values: Record<string, string>;
+  /** Per tekst: of het Engels niet meer bij het Nederlands hoort. */
+  stale: Record<string, boolean>;
+}) {
   const [state, action, pending] = useActionState<SaveState, FormData>(
     saveAll,
     null,
@@ -44,6 +51,17 @@ export function ContentForm({ values }: { values: Record<string, string> }) {
               </span>
               <span className="text-muted">{field.where}</span>
             </legend>
+
+            {stale[field.key] && (
+              // Alleen een melding, geen terugval. Anders dan bij de teksten uit
+              // de Band App staan hier beide talen onder elkaar op dit scherm —
+              // je ziet het verschil. Stil van taal wisselen op een gepubliceerde
+              // pagina is erger dan een waarschuwing die je ziet staan.
+              <p className="text-danger">
+                De Nederlandse tekst is gewijzigd sinds deze vertaling. Het Engels
+                staat nog zoals het was.
+              </p>
+            )}
 
             {(["nl", "en"] as const).map((locale) => (
               <label key={locale} className="flex flex-col gap-1">
