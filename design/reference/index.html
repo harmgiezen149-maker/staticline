@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Static Line — homepage (design reference)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <a href="#top"><img class="site-header__mark" src="../assets/staticline-wordmark-flat.png" alt="Static Line"></a>
+  <nav class="site-nav">
+    <a href="#shows">Shows</a>
+    <a href="#photos">Foto's</a>
+    <a href="#band">Band</a>
+  </nav>
+  <a class="site-header__cta" href="#booking">Boeken</a>
+  <p class="lang-switch"><span aria-current="true">NL</span> / <a href="?lang=en">en</a></p>
+  <button class="nav-toggle" type="button" aria-label="Menu"><span></span></button>
+</header>
+
+<section class="hero grain" id="top">
+  <div class="hero__inner">
+    <p class="hero__kicker">Eerste show — 10 november 2026</p>
+    <img class="hero__wordmark" src="../assets/staticline-wordmark.png" alt="Static Line">
+    <p class="hero__sub">Rauwe, opgefokte rock uit Nijmegen. Drie man, geen omweg. Losse snaren, kapotte versterkers en een set die niet stilstaat.</p>
+    <div class="hero__actions">
+      <a class="btn btn--primary" href="#booking">Boek ons</a>
+      <a class="btn btn--ghost" href="#shows">Alle shows</a>
+    </div>
+  </div>
+</section>
+
+<section class="next-show" aria-label="Volgende show">
+  <div class="next-show__date">
+    <p class="next-show__label">Volgende show</p>
+    <p class="next-show__day">10.11</p>
+    <p class="next-show__meta">2026 · 20:30</p>
+  </div>
+  <div class="next-show__body">
+    <h2 class="next-show__venue">Doornroosje, Nijmegen</h2>
+    <p class="next-show__note">Releaseshow met support. Deuren 20:00, wij om 21:15.</p>
+  </div>
+  <a class="btn btn--inset next-show__tickets" href="#tickets">Tickets</a>
+</section>
+
+<section class="shows" id="shows">
+  <div class="shows__head">
+    <h2 class="display h2">Alle shows</h2>
+    <p class="shows__count">5 data</p>
+  </div>
+
+  <a class="show-row" href="#tickets">
+    <span class="show-row__date">10 nov 2026</span>
+    <span class="show-row__venue">Doornroosje</span>
+    <span class="show-row__city">Nijmegen</span>
+    <span class="show-row__status" data-status="release">Releaseshow</span>
+  </a>
+  <a class="show-row" href="#tickets">
+    <span class="show-row__date">21 nov 2026</span>
+    <span class="show-row__venue">Luxor Live</span>
+    <span class="show-row__city">Arnhem</span>
+    <span class="show-row__status" data-status="tickets">Tickets</span>
+  </a>
+  <div class="show-row" aria-disabled="true">
+    <span class="show-row__date">05 dec 2026</span>
+    <span class="show-row__venue">dB's</span>
+    <span class="show-row__city">Utrecht</span>
+    <span class="show-row__status" data-status="soldout">Uitverkocht</span>
+  </div>
+  <a class="show-row" href="#tickets">
+    <span class="show-row__date">17 jan 2027</span>
+    <span class="show-row__venue">Effenaar, Kleine Zaal</span>
+    <span class="show-row__city">Eindhoven</span>
+    <span class="show-row__status" data-status="tickets">Tickets</span>
+  </a>
+  <div class="show-row">
+    <span class="show-row__date">07 feb 2027</span>
+    <span class="show-row__venue">Trix</span>
+    <span class="show-row__city">Antwerpen</span>
+    <span class="show-row__status" data-status="announced">Aangekondigd</span>
+  </div>
+</section>
+
+<section class="photos grain" id="photos">
+  <div class="photos__inner">
+    <h2 class="display h2">Foto's</h2>
+    <div class="photo-grid">
+      <figure class="is-placeholder"><figcaption>live shot — duotone rood</figcaption></figure>
+      <figure class="is-placeholder"><figcaption>bandportret</figcaption></figure>
+      <figure class="is-placeholder"><figcaption>crowd — duotone teal</figcaption></figure>
+      <figure class="is-placeholder"><figcaption>backstage</figcaption></figure>
+      <figure class="is-placeholder"><figcaption>gitaar detail</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer" id="booking">
+  <img class="site-footer__mark" src="../assets/staticline-wordmark-flat.png" alt="Static Line">
+  <p class="site-footer__note">Static Line · Nijmegen · Boekingen en technische rider op aanvraag</p>
+  <a class="site-footer__mail" href="mailto:boeking@staticline.nl">boeking@staticline.nl</a>
+</footer>
+
+</body>
+</html>

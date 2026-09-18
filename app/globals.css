@@ -1,0 +1,142 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Het ontwerp kent twee breekpunten, allebei als max-width: 1024 en 640.
+   Hier staan ze als min-width zodat de opbouw mobile-first is — beter voor een
+   bezoeker die net een sticker heeft gescand op 4G. De grenzen liggen daarom op
+   641 en 1025, zodat een venster van precies 640 of 1024 px in dezelfde stand
+   valt als in de referentie-implementatie.
+
+   sm:  641px en hoger  = tablet
+   lg: 1025px en hoger  = desktop
+   geen prefix          = mobiel
+
+   De overige standaardbreekpunten van Tailwind staan uit: een derde grens die
+   niet in het ontwerp voorkomt, is een fout die niemand opmerkt. */
+@theme {
+  --breakpoint-*: initial;
+  --breakpoint-sm: 641px;
+  --breakpoint-lg: 1025px;
+
+  /* Kleuren. De namen komen uit design-system/tokens.json; ze zijn hier ingekort
+     zodat de utilities leesbaar blijven (bg-base, text-primary, border-line). */
+  --color-base: #0d0f12;
+  --color-surface: #1c2126;
+  --color-raised: #262d34;
+  --color-inset: #090b0d;
+
+  --color-primary: #ede5d4;
+  --color-muted: #9ba3ab;
+  --color-faint: #6b747c;
+  --color-on-accent: #f7f2e8;
+
+  --color-accent: #b33a28;
+  --color-accent-hover: #c9482f;
+  --color-accent-quiet: #2a1614;
+  --color-accent-alt: #2aa5b5;
+
+  --color-line: #333b42;
+  --color-line-strong: #4a545c;
+
+  --color-success: #4f9d69;
+  --color-warning: #d9a441;
+  --color-danger: #d9503c;
+
+  /* Letters. De drie variabelen worden gevuld door next/font in de root layout. */
+  --font-display: var(--font-oswald), "Arial Narrow", system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Typografische schaal uit de handoff: 64 · 44 · 30 · 26 · 22 · 18 · 16 · 15 ·
+     14 · 12 · 11 · 10. Genummerd en niet benoemd, zodat een maat die er niet in
+     staat meteen opvalt als arbitrary value. */
+  --text-64: 64px;
+  --text-44: 44px;
+  --text-30: 30px;
+  --text-26: 26px;
+  --text-22: 22px;
+  --text-20: 20px;
+  --text-18: 18px;
+  --text-16: 16px;
+  --text-15: 15px;
+  --text-14: 14px;
+  --text-12: 12px;
+  --text-11: 11px;
+  --text-10: 10px;
+
+  /* Letterafstanden zoals het ontwerp ze gebruikt. */
+  --tracking-tight2: 0.02em;
+  --tracking-tight3: 0.03em;
+  --tracking-tight4: 0.04em;
+  --tracking-wide8: 0.08em;
+  --tracking-wide10: 0.1em;
+  --tracking-wide12: 0.12em;
+  --tracking-wide14: 0.14em;
+  --tracking-wide16: 0.16em;
+  --tracking-wide18: 0.18em;
+  --tracking-wide22: 0.22em;
+  --tracking-wide28: 0.28em;
+
+  /* Radius is nul, overal. Staat hier zodat `rounded` niets anders kan doen. */
+  --radius-none: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-full: 0px;
+}
+
+@layer base {
+  html {
+    background: var(--bg-base);
+  }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Eén focus-ring, overal. Op een donkere site verdwijnt focus zonder deze regel. */
+  *:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Het ontwerp kent geen scroll- of entree-animaties; alleen kleurovergangen van
+     120ms. Wie toch beweging uitzet, hoort ook die niet te krijgen. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility grain-overlay {
+  /* De korrel uit het ontwerp: een tilende 256×256 PNG, niet een paginagrote
+     afbeelding. Wordt als los laagje over een sectie gelegd. */
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}

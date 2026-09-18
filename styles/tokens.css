@@ -1,0 +1,53 @@
+/* Static Line — design tokens.
+   Gegenereerd uit design-system/tokens.json. Alleen donker thema, geen light mode.
+   Border radius is overal 0. Niet met de hand aanpassen; opnieuw genereren uit de bron. */
+
+:root {
+  /* Achtergrond & tekst */
+  --bg-base: #0d0f12;
+  --bg-surface: #1c2126;
+  --bg-raised: #262d34;
+  --bg-inset: #090b0d;
+  --text-primary: #ede5d4;
+  --text-muted: #9ba3ab;
+  --text-faint: #6b747c;
+  --text-on-accent: #f7f2e8;
+
+  /* Accenten */
+  --accent: #b33a28;
+  --accent-hover: #c9482f;
+  --accent-quiet: #2a1614;
+  --accent-alt: #2aa5b5;
+
+  /* Lijnen en status */
+  --border-default: #333b42;
+  --border-strong: #4a545c;
+  --focus-ring: #2aa5b5;
+  --success: #4f9d69;
+  --warning: #d9a441;
+  --danger: #d9503c;
+
+  /* Letters — de variabelen worden in app/[lang]/layout.tsx gevuld door next/font */
+  --font-display: var(--font-oswald), "Arial Narrow", system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Ruimte */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* Radius is nul. Staat er als token zodat het een besluit blijft en geen vergetelheid. */
+  --radius: 0px;
+
+  /* De enige overgang in het ontwerp. */
+  --transition: 120ms ease;
+
+  --grain: url("/assets/grain.png");
+}

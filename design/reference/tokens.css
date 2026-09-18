@@ -1,0 +1,48 @@
+/* Static Line — design tokens. Dark theme only, no light mode.
+   Source of truth: the Static Line design system (tokens.json).
+   Border radius is 0 everywhere. */
+
+:root {
+  /* Background */
+  --bg-base: #0D0F12;      /* page background */
+  --bg-surface: #1C2126;   /* raised sections */
+  --bg-raised: #262D34;    /* cards on surface */
+  --bg-inset: #090B0D;     /* header/footer, inset blocks */
+
+  /* Text */
+  --text-primary: #EDE5D4; /* bone white */
+  --text-muted: #9BA3AB;
+  --text-faint: #6B747C;   /* mono labels only, never body copy */
+  --text-on-accent: #F7F2E8;
+
+  /* Accent */
+  --accent: #B33A28;       /* oxide red */
+  --accent-hover: #C9482F;
+  --accent-quiet: #2A1614; /* row hover on dark */
+  --accent-alt: #2AA5B5;   /* teal, links + status */
+
+  /* Lines & states */
+  --border-default: #333B42;
+  --border-strong: #4A545C;
+  --focus-ring: #2AA5B5;
+  --danger: #D9503C;
+
+  /* Type */
+  --font-display: "Oswald", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Spacing scale (px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --radius: 0;
+  --grain: url("../assets/grain.png");
+}
