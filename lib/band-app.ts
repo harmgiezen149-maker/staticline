@@ -101,3 +101,29 @@ export async function fetchBandAppPublic(): Promise<BandAppPublic | null> {
     return null;
   }
 }
+
+/**
+ * De deelbare link naar de technische rider en het podiumplan.
+ *
+ * De Band App heeft daar een pagina voor op `/rider/<token>`, met de bezetting,
+ * de plattegrond, de inputlijst en de tekst van de band, en een afdrukknop
+ * waarmee een zaal er een pdf van maakt. Precies wat docs/01-scope.md als
+ * downloadbare rider op de boekingspagina beschrijft — en altijd de actuele
+ * versie, in plaats van een bijlage die iemand ooit gemaild heeft.
+ *
+ * Die sleutel is niet op te halen met een publieke aanroep: in de Band App zit hij
+ * achter een inlog, want wie de link heeft mag de rider lezen. Hij hoort dus als
+ * omgevingsvariabele ingesteld te worden:
+ *
+ *   BAND_APP_RIDER_URL="https://static-line-bandapp.vercel.app/rider/<token>"
+ *
+ * In de Band App staat die link onderaan het riderscherm. Wordt hij daar
+ * vernieuwd, dan moet deze variabele mee. Zolang hij leeg is, zegt de
+ * boekingspagina eerlijk dat de rider op aanvraag is.
+ */
+export async function getRiderUrl(): Promise<string | null> {
+  const url = process.env.BAND_APP_RIDER_URL?.trim();
+  if (!url) return null;
+  // Alleen http(s): deze waarde komt in een `href` op een publieke pagina.
+  return /^https?:\/\//i.test(url) ? url : null;
+}

@@ -140,9 +140,16 @@ bestaande tokens en patronen; er zijn geen nieuwe kleuren, radii, schaduwen of
 bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
 
 - Het mobiele menupaneel (`components/MobileNav.tsx`)
-- Alle publieke pagina's behalve de homepage
+- Alle publieke pagina's behalve de homepage — het omhulsel staat in
+  `components/Page.tsx`, de pagina's zelf in `components/pages/`
+- Het boekingsformulier (`components/BookingForm.tsx`)
+- De nieuwsbriefstrip, de kaart en de uitgestelde embeds
 - Het besloten deel
 - Laad-, fout- en lege staten
+
+Twee dingen zijn in de kop bijgekomen die niet ontworpen zijn: Muziek en Video.
+Ze verschijnen pas vanaf `lg:`, zodat de kop op tablet precies de drie items
+breed blijft die het ontwerp tekent.
 
 ## Wat er over de inhoud bekend is
 
@@ -159,6 +166,23 @@ in de Band App iets anders bleek:
   wordt niet gebruikt.
 - Bandbio, bandlogo en fotografie ontbreken nog. De fotosectie toont zolang de
   benoemde placeholders uit het ontwerp.
+
+## Wat er nog ingesteld moet worden
+
+Deze dingen werken zonder, maar beter mét. Zolang ze ontbreken logt de site een
+waarschuwing en gaat hij door — een aanvraag hoort nooit te stranden omdat een
+sleutel ontbreekt.
+
+| Variabele | Waarvoor |
+| --- | --- |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` | captcha op het boekingsformulier; zonder deze blijft alleen de honeypot over |
+| `BAND_APP_RIDER_URL` | de deelbare riderlink uit de Band App, voor de boekingspagina |
+| `DATABASE_URL` | eigen database voor boekingen en nieuwsbriefabonnees; nu worden aanvragen alleen doorgestuurd |
+| mailkoppeling | bevestigingsmail aan de afzender |
+
+Inhoud die nog ontbreekt staat op één plek: `content/media.ts`. Foto's, Spotify,
+video's en sociale links zijn daar één regel toevoegen; de pagina's zijn af en
+tonen tot die tijd een eerlijke lege staat.
 
 ## Voor wie dit is
 

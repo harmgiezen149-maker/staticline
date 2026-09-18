@@ -3,7 +3,7 @@ import type { Copy } from "./types";
 /**
  * Nederlandse copy.
  *
- * Grotendeels overgenomen uit het ontwerpprototype. Twee dingen zijn bewust
+ * De homepage-teksten komen uit het ontwerpprototype. Twee dingen zijn bewust
  * veranderd ten opzichte van het ontwerp, allebei omdat de werkelijkheid anders
  * bleek:
  *
@@ -12,6 +12,9 @@ import type { Copy } from "./types";
  * - Het ontwerp presenteerde de eerste show als releaseshow met support. Dat is
  *   niet wat er speelt, en de band speelt covers. De copy blijft daarom open,
  *   zodat er niets herschreven hoeft te worden zodra er eigen werk is.
+ *
+ * De teksten voor de overige pagina's zijn nieuw en niet ontworpen; ze volgen de
+ * toon van de homepage. Waar inhoud ontbreekt staat er wat er komt, niet niets.
  */
 export const nl: Copy = {
   meta: {
@@ -23,6 +26,8 @@ export const nl: Copy = {
     shows: "Shows",
     photos: "Foto's",
     band: "Band",
+    music: "Muziek",
+    video: "Video",
     booking: "Boeken",
     menu: "Menu",
     language: "Taal",
@@ -67,5 +72,125 @@ export const nl: Copy = {
   footer: {
     note: "Static Line · Nijmegen · Boekingen en technische rider op aanvraag",
     mail: "boeking@staticline.nl",
+    social: "Volg ons",
+  },
+
+  agenda: {
+    title: "Agenda",
+    intro:
+      "Waar we spelen. Staat er niets bij dat in de buurt komt? Vraag ons dan gewoon.",
+    upcoming: "Komende shows",
+    archive: "Geweest",
+    archiveEmpty: "Nog niets gespeeld. Dat verandert op 10 november.",
+    map: "Op de kaart",
+    mapEmpty:
+      "Zodra er coördinaten bij de shows staan, verschijnt hier een kaart.",
+  },
+
+  band: {
+    title: "Over de band",
+    intro: "",
+    members: "Bandleden",
+    bioEmpty:
+      "De bandtekst wordt nog geschreven. Tot die tijd: vier man, gitaren te hard, en een voorkeur voor nummers uit de jaren negentig die nog steeds pijn doen.",
+    membersEmpty: "De bezetting wordt nog ingevuld.",
+    noRole: "Bandlid",
+  },
+
+  music: {
+    title: "Muziek",
+    intro: "Wat we spelen.",
+    spotify: "Luisteren",
+    setlist: "Wat we spelen",
+    setlistNote:
+      "Deze lijst komt rechtstreeks uit de app van de band en verandert dus mee.",
+    empty:
+      "Er staat nog niets online. Kom naar een show, dat is toch waar het om gaat.",
+  },
+
+  video: {
+    title: "Video",
+    intro: "Beeld van de band.",
+    empty: "Er is nog geen video. Zodra er iets gefilmd is, staat het hier.",
+  },
+
+  gallery: {
+    title: "Foto's",
+    intro: "",
+  },
+
+  embed: {
+    load: "{service} laden",
+    note: "Wordt pas geladen als je erop klikt — anders zet {service} cookies bij iedereen die langskomt.",
+  },
+
+  newsletter: {
+    title: "Blijf op de hoogte",
+    body: "Een mail als er een show bij komt. Niet vaker.",
+    placeholder: "jouw@email.nl",
+    submit: "Aanmelden",
+    ok: "Bijna klaar — klik op de link in de mail die we net gestuurd hebben.",
+    error: "Dat ging mis. Probeer het zo nog eens.",
+    consent: "Afmelden kan met één klik, in elke mail.",
+  },
+
+  booking: {
+    title: "Boeken",
+    intro:
+      "Wil je ons boeken, of heb je een vraag? Vul dit in en je krijgt antwoord. Hoe meer je invult, hoe sneller we iets zinnigs kunnen zeggen.",
+    kindLabel: "Waar gaat het over?",
+    kindBooking: "Boeking",
+    kindQuestion: "Algemene vraag",
+    groupContact: "Wie ben je",
+    groupWhen: "Wanneer",
+    groupPlace: "Waar",
+    groupTech: "Techniek en praktisch",
+    groupMessage: "Je bericht",
+    fields: {
+      name: "Naam",
+      email: "E-mail",
+      phone: "Telefoon",
+      date: "Datum",
+      datePlaceholder: "bijv. 14 maart, of ergens in mei",
+      location: "Locatie",
+      time: "Tijd",
+      timePlaceholder: "bijv. 21:00",
+      duration: "Speelduur",
+      durationPlaceholder: "bijv. 2 × 45 minuten",
+      eventType: "Type event",
+      eventTypePlaceholder: "café, festival, feest, bruiloft…",
+      budget: "Budget",
+      budgetPlaceholder: "bijv. 350, of een bereik",
+      roomSize: "Grootte van de ruimte",
+      roomSizePlaceholder: "bijv. 150 man",
+      parking: "Parkeergelegenheid",
+      backstage: "Backstage of veilige opslag",
+      pa: "PA aanwezig",
+      message: "Bericht",
+      messagePlaceholder: "Alles wat we verder moeten weten.",
+    },
+    choice: {
+      yes: "Ja",
+      no: "Nee",
+      unknown: "Weet ik niet",
+      rent: "In te huren",
+    },
+    submit: "Versturen",
+    sending: "Bezig…",
+    ok: "Verstuurd.",
+    okNote: "Je hoort van ons. Meestal binnen een paar dagen.",
+    errorGeneric:
+      "Het versturen lukte niet. Probeer het nog eens, of mail ons rechtstreeks.",
+    errorName: "Vul je naam in.",
+    errorEmail: "Vul een e-mailadres in waar we je op kunnen bereiken.",
+    errorCaptcha: "De controle is niet gelukt. Probeer het nog eens.",
+    required: "verplicht",
+    optional: "mag leeg",
+    riderTitle: "Technische rider en podiumplan",
+    riderBody:
+      "Wat wij meenemen, wat de zaal levert, de inputlijst en waar we staan. Altijd de actuele versie, rechtstreeks uit de app van de band.",
+    riderLink: "Rider bekijken",
+    riderEmpty:
+      "De rider is er nog niet in een deelbare vorm. Vraag ernaar en we sturen hem.",
   },
 };

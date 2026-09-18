@@ -16,6 +16,11 @@ type Props = {
    * sectie de placeholders uit het ontwerp met de omschrijving van wat er komt.
    */
   photos?: Photo[];
+  /**
+   * Of de sectiekop meegerenderd wordt. Op de fotopagina staat de titel al als
+   * paginakop, en twee keer "Foto's" onder elkaar leest als een fout.
+   */
+  heading?: boolean;
 };
 
 /**
@@ -27,7 +32,7 @@ type Props = {
  * zijn daarom niet leeg maar benoemd, zodat duidelijk is wat er hoort te komen —
  * precies zoals de referentie-implementatie het doet.
  */
-export function PhotoGrid({ locale, photos = [] }: Props) {
+export function PhotoGrid({ locale, photos = [], heading = true }: Props) {
   const copy = getCopy(locale);
 
   const cells: Array<Photo | { caption: string }> =
@@ -43,9 +48,11 @@ export function PhotoGrid({ locale, photos = [] }: Props) {
       <div className="grain-overlay opacity-35" aria-hidden="true" />
 
       <div className="relative flex flex-col gap-4 sm:gap-6">
-        <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
-          {copy.photos.heading}
-        </h2>
+        {heading && (
+          <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
+            {copy.photos.heading}
+          </h2>
+        )}
 
         {/* `minmax(140px,auto)` op mobiel in plaats van een vaste 140px.
             De referentie-implementatie zet de eerste cel daar op een vaste hoogte

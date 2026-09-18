@@ -11,6 +11,11 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // Node's typestripper (`node --test` met --experimental-strip-types) wil de
+    // `.ts` in een importpad zien staan; TypeScript weigert dat standaard. Mag
+    // aan omdat `noEmit` aanstaat: er wordt hier niets gecompileerd, alleen
+    // gecontroleerd.
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
@@ -30,5 +35,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "design"]
 }

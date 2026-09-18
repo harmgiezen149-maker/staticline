@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { getCopy } from "@/content";
+import { socials } from "@/content/media";
 import type { Locale } from "@/lib/i18n";
 
 import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
@@ -11,9 +12,22 @@ import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
  * Het wordmark staat hier klein en vlak. Dat is een besluit uit het brandbook: de
  * mark staat groot bovenaan en klein onderaan, en nergens anders prominent —
  * herhalen op volle sterkte put hem uit.
+ *
+ * De sociale links zijn een toevoeging op het ontwerp; de vragenlijst noemde
+ * Instagram expliciet als wens. Ze staan in dezelfde mono-stijl als het
+ * e-mailadres, dus er komt geen nieuwe vorm bij. Zolang er geen adressen in
+ * content/media.ts staan, blijft de rij weg.
  */
 export function SiteFooter({ locale }: { locale: Locale }) {
   const copy = getCopy(locale);
+
+  // Instagram vooraan — dat was een expliciete wens.
+  const links = [
+    ["Instagram", socials.instagram],
+    ["YouTube", socials.youtube],
+    ["Spotify", socials.spotify],
+    ["Facebook", socials.facebook],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 
   return (
     <footer
@@ -29,6 +43,25 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       <p className="font-mono text-12 leading-[18px] tracking-wide8 text-muted">
         {copy.footer.note}
       </p>
+
+      {links.length > 0 && (
+        <nav
+          aria-label={copy.footer.social}
+          className="flex flex-wrap gap-4 font-mono text-12 tracking-wide14 uppercase"
+        >
+          {links.map(([label, href]) => (
+            <a
+              key={label}
+              href={href}
+              rel="me noreferrer"
+              target="_blank"
+              className="text-muted transition-colors duration-[120ms] hover:text-primary"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+      )}
 
       <a
         href={`mailto:${copy.footer.mail}`}

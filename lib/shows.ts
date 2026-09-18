@@ -106,6 +106,8 @@ function toShow(gig: MaybeExtended): Show | null {
 export type ShowsResult = {
   /** Komende shows, oplopend op datum. */
   upcoming: Show[];
+  /** Gespeelde shows, nieuwste eerst. De Band App levert er hoogstens vijftig. */
+  past: Show[];
   /** De eerstvolgende show, of null als de agenda leeg is. */
   next: Show | null;
   /** Of de band al eerder gespeeld heeft. Bepaalt of de kicker "eerste" of "volgende" zegt. */
@@ -126,7 +128,13 @@ export async function getShows(): Promise<ShowsResult> {
   const data = await fetchBandAppPublic();
 
   if (!data) {
-    return { upcoming: [], next: null, hasPlayed: false, available: false };
+    return {
+      upcoming: [],
+      past: [],
+      next: null,
+      hasPlayed: false,
+      available: false,
+    };
   }
 
   const upcoming = data.gigs
@@ -134,10 +142,17 @@ export async function getShows(): Promise<ShowsResult> {
     .filter((show): show is Show => show !== null)
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  // Nieuwste eerst: een archief leest van recent naar lang geleden.
+  const past = data.pastGigs
+    .map(toShow)
+    .filter((show): show is Show => show !== null)
+    .sort((a, b) => b.date.localeCompare(a.date));
+
   return {
     upcoming,
+    past,
     next: upcoming[0] ?? null,
-    hasPlayed: data.pastGigs.length > 0,
+    hasPlayed: past.length > 0,
     available: true,
   };
 }
