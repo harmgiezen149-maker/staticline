@@ -17,7 +17,7 @@ al het andere volgt het design system.
 | Hosting | Vercel, project `staticline`, deployt vanaf GitHub |
 | Gedeelde data | via de API van de Band App, **niet** via een gedeelde database |
 | Eigen data | eigen Postgres (Neon) bij dit Vercel-project |
-| i18n | Nederlands op `/`, Engels op `/en`, via `proxy.ts` — nooit client-only |
+| i18n | Nederlands op `/`, Engels op `/en`, als twee echte routes — nooit client-only |
 
 ## Hoe dit aan de Band App hangt
 
@@ -72,6 +72,23 @@ Die komen uit besluiten die al genomen zijn. Niet opnieuw openen in code.
   waarom: een `hidden` van de aanroeper verliest dan willekeurig van een
   `inline-flex` uit de basis.
 
+## Taalroutering — waarom twee root layouts
+
+Er zijn twee root layouts, `app/(nl)` en `app/(en)`, elk met hun eigen
+`<html lang>`. De inhoud van een pagina staat één keer in een component; de
+routebestanden zijn dun en geven alleen de taal mee.
+
+Dat is niet de voor de hand liggende opzet — één `app/[lang]` met een rewrite in
+`proxy.ts` is korter. Die stond er ook, en werkte lokaal. Op Vercel gaf `/`
+alleen een 404: dat adres bestond daar niet als route, want het ontstond pas uit
+middleware. Het adres dat op de sticker met de QR-code komt te staan, hoort niet
+af te hangen van een routeringslaag die zich op twee plekken anders gedraagt.
+
+Nu staan `/` en `/en` allebei gewoon in de routeringstabel en is er geen
+middleware meer. De prijs is één dun bestand per pagina per taal.
+
+**Voeg hier geen `[lang]`-segment of taal-rewrite opnieuw aan toe.**
+
 ## Breekpunten
 
 Het ontwerp werkt met twee grenzen, als max-width geschreven: 1024 en 640. In
@@ -89,11 +106,11 @@ in het ontwerp voorkomt, is een fout die niemand opmerkt.
 ## Indeling
 
 ```
-app/[lang]/         alle pagina's, één keer, in beide talen
-components/         SiteHeader, Hero, NextShow, ShowList, ShowRow, PhotoGrid, SiteFooter, …
+app/(nl)/           Nederlandse routes: /, /agenda, /boeken …
+app/(en)/en/        Engelse routes: /en, /en/agenda …
+components/         SiteHeader, Hero, NextShow, ShowList, ShowRow, PhotoGrid, SiteFooter, HomePage, …
 content/            copy per taal; het type in content/types.ts dwingt af dat beide compleet zijn
-lib/                i18n, band-app-koppeling, showmodel
-proxy.ts            taalroutering: / is Nederlands, /en is Engels
+lib/                i18n, band-app-koppeling, showmodel, fonts
 styles/tokens.css   gegenereerd uit design-system/tokens.json — niet met de hand aanpassen
 design/             de design-handoff, alleen referentie, staat buiten de linter en de build
 design-system/      tokens, brandbook, logo's

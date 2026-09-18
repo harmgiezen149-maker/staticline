@@ -13,7 +13,7 @@ const body = {
     { id: 6, name: "Quinten van Dreven", role: "Ritmegitarist", instrument: "Gitaar", bio: "", photoUrl: null },
   ],
   gigs: [
-    { id: 14, mon: "Nov", day: "10", time: "20:00", title: "Loburg Lonight 3 bands peforming", date: "2026-11-10T20:00:00.000Z" },
+    { id: 14, mon: "Nov", day: "10", time: "20:00", title: "Loburg, Wageningen", date: "2026-11-10T20:00:00.000Z" },
   ],
   setlistSections: [],
   setlist: [],
