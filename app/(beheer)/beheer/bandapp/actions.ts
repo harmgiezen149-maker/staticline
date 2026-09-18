@@ -89,6 +89,11 @@ function gigFields(formData: FormData) {
     publicStatus: text("publicStatus"),
     ticketUrl: text("ticketUrl"),
     publicNote: text("publicNote"),
+    // Altijd meesturen, ook leeg. Een leeg veld betekent hier "haal de speld van
+    // de kaart"; weglaten zou betekenen "laat staan wat er stond", en dan kun je
+    // een verkeerd gezette speld nooit meer kwijt.
+    lat: text("lat"),
+    lng: text("lng"),
   };
 }
 

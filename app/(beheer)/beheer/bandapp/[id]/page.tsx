@@ -49,6 +49,8 @@ export default async function ShowPage({
             publicStatus: gig.publicStatus,
             ticketUrl: gig.ticketUrl,
             publicNote: gig.publicNote,
+            lat: gig.lat === null ? "" : String(gig.lat),
+            lng: gig.lng === null ? "" : String(gig.lng),
           }}
         />
       </div>

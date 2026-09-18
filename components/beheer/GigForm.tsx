@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   type BandAppState,
@@ -8,6 +8,11 @@ import {
   deleteGig,
   updateGig,
 } from "@/app/(beheer)/beheer/bandapp/actions";
+import {
+  isShortLink,
+  parseCoordinates,
+  roundCoordinate,
+} from "@/lib/portal/coordinates";
 
 export type GigValues = {
   id?: number;
@@ -19,6 +24,8 @@ export type GigValues = {
   publicStatus: string;
   ticketUrl: string;
   publicNote: string;
+  lat: string;
+  lng: string;
 };
 
 /**
@@ -41,6 +48,36 @@ export function GigForm({ gig }: { gig?: GigValues }) {
     editing ? updateGig : createGig,
     null,
   );
+
+  // De coördinaten zijn wél gestuurd in plaats van vrij: een geplakte kaartlink
+  // moet ze kunnen invullen.
+  const [lat, setLat] = useState(gig?.lat ?? "");
+  const [lng, setLng] = useState(gig?.lng ?? "");
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  function applyLink(value: string) {
+    if (!value.trim()) {
+      setLinkError(null);
+      return;
+    }
+
+    if (isShortLink(value)) {
+      setLinkError(
+        "Een verkorte link bevat de coördinaten niet. Open hem en kopieer het adres uit de adresbalk.",
+      );
+      return;
+    }
+
+    const found = parseCoordinates(value);
+    if (!found) {
+      setLinkError("Hier staan geen coördinaten in.");
+      return;
+    }
+
+    setLat(String(roundCoordinate(found.lat)));
+    setLng(String(roundCoordinate(found.lng)));
+    setLinkError(null);
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -102,6 +139,66 @@ export function GigForm({ gig }: { gig?: GigValues }) {
           value={gig?.publicNote}
           placeholder="Met support, deuren 20:00"
         />
+
+        <fieldset className="flex flex-col gap-3 border border-line-default p-4">
+          <legend className="flex flex-col">
+            <span className="font-mono text-11 text-faint uppercase">
+              Op de kaart
+            </span>
+          </legend>
+
+          <p className="text-muted">
+            Zoek de zaal op in Google Maps of OpenStreetMap en plak het adres uit
+            de adresbalk. Leeg laten mag: dan staat deze show niet op de kaart.
+          </p>
+
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-11 text-faint uppercase">
+              Kaartlink plakken
+            </span>
+            <input
+              type="text"
+              // Geen `name`: dit veld is een hulpmiddel en wordt niet opgeslagen.
+              placeholder="https://www.google.com/maps/place/…"
+              onChange={(event) => applyLink(event.target.value)}
+              className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            />
+          </label>
+
+          {linkError && <p className="text-danger">{linkError}</p>}
+
+          <div className="flex flex-wrap gap-4">
+            <label className="flex flex-col gap-1">
+              <span className="font-mono text-11 text-faint uppercase">
+                Breedtegraad
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                name="lat"
+                value={lat}
+                onChange={(event) => setLat(event.target.value)}
+                placeholder="51.9692"
+                className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="font-mono text-11 text-faint uppercase">
+                Lengtegraad
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                name="lng"
+                value={lng}
+                onChange={(event) => setLng(event.target.value)}
+                placeholder="5.6654"
+                className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+              />
+            </label>
+          </div>
+        </fieldset>
 
         <div className="flex flex-wrap items-center gap-4">
           <button
