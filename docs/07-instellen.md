@@ -47,24 +47,67 @@ aanvragen per jaar.
 Waarvoor: het boekingsformulier afschermen tegen bots. Zonder deze sleutels blijft
 alleen de honeypot over, plus vijf aanvragen per uur per afzender.
 
-1. Ga naar [dash.cloudflare.com](https://dash.cloudflare.com/?to=/:account/turnstile).
-   Een gratis account volstaat; een creditcard is niet nodig.
-2. **Add site**, met:
-   - Domein: `staticline.nl` — en zolang dat er nog niet is ook
-     `staticline-harmgiezen149-makers-projects.vercel.app`
-   - Widget mode: **Managed**
-3. Je krijgt twee sleutels:
+> **Voeg `staticline.nl` niet als site toe bij Cloudflare.** Dat proces vraagt je
+> de nameservers bij mijn.host om te zetten, en daarmee verhuist je hele DNS: de
+> MX naar mijn.host, het SPF-record, de DKIM van je mailprovider, de
+> Resend-records en de Vercel-records moeten dan allemaal opnieuw, met een venster
+> waarin de mail stilligt.
+>
+> Turnstile werkt zonder dat je domein bij Cloudflare staat. Het is een losse
+> dienst op accountniveau, náást "Websites" en niet erin.
+
+1. Maak een gratis account op [dash.cloudflare.com](https://dash.cloudflare.com).
+   Een creditcard is niet nodig. Word je gevraagd een site toe te voegen of je
+   nameservers te wijzigen: overslaan.
+2. Ga naar **Turnstile**, of rechtstreeks via
+   [deze link](https://dash.cloudflare.com/?to=/:account/turnstile), die het
+   onboardingproces omzeilt.
+3. **Add widget**, met:
+
+   | Veld | Waarde |
+   | --- | --- |
+   | Widget name | `staticline.nl — boekingsformulier` |
+   | Hostnames | `staticline.nl` |
+   | Widget Mode | **Managed** |
+
+   Subdomeinen vallen er automatisch onder, dus `www.staticline.nl` werkt mee.
+   Klaagt Turnstile toch over de hostnaam, voeg die dan alsnog los toe.
+   **Pre-clearance** laat je uit: dat is voor sites die achter Cloudflare draaien,
+   en deze draait op Vercel.
+
+4. Je krijgt twee sleutels:
 
    | Cloudflare noemt het | Zet in Vercel als |
    | --- | --- |
    | Site Key | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` |
    | Secret Key | `TURNSTILE_SECRET_KEY` |
 
+**Zet deze twee alleen voor Production**, anders dan de overige variabelen. Een
+previewdeploy krijgt van Vercel elke keer een willekeurige hostnaam, die je niet
+vooraf bij Turnstile kunt aanmelden — de captcha zou daar dus altijd falen.
+Ontbreken de sleutels op Preview, dan slaat `lib/turnstile.ts` de controle over
+met een waarschuwing in het log en blijven de honeypot en de snelheidsbegrenzer
+staan.
+
 De site key mag publiek — die staat in de HTML, vandaar het voorvoegsel
 `NEXT_PUBLIC_`. De secret key is geheim en hoort alleen in Vercel.
 
 Turnstile zet geen cookies waarvoor een toestemmingsbanner nodig is. Dat was de
 reden om het boven reCAPTCHA te kiezen.
+
+### Testen zonder op echte bezoekers te wachten
+
+Cloudflare publiceert sleutels die altijd hetzelfde doen:
+
+| Doel | Site Key | Secret Key |
+| --- | --- | --- |
+| Altijd goedkeuren | `1x00000000000000000000AA` | `1x0000000000000000000000000000000AA` |
+| Altijd weigeren | `2x00000000000000000000AB` | `2x0000000000000000000000000000000AA` |
+
+Met de tweede rij hoort het formulier "de controle is niet gelukt" te tonen, en
+hoor je het daarna nog een keer te kunnen proberen zonder de pagina te herladen —
+zie de reset in `components/BookingForm.tsx` voor waarom dat laatste een test
+waard is.
 
 ---
 

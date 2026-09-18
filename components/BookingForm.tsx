@@ -35,6 +35,17 @@ type Props = {
 
 type State = "idle" | "sending" | "ok" | "error";
 
+/**
+ * Het script van Cloudflare hangt zichzelf aan `window`. Alleen `reset` wordt
+ * hier gebruikt, dus alleen die staat hier — een volledige typedefinitie voor
+ * een script van derden loopt vanzelf achter op de werkelijkheid.
+ */
+declare global {
+  interface Window {
+    turnstile?: { reset: (widget?: string) => void };
+  }
+}
+
 export function BookingForm({ copy, locale, siteKey }: Props) {
   const [kind, setKind] = useState<BookingKind>("booking");
   const [state, setState] = useState<State>("idle");
@@ -47,6 +58,21 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
   useEffect(() => {
     if (state === "ok") okRef.current?.focus();
   }, [state]);
+
+  /**
+   * Een mislukte poging afsluiten.
+   *
+   * De reset is het punt. Een Turnstile-token is eenmalig: laat je hem na een
+   * fout staan, dan stuurt de volgende poging een al verbruikt token mee en
+   * wijst Cloudflare die af. De bezoeker ziet dan "de controle is niet gelukt"
+   * en komt er niet meer uit, ook niet als hij de echte fout corrigeert — alleen
+   * herladen helpt nog. Precies op het formulier waar de site om draait.
+   */
+  function fail(message: string) {
+    setState("error");
+    setError(message);
+    window.turnstile?.reset();
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,8 +96,7 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
       const payload = (await res.json().catch(() => ({}))) as {
         error?: string;
       };
-      setState("error");
-      setError(
+      fail(
         payload.error === "no-name"
           ? copy.errorName
           : payload.error === "no-email"
@@ -81,8 +106,7 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
               : copy.errorGeneric,
       );
     } catch {
-      setState("error");
-      setError(copy.errorGeneric);
+      fail(copy.errorGeneric);
     }
   }
 
@@ -106,9 +130,12 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
   return (
     <>
       {siteKey && (
+        // afterInteractive en niet lazyOnload: lazyOnload wacht op het
+        // load-event, en wie het korte vragenformulier van vier velden snel
+        // invult kan dan verzenden voordat er een token is.
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
         />
       )}
 
