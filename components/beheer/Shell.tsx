@@ -16,9 +16,11 @@ type Props = {
   children: React.ReactNode;
 };
 
+// Boekingen komt hier zodra dat scherm er is. Een link naar een pagina die nog
+// niet bestaat is een 404 die je zelf hebt aangelegd.
 const LINKS = [
   { href: "/beheer", label: "Overzicht" },
-  { href: "/beheer/boekingen", label: "Boekingen" },
+  { href: "/beheer/database", label: "Database" },
 ] as const;
 
 export function Shell({ session, title, children }: Props) {

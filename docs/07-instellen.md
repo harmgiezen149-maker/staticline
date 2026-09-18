@@ -309,13 +309,35 @@ worden ingebakken bij de build.
 ### 5.4 De tabellen
 
 Het besloten deel gebruikt twee nieuwe tabellen en vier extra kolommen op
-`booking_submissions`. Die staan in `db/schema.sql`, dat idempotent is:
+`booking_submissions`. Die staan in `db/schema.sql`, dat idempotent is: elke
+opdracht maakt alleen aan wat er nog niet is, en er staat geen enkele opdracht in
+die iets verwijdert. Zo vaak draaien als je wilt dus.
+
+Er zijn drie manieren, en na de eerste keer is de eerste de makkelijkste:
+
+**In het beheerscherm.** Log in en ga naar **Database**. Dat scherm laat zien
+welke tabellen er staan en welke ontbreken, en werkt ze met één knop bij. Alleen
+voor een beheerder. Dit is de manier voor elke volgende wijziging.
+
+**Met de opdrachtregel**, als je de repo lokaal hebt staan en `DATABASE_URL` in
+`.env.local`:
 
 ```
 npm run db:setup
 ```
 
-Dat mag zo vaak als je wilt; bestaande gegevens blijven staan.
+**In de SQL-editor van Neon**, als je geen van beide hebt. Ga in Vercel naar
+Storage, open je Neon-database, kies daar **SQL Editor** en plak de inhoud van
+`db/schema.sql`. Dit is de manier voor de állereerste keer: het beheerscherm
+heeft de tabel `portal_login_tokens` nodig om je te laten inloggen, en die
+bestaat op dat moment nog niet.
+
+Controleren of het gelukt is:
+
+```sql
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public' ORDER BY table_name;
+```
 
 ### 5.5 Inloggen
 
