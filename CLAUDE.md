@@ -180,6 +180,13 @@ sleutel ontbreekt.
 | `BAND_APP_RIDER_URL` | de deelbare riderlink uit de Band App, voor de boekingspagina |
 | `RESEND_API_KEY` | bevestigingsmail aan de afzender en de dubbele opt-in van de nieuwsbrief |
 | `SITE_URL` | het volledige adres voor links in die mails; standaard `https://www.staticline.nl` |
+| `PORTAL_SECRET` | ondertekent het sessiekoekje van `/beheer`; minimaal 32 tekens |
+| `PORTAL_ADMINS` + `PORTAL_MEMBERS` | kommalijsten met wie er in het besloten deel mag |
+
+De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
+gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel
+hoort dicht te blijven, niet open te vallen — zonder `PORTAL_SECRET` of zonder
+adressen komt er niemand in `/beheer`.
 
 Waar je die waarden vandaan haalt en wat elke keuze betekent, staat stap voor stap
 in **`docs/07-instellen.md`**.

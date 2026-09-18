@@ -248,6 +248,97 @@ reputatie, niet aan instellingen — dat trekt vanzelf bij zodra er wat volume i
 
 ---
 
+## 5. Besloten deel — `PORTAL_SECRET`, `PORTAL_ADMINS`, `PORTAL_MEMBERS`
+
+Het beheerscherm op `/beheer`. Zonder deze drie waarden komt daar niemand
+binnen, en dat is met opzet: de captcha en de mail mogen overgeslagen worden
+zodra hun sleutel ontbreekt, want een boeking hoort nooit te stranden. Een
+inlogcontrole werkt andersom. Ontbreekt de sleutel, dan gaat de deur op slot en
+niet open.
+
+### 5.1 De ondertekensleutel
+
+`PORTAL_SECRET` ondertekent het sessiekoekje. Wie deze waarde heeft, kan zelf een
+geldig koekje maken en is binnen — behandel hem als een wachtwoord.
+
+Minimaal 32 tekens. Maak er een die niemand hoeft te onthouden:
+
+```
+openssl rand -base64 48
+```
+
+Geen `openssl` bij de hand? In een terminal met Node:
+
+```
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+Verander je deze waarde, dan is iedereen meteen uitgelogd. Dat is ook het middel
+als er ooit iemand per direct uit moet: er is geen sessietabel om een rij uit te
+verwijderen.
+
+### 5.2 Wie er in mag
+
+Twee kommalijsten met e-mailadressen. Geen gebruikerstabel — vier adressen
+beheer je sneller hier dan in een scherm dat daarvoor gebouwd moet worden, en er
+zijn geen wachtwoorden die kunnen lekken.
+
+| Variabele | Wie | Wat ze mogen |
+| --- | --- | --- |
+| `PORTAL_ADMINS` | Harm | Alles |
+| `PORTAL_MEMBERS` | De andere drie leden | Meekijken, later eigen taken afvinken |
+
+```
+PORTAL_ADMINS=harm@voorbeeld.nl
+PORTAL_MEMBERS=vedran@voorbeeld.nl, niels@voorbeeld.nl, quinten@voorbeeld.nl
+```
+
+Hoofdletters en extra spaties maken niet uit. Staat een adres per ongeluk in
+beide lijsten, dan wint beheerder.
+
+Iemand rechten afnemen is het adres uit de lijst halen. Dat werkt meteen, ook
+bij iemand die al ingelogd is: de rol wordt bij elke paginaweergave opnieuw in
+deze lijsten opgezocht en niet uit het koekje gelezen.
+
+### 5.3 In Vercel
+
+Bij het project onder **Settings → Environment Variables**, alle drie voor
+Production, Preview en Development. Daarna opnieuw deployen — omgevingsvariabelen
+worden ingebakken bij de build.
+
+### 5.4 De tabellen
+
+Het besloten deel gebruikt twee nieuwe tabellen en vier extra kolommen op
+`booking_submissions`. Die staan in `db/schema.sql`, dat idempotent is:
+
+```
+npm run db:setup
+```
+
+Dat mag zo vaak als je wilt; bestaande gegevens blijven staan.
+
+### 5.5 Inloggen
+
+Ga naar `staticline.nl/beheer`, vul je adres in, klik de link in de mail. De link
+is een kwartier geldig en werkt één keer.
+
+Dat "één keer" merk je als je de mail twee keer opent: sommige mailprogramma's
+openen links vooraf om ze te controleren, en dan is de link op tegen de tijd dat
+jij klikt. Vraag in dat geval gewoon een nieuwe aan.
+
+Komt er geen mail, loop dan na:
+
+1. Staat `RESEND_API_KEY` er? Zonder mail geen inloglink. Zie hoofdstuk 4.
+2. Staat je adres precies zo in `PORTAL_ADMINS` of `PORTAL_MEMBERS`?
+3. Is er een `DATABASE_URL`? De sleutel wordt in de database bewaard.
+
+Het scherm zegt bij een onbekend adres hetzelfde als bij een bekend adres: "als
+dit adres toegang heeft". Dat is met opzet — anders kan iemand met dat formulier
+uitvragen wie er in de band zit. De keerzijde is dat een typefout in je eigen
+adres er ook uitziet als succes.
+
+---
+
 ## Niet nodig
 
 `BAND_APP_URL` heeft een standaardwaarde in de code

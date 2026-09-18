@@ -65,3 +65,69 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   confirmed_at timestamptz,
   created_at   timestamptz NOT NULL DEFAULT now()
 );
+
+-- ---------------------------------------------------------------------------
+-- Het besloten deel (/beheer)
+-- ---------------------------------------------------------------------------
+
+-- Eenmalige inloglinks.
+--
+-- Geen wachtwoorden: vier bandleden die een paar keer per maand inloggen hebben
+-- meer last van een vergeten wachtwoord dan van een mailtje. Wie mag inloggen
+-- staat in PORTAL_ADMINS en PORTAL_MEMBERS, niet in een tabel — vier adressen
+-- beheer je sneller in Vercel dan in een scherm dat daarvoor gebouwd moet worden.
+--
+-- Bewaard wordt de SHA-256 van de sleutel, niet de sleutel zelf. Lekt deze tabel,
+-- dan kan niemand er alsnog mee inloggen.
+CREATE TABLE IF NOT EXISTS portal_login_tokens (
+  id         bigserial PRIMARY KEY,
+  email      text        NOT NULL,
+  token_hash text        NOT NULL UNIQUE,
+  expires_at timestamptz NOT NULL,
+  -- Ingevuld zodra de link gebruikt is. Een tweede klik werkt dan niet meer:
+  -- mailprogramma's die links vooraf openen zouden je anders uitloggen zodra je
+  -- de mail opent.
+  used_at    timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS portal_login_tokens_expires_idx
+  ON portal_login_tokens (expires_at);
+
+-- Wie wat wanneer gewijzigd heeft.
+--
+-- docs/04-band-app-integration.md noemt dit expliciet niet-optioneel, en dat is
+-- terecht. Twee van de drie leden stemden ervoor dat alleen de Band App mag
+-- schrijven; dat is overruled door de beheerder. Die afweging is alleen te
+-- verdedigen als zichtbaar is wie iets veranderd heeft.
+CREATE TABLE IF NOT EXISTS portal_audit_log (
+  id         bigserial PRIMARY KEY,
+  -- Het e-mailadres van wie de wijziging deed.
+  actor      text        NOT NULL,
+  -- Wat er gebeurde, als vaste sleutel: "booking.status", "media.add", …
+  action     text        NOT NULL,
+  -- Waar het over ging, meestal een id.
+  subject    text        NOT NULL DEFAULT '',
+  -- Vrije toelichting, bedoeld om gelezen te worden.
+  detail     text        NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS portal_audit_log_created_idx
+  ON portal_audit_log (created_at DESC);
+
+-- Het beheerscherm heeft meer nodig dan `handled`: een aanvraag die je gezien
+-- hebt is iets anders dan een aanvraag die geboekt is. `handled` blijft staan —
+-- er kan al data in zitten, en dit bestand is net zo additief als het schema van
+-- de Band App.
+ALTER TABLE booking_submissions
+  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'new';
+ALTER TABLE booking_submissions
+  ADD COLUMN IF NOT EXISTS note text NOT NULL DEFAULT '';
+ALTER TABLE booking_submissions
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+ALTER TABLE booking_submissions
+  ADD COLUMN IF NOT EXISTS updated_by text NOT NULL DEFAULT '';
+
+CREATE INDEX IF NOT EXISTS booking_submissions_status_idx
+  ON booking_submissions (status);
