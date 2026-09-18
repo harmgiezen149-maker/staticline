@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { getCopy } from "@/content";
-import { socials } from "@/content/media";
+import { getSocials, getText } from "@/lib/site-content";
 import type { Locale } from "@/lib/i18n";
 
 import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
@@ -18,7 +18,9 @@ import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
  * e-mailadres, dus er komt geen nieuwe vorm bij. Zolang er geen adressen in
  * content/media.ts staan, blijft de rij weg.
  */
-export function SiteFooter({ locale }: { locale: Locale }) {
+export async function SiteFooter({ locale }: { locale: Locale }) {
+  const socials = await getSocials();
+  const note = await getText("footer.note", locale, getCopy(locale).footer.note);
   const copy = getCopy(locale);
 
   // Instagram vooraan — dat was een expliciete wens.
@@ -41,7 +43,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       />
 
       <p className="font-mono text-12 leading-[18px] tracking-wide8 text-muted">
-        {copy.footer.note}
+        {note}
       </p>
 
       {links.length > 0 && (

@@ -1,7 +1,7 @@
 import { Embed } from "@/components/Embed";
 import { Empty, Page, Section } from "@/components/Page";
 import { getCopy } from "@/content";
-import { spotify } from "@/content/media";
+import { getSpotify } from "@/lib/site-content";
 import { fetchBandAppPublic } from "@/lib/band-app";
 import type { Locale } from "@/lib/i18n";
 
@@ -13,6 +13,7 @@ import type { Locale } from "@/lib/i18n";
  * bekeken nummers belanden hier nooit.
  */
 export async function MusicPage({ locale }: { locale: Locale }) {
+  const spotify = await getSpotify();
   const copy = getCopy(locale);
   const data = await fetchBandAppPublic();
 

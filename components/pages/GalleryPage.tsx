@@ -1,7 +1,7 @@
 import { Page } from "@/components/Page";
 import { PhotoGrid } from "@/components/PhotoGrid";
 import { getCopy } from "@/content";
-import { photos } from "@/content/media";
+import { getPhotos } from "@/lib/site-content";
 import type { Locale } from "@/lib/i18n";
 
 /**
@@ -11,7 +11,8 @@ import type { Locale } from "@/lib/i18n";
  * homepage. Zolang er geen fotografie is, staan hier de benoemde placeholders uit
  * de design-handoff.
  */
-export function GalleryPage({ locale }: { locale: Locale }) {
+export async function GalleryPage({ locale }: { locale: Locale }) {
+  const photos = await getPhotos();
   const copy = getCopy(locale);
 
   return (

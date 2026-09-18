@@ -1,11 +1,12 @@
 -- Wat de website zelf bezit.
 --
--- Bewust maar twee tabellen, en bewust niet in de database van de Band App: die
--- draait bij elke deploy `prisma db push` tegen zijn eigen schema, en tabellen
--- die daar niet in staan laten die build omvallen. Zie CLAUDE.md.
+-- Zes tabellen: wat er binnenkomt van bezoekers, wie er in het besloten deel
+-- mag, en de inhoud die daar aan te passen is. Bewust niet in de database van de
+-- Band App: die draait bij elke deploy `prisma db push` tegen zijn eigen schema,
+-- en tabellen die daar niet in staan laten die build omvallen. Zie CLAUDE.md.
 --
--- Geen migratieframework. Twee tabellen die zelden veranderen hebben geen
--- gereedschap nodig dat zelf onderhoud vraagt; dit bestand is idempotent en mag
+-- Geen migratieframework. Een handvol tabellen die zelden veranderen heeft geen
+-- gereedschap nodig dat zelf onderhoud vraagt. Dit bestand is idempotent en mag
 -- zo vaak gedraaid worden als je wilt:
 --
 --   npm run db:setup
@@ -131,3 +132,51 @@ ALTER TABLE booking_submissions
 
 CREATE INDEX IF NOT EXISTS booking_submissions_status_idx
   ON booking_submissions (status);
+
+-- ---------------------------------------------------------------------------
+-- Inhoud die via /beheer aan te passen is
+-- ---------------------------------------------------------------------------
+
+-- Losse waarden, met of zonder taal.
+--
+-- Eén tabel voor twee dingen die er hetzelfde uitzien: instellingen die voor de
+-- hele site gelden (`locale` leeg) en teksten die per taal verschillen
+-- (`locale` is 'nl' of 'en'). Een aparte tabel per soort zou twee keer dezelfde
+-- vier kolommen opleveren.
+--
+-- Een sleutel die hier niet staat, of een lege waarde, betekent: gebruik wat er
+-- in de code staat. Daarom is er nooit een rij nodig om de site te laten werken,
+-- en kan een leeggemaakt veld de pagina niet slopen — het valt gewoon terug.
+CREATE TABLE IF NOT EXISTS site_content (
+  -- Bijvoorbeeld 'hero.sub', 'spotify.id', 'social.instagram'.
+  key        text        NOT NULL,
+  -- 'nl', 'en', of leeg als het niet van taal afhangt.
+  locale     text        NOT NULL DEFAULT '',
+  value      text        NOT NULL DEFAULT '',
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  updated_by text        NOT NULL DEFAULT '',
+  PRIMARY KEY (key, locale)
+);
+
+-- Foto's en video's, als geordende lijst.
+--
+-- Wel een eigen tabel: dit zijn er meerdere van dezelfde soort met een volgorde,
+-- en dat past niet in een sleutel-waardetabel zonder er nummers in te gaan
+-- verzinnen.
+CREATE TABLE IF NOT EXISTS site_media (
+  id         bigserial PRIMARY KEY,
+  -- 'photo' of 'video'
+  kind       text        NOT NULL,
+  -- Bij een foto het volledige adres van het bestand, bij een video het
+  -- YouTube-id uit de link.
+  url        text        NOT NULL,
+  -- De omschrijving voor wie de foto niet kan zien. Bij een video de titel.
+  alt        text        NOT NULL DEFAULT '',
+  caption    text        NOT NULL DEFAULT '',
+  sort_order int         NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_by text        NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS site_media_kind_idx
+  ON site_media (kind, sort_order, id);

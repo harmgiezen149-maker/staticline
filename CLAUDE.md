@@ -195,9 +195,15 @@ De eigen database is twee tabellen in `db/schema.sql`, aangemaakt met
 `npm run db:setup`. Geen migratieframework: twee tabellen die zelden veranderen
 hebben geen gereedschap nodig dat zelf onderhoud vraagt.
 
-Inhoud die nog ontbreekt staat op één plek: `content/media.ts`. Foto's, Spotify,
-video's en sociale links zijn daar één regel toevoegen; de pagina's zijn af en
-tonen tot die tijd een eerlijke lege staat.
+Inhoud die nog ontbreekt heeft twee plekken, in deze volgorde: de database via
+`/beheer/inhoud`, en anders `content/media.ts` en `content/nl.ts` in de code.
+`lib/site-content.ts` legt die laag eroverheen — staat er iets in de database, dan
+wint dat; staat er niets, dan blijft wat er in de code staat. Daardoor kan het
+beheerscherm nooit een pagina leeg of stuk maken, en werkt alles ook zonder die
+tabellen.
+
+Foto's uploaden kan nog niet: daar is een Vercel Blob-opslag voor nodig die nog
+niet aangezet is. Spotify, video's, sociale links en een paar lopende teksten wel.
 
 ## Voor wie dit is
 

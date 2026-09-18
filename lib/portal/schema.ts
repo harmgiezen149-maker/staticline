@@ -24,6 +24,8 @@ export const EXPECTED_TABLES = [
   "newsletter_subscribers",
   "portal_audit_log",
   "portal_login_tokens",
+  "site_content",
+  "site_media",
 ] as const;
 
 /**

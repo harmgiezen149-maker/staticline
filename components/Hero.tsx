@@ -4,6 +4,7 @@ import { Button } from "./Button";
 import { getCopy } from "@/content";
 import { formatShowDateLong, localePath, type Locale } from "@/lib/i18n";
 import type { Show } from "@/lib/shows";
+import { getText } from "@/lib/site-content";
 
 import background from "@/public/assets/background.jpg";
 import wordmark from "@/public/assets/staticline-wordmark.png";
@@ -15,8 +16,15 @@ type Props = {
   hasPlayed: boolean;
 };
 
-export function Hero({ locale, next, hasPlayed }: Props) {
+export async function Hero({ locale, next, hasPlayed }: Props) {
   const copy = getCopy(locale);
+
+  // De twee ondertitels zijn via /beheer aan te passen. Staat er niets, dan komt
+  // de tekst uit content/ — zie lib/site-content.ts.
+  const [sub, subShort] = await Promise.all([
+    getText("hero.sub", locale, copy.hero.sub),
+    getText("hero.subShort", locale, copy.hero.subShort),
+  ]);
 
   // Het ontwerp zet hier vast "Eerste show — 10 november 2026". Dat klopt zolang
   // de band nog niets gespeeld heeft, en daarna niet meer. De tekst volgt daarom
@@ -67,10 +75,10 @@ export function Hero({ locale, next, hasPlayed }: Props) {
             kortere subkop voor. Beide staan in de HTML en CSS kiest — dat is een
             paar honderd bytes, en het alternatief is een layout shift of JS. */}
         <p className="max-w-[560px] text-14 leading-[22px] sm:hidden">
-          {copy.hero.subShort}
+          {subShort}
         </p>
         <p className="hidden max-w-[560px] text-18 leading-[28px] sm:block">
-          {copy.hero.sub}
+          {sub}
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
