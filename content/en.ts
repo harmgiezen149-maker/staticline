@@ -4,7 +4,7 @@ import type { Copy } from "./types";
 export const en: Copy = {
   meta: {
     title: "Static Line",
-    description: "Raw, wired rock from Nijmegen. Shows, photos and bookings.",
+    description: "Raw, wired rock from Ede. Shows, photos and bookings.",
   },
   nav: {
     shows: "Shows",
@@ -20,8 +20,8 @@ export const en: Copy = {
     kickerFirst: "First show",
     kickerNext: "Next show",
     kickerNone: "No shows scheduled yet",
-    sub: "Raw, wired rock from Nijmegen. No detours. Loose strings, blown amps, a set that never sits still.",
-    subShort: "Raw rock from Nijmegen. No detours.",
+    sub: "Raw, wired rock from Ede. No detours. Loose strings, blown amps, a set that never sits still.",
+    subShort: "Raw rock from Ede. No detours.",
     wordmarkAlt: "Static Line",
     ctaBook: "Book us",
     ctaShows: "All shows",
@@ -54,7 +54,7 @@ export const en: Copy = {
     ],
   },
   footer: {
-    note: "Static Line · Nijmegen · Booking and tech rider on request",
+    note: "Static Line · Ede · Booking and tech rider on request",
     mail: "boeking@staticline.nl",
     social: "Follow us",
   },
@@ -129,7 +129,7 @@ export const en: Copy = {
       "Click this link to confirm your newsletter sign-up:",
     newsletterIgnore:
       "Did not sign up? Then do nothing. Without this click we will not send you anything.",
-    signature: "Static Line · Nijmegen · staticline.nl",
+    signature: "Static Line · Ede · staticline.nl",
   },
 
   newsletter: {

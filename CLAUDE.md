@@ -2,7 +2,7 @@
 
 # Static Line — website
 
-Publieke bandsite plus een besloten deel voor de band, voor het Nijmeegse
+Publieke bandsite plus een besloten deel voor de band, voor het Edese
 Static Line. Live op **staticline.nl** vóór de eerste show op **10 november 2026**.
 
 Lees `docs/` voor je code schrijft. Het ontwerp van de homepage is af en bevroren;

@@ -20,7 +20,7 @@ export const nl: Copy = {
   meta: {
     title: "Static Line",
     description:
-      "Rauwe, opgefokte rock uit Nijmegen. Shows, foto's en boekingen.",
+      "Rauwe, opgefokte rock uit Ede. Shows, foto's en boekingen.",
   },
   nav: {
     shows: "Shows",
@@ -36,8 +36,8 @@ export const nl: Copy = {
     kickerFirst: "Eerste show",
     kickerNext: "Volgende show",
     kickerNone: "Nog geen shows gepland",
-    sub: "Rauwe, opgefokte rock uit Nijmegen. Geen omweg. Losse snaren, kapotte versterkers en een set die niet stilstaat.",
-    subShort: "Rauwe rock uit Nijmegen. Geen omweg.",
+    sub: "Rauwe, opgefokte rock uit Ede. Geen omweg. Losse snaren, kapotte versterkers en een set die niet stilstaat.",
+    subShort: "Rauwe rock uit Ede. Geen omweg.",
     wordmarkAlt: "Static Line",
     ctaBook: "Boek ons",
     ctaShows: "Alle shows",
@@ -70,7 +70,7 @@ export const nl: Copy = {
     ],
   },
   footer: {
-    note: "Static Line · Nijmegen · Boekingen en technische rider op aanvraag",
+    note: "Static Line · Ede · Boekingen en technische rider op aanvraag",
     mail: "boeking@staticline.nl",
     social: "Volg ons",
   },
@@ -148,7 +148,7 @@ export const nl: Copy = {
       "Klik op deze link om je aanmelding voor de nieuwsbrief te bevestigen:",
     newsletterIgnore:
       "Heb je je niet aangemeld? Dan hoef je niets te doen. Zonder deze klik sturen we je niets.",
-    signature: "Static Line · Nijmegen · staticline.nl",
+    signature: "Static Line · Ede · staticline.nl",
   },
 
   newsletter: {
