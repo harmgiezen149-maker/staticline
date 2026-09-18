@@ -89,6 +89,18 @@ middleware meer. De prijs is één dun bestand per pagina per taal.
 
 **Voeg hier geen `[lang]`-segment of taal-rewrite opnieuw aan toe.**
 
+## vercel.json — laat `framework` staan
+
+Het Vercel-project is aangemaakt toen de repo nog leeg was, dus daar is Next.js
+nooit gedetecteerd en stond het framework op niets. Gevolg: `vercel build` liep
+wel door, maar de deploy serveerde alleen de bestanden uit `public/`. Statische
+bestanden werkten, elke pagina gaf een 404 — ook `/en`, dat wél een echte route
+is. Dat kostte een ronde zoeken, omdat het inlogscherm van Vercel er een 302
+overheen legde en de 404 daardoor niet te zien was.
+
+`"framework": "nextjs"` in `vercel.json` zet dat in de repo vast, zodat het niet
+afhangt van een instelling die iemand ooit in de Vercel-interface heeft staan.
+
 ## Breekpunten
 
 Het ontwerp werkt met twee grenzen, als max-width geschreven: 1024 en 640. In
