@@ -175,10 +175,17 @@ sleutel ontbreekt.
 
 | Variabele | Waarvoor |
 | --- | --- |
+| `DATABASE_URL` | eigen Neon-database voor boekingen en nieuwsbriefabonnees; zonder deze worden aanvragen alleen doorgestuurd |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` | captcha op het boekingsformulier; zonder deze blijft alleen de honeypot over |
 | `BAND_APP_RIDER_URL` | de deelbare riderlink uit de Band App, voor de boekingspagina |
-| `DATABASE_URL` | eigen database voor boekingen en nieuwsbriefabonnees; nu worden aanvragen alleen doorgestuurd |
 | mailkoppeling | bevestigingsmail aan de afzender |
+
+Waar je die waarden vandaan haalt en wat elke keuze betekent, staat stap voor stap
+in **`docs/07-instellen.md`**.
+
+De eigen database is twee tabellen in `db/schema.sql`, aangemaakt met
+`npm run db:setup`. Geen migratieframework: twee tabellen die zelden veranderen
+hebben geen gereedschap nodig dat zelf onderhoud vraagt.
 
 Inhoud die nog ontbreekt staat op één plek: `content/media.ts`. Foto's, Spotify,
 video's en sociale links zijn daar één regel toevoegen; de pagina's zijn af en

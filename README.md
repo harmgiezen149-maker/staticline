@@ -27,10 +27,22 @@ node scripts/band-app-fixture.mjs
 Dat is geen productiecode maar een vast antwoord op `/api/public`, zodat de site
 lokaal te bekijken is zonder de Band App te draaien.
 
+## Database
+
+De site draait zonder, maar bewaart dan geen boekingen. Koppel in Vercel onder
+Storage een Neon-database aan dit project en draai daarna eenmalig:
+
+```bash
+npm run db:setup
+```
+
+Zie `docs/07-instellen.md` voor dit en de overige instellingen.
+
 ## Controleren voor je pusht
 
 ```bash
 npm run lint
+npm test
 npm run build
 ```
 
