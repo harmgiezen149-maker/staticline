@@ -25,10 +25,6 @@ const copy = getCopy("nl");
 export const metadata: Metadata = {
   title: { default: copy.meta.title, template: `%s — ${copy.meta.title}` },
   description: copy.meta.description,
-  alternates: {
-    canonical: "/",
-    languages: { nl: "/", en: "/en" },
-  },
 };
 
 export default function NlLayout({ children }: LayoutProps<"/">) {
