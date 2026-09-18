@@ -4,6 +4,7 @@ import { Empty, Page, Section } from "@/components/Page";
 import { getCopy } from "@/content";
 import { fetchBandAppPublic } from "@/lib/band-app";
 import type { Locale } from "@/lib/i18n";
+import { localiseBand } from "@/lib/site-content";
 
 /**
  * Over de band, plus de bandleden.
@@ -15,9 +16,9 @@ import type { Locale } from "@/lib/i18n";
 export async function BandPage({ locale }: { locale: Locale }) {
   const copy = getCopy(locale);
   const data = await fetchBandAppPublic();
-
-  const bio = data?.band.bio?.trim() ?? "";
-  const members = data?.members ?? [];
+  // Op /en de vertalingen uit /beheer/vertalingen, met het Nederlands als
+  // terugval zodra het origineel gewijzigd is.
+  const { bio, members } = await localiseBand(data, locale);
 
   return (
     <Page locale={locale} path="/band" title={copy.band.title}>

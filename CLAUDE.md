@@ -195,6 +195,7 @@ sleutel ontbreekt.
 | `PORTAL_ADMINS` + `PORTAL_MEMBERS` | kommalijsten met wie er in het besloten deel mag |
 | `BLOB_READ_WRITE_TOKEN` | de Vercel Blob-opslag voor de foto's; Vercel zet deze zelf zodra je een Blob-store koppelt |
 | `SITE_API_TOKEN` | schrijven naar de Band App vanuit `/beheer/bandapp`; dezelfde waarde moet bij béíde Vercel-projecten staan |
+| `ANTHROPIC_API_KEY` | de teksten uit de Band App naar het Engels vertalen in `/beheer/vertalingen`; zonder deze kan het nog met de hand |
 
 De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
 gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel
@@ -214,6 +215,14 @@ Inhoud die nog ontbreekt heeft twee plekken, in deze volgorde: de database via
 wint dat; staat er niets, dan blijft wat er in de code staat. Daardoor kan het
 beheerscherm nooit een pagina leeg of stuk maken, en werkt alles ook zonder die
 tabellen.
+
+De Band App kent één taal. De bandbio en de tekst per lid staan daar in het
+Nederlands; de Engelse versie ervan staat in de database van déze site, gemaakt in
+`/beheer/vertalingen`. Bewust niet als extra kolom daar: de band leest in de app
+geen Engels, en dit is pagina-inhoud. Bij elke vertaling staat een hash van de
+Nederlandse brontekst. Wijzigt het origineel, dan geldt de vertaling als verouderd
+en toont de site het Nederlands — liever een Nederlandse zin op een Engelse pagina
+dan een Engelse zin die iets anders beweert.
 
 Foto's gaan naar Vercel Blob. De browser uploadt daar rechtstreeks heen en deze
 site geeft er alleen een kortlopende sleutel voor af — een serverloze functie op

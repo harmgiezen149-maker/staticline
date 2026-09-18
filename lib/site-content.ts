@@ -11,9 +11,11 @@ import {
 import heroBackground from "@/public/assets/background.jpg";
 import wordmarkFile from "@/public/assets/staticline-wordmark.png";
 
+import type { BandAppMember, BandAppPublic } from "./band-app";
 import type { Locale } from "./i18n";
 import { loadContent, loadMedia } from "./portal/content";
 import { type ImageSlot, storageKey } from "./portal/content-keys";
+import { loadTranslations, pick } from "./portal/translations";
 
 /**
  * Wat de publieke site aan inhoud toont.
@@ -154,3 +156,38 @@ export const getHeroBackground = () =>
     height: heroBackground.height,
     blurDataURL: heroBackground.blurDataURL,
   });
+
+/**
+ * De bandgegevens in de taal van de pagina.
+ *
+ * De Band App kent één taal. Op `/en` komt de Engelse tekst uit de vertalingen
+ * die in /beheer/vertalingen gemaakt zijn — maar alleen als die bij de huidige
+ * Nederlandse tekst hoort. Is het origineel daarna gewijzigd, dan valt dit terug
+ * op het Nederlands. Zie lib/portal/translations.ts voor waarom dat zo is.
+ *
+ * Op `/` gebeurt er niets: dan is de brontekst al de juiste tekst, en wordt er
+ * niets uit de database gelezen.
+ */
+export async function localiseBand(
+  data: BandAppPublic | null,
+  locale: Locale,
+): Promise<{ bio: string; members: BandAppMember[] }> {
+  const bio = data?.band.bio?.trim() ?? "";
+  const members = data?.members ?? [];
+
+  if (locale === "nl" || !data) return { bio, members };
+
+  const translations = await loadTranslations();
+  const t = (id: string, source: string) =>
+    source.trim() ? pick(id, source.trim(), translations) : source;
+
+  return {
+    bio: t("band.bio", bio),
+    members: members.map((member) => ({
+      ...member,
+      role: t(`member.${member.id}.role`, member.role ?? ""),
+      instrument: t(`member.${member.id}.instrument`, member.instrument ?? ""),
+      bio: t(`member.${member.id}.bio`, member.bio ?? ""),
+    })),
+  };
+}

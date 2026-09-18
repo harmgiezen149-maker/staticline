@@ -435,6 +435,36 @@ Daar zit geen inlog voor deze aanroepen, hier wel.
 
 ---
 
+## 8. Vertalen — `ANTHROPIC_API_KEY`
+
+De bandbio en de tekst per lid komen uit de Band App, die één taal kent. Met deze
+sleutel vertaalt `/beheer/vertalingen` ze naar het Engels; zonder de sleutel kun
+je ze daar nog steeds met de hand invullen.
+
+Een sleutel maak je aan op `console.anthropic.com` onder API Keys. Zet hem in
+Vercel bij het `staticline`-project en deploy opnieuw.
+
+### Wat het kost
+
+Zo goed als niets. Het gaat om een bandbio en vier ledenteksten, en alleen wat
+ontbreekt of verouderd is wordt opnieuw vertaald. De hele band in één keer zit in
+de orde van twee cent.
+
+### Hoe het werkt
+
+Bij elke vertaling wordt een hash van de Nederlandse brontekst bewaard. Pas je
+die tekst later in de Band App aan, dan staat de vertaling hier als **verouderd**
+en toont de site zolang het Nederlands. Liever een Nederlandse zin op een Engelse
+pagina dan een Engelse zin die iets anders beweert dan het origineel.
+
+Wat al actueel is, wordt niet opnieuw vertaald. Anders zou een handmatige
+correctie bij de volgende ronde weer verdwijnen.
+
+De vertaling is een voorstel. Elk veld blijft te bewerken, en wat je daar zelf
+neerzet blijft staan.
+
+---
+
 ## Niet nodig
 
 `BAND_APP_URL` heeft een standaardwaarde in de code

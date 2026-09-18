@@ -3,7 +3,7 @@ import { Hero } from "@/components/Hero";
 import { Newsletter } from "@/components/Newsletter";
 import { NextShow } from "@/components/NextShow";
 import { PhotoGrid } from "@/components/PhotoGrid";
-import { getPhotos } from "@/lib/site-content";
+import { getPhotos, localiseBand } from "@/lib/site-content";
 import { ShowList } from "@/components/ShowList";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -28,6 +28,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
   // Dezelfde aanroep die getShows() doet. Next hergebruikt het antwoord binnen
   // één paginaweergave, dus dit is één verzoek aan de Band App en niet twee.
   const bandApp = await fetchBandAppPublic();
+  const band = await localiseBand(bandApp, locale);
   const copy = getCopy(locale);
 
   return (
@@ -37,11 +38,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
         <Hero locale={locale} next={next} hasPlayed={hasPlayed} />
         <NextShow locale={locale} show={next} />
         <ShowList locale={locale} shows={upcoming} />
-        <BandSection
-          locale={locale}
-          bio={bandApp?.band.bio?.trim() ?? ""}
-          members={bandApp?.members ?? []}
-        />
+        <BandSection locale={locale} bio={band.bio} members={band.members} />
         <PhotoGrid locale={locale} photos={photos} />
         <Newsletter locale={locale} copy={copy.newsletter} />
       </main>
