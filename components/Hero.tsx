@@ -4,10 +4,8 @@ import { Button } from "./Button";
 import { getCopy } from "@/content";
 import { formatShowDateLong, localePath, type Locale } from "@/lib/i18n";
 import type { Show } from "@/lib/shows";
-import { getText } from "@/lib/site-content";
+import { getHeroBackground, getText, getWordmark } from "@/lib/site-content";
 
-import background from "@/public/assets/background.jpg";
-import wordmark from "@/public/assets/staticline-wordmark.png";
 
 type Props = {
   locale: Locale;
@@ -21,9 +19,11 @@ export async function Hero({ locale, next, hasPlayed }: Props) {
 
   // De twee ondertitels zijn via /beheer aan te passen. Staat er niets, dan komt
   // de tekst uit content/ — zie lib/site-content.ts.
-  const [sub, subShort] = await Promise.all([
+  const [sub, subShort, background, wordmark] = await Promise.all([
     getText("hero.sub", locale, copy.hero.sub),
     getText("hero.subShort", locale, copy.hero.subShort),
+    getHeroBackground(),
+    getWordmark(),
   ]);
 
   // Het ontwerp zet hier vast "Eerste show — 10 november 2026". Dat klopt zolang
@@ -39,12 +39,17 @@ export async function Hero({ locale, next, hasPlayed }: Props) {
       className="relative isolate px-5 pt-10 pb-7 sm:px-8 sm:pt-14 sm:pb-10 lg:px-12 lg:pt-18 lg:pb-12"
     >
       <Image
-        src={background}
+        src={background.src}
         alt=""
         fill
         priority
         sizes="100vw"
-        placeholder="blur"
+        // De vervaging tijdens het laden komt uit de import en bestaat alleen
+        // voor het bestand uit de code. Een geüpload bestand heeft er geen, en
+        // `placeholder="blur"` zonder `blurDataURL` is een fout.
+        {...(background.blurDataURL
+          ? { placeholder: "blur" as const, blurDataURL: background.blurDataURL }
+          : {})}
         className="-z-10 object-cover"
       />
 
@@ -64,11 +69,13 @@ export async function Hero({ locale, next, hasPlayed }: Props) {
             aangeleverde bestand, op de breedtes uit de handoff: 720px op desktop,
             520px op tablet, volle breedte op mobiel. */}
         <Image
-          src={wordmark}
+          src={wordmark.src}
           alt={copy.hero.wordmarkAlt}
+          width={wordmark.width}
+          height={wordmark.height}
           priority
           sizes="(min-width: 1025px) 720px, (min-width: 641px) 520px, 100vw"
-          className="w-full drop-shadow-[0_12px_40px_rgba(0,0,0,0.6)] sm:w-[520px] lg:w-[720px]"
+          className="h-auto w-full drop-shadow-[0_12px_40px_rgba(0,0,0,0.6)] sm:w-[520px] lg:w-[720px]"
         />
 
         {/* Twee varianten van dezelfde zin: het ontwerp schrijft op mobiel een

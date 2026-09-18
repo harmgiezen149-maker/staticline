@@ -8,9 +8,12 @@ import {
   videos as codeVideos,
 } from "@/content/media";
 
+import heroBackground from "@/public/assets/background.jpg";
+import wordmarkFile from "@/public/assets/staticline-wordmark.png";
+
 import type { Locale } from "./i18n";
 import { loadContent, loadMedia } from "./portal/content";
-import { storageKey } from "./portal/content-keys";
+import { type ImageSlot, storageKey } from "./portal/content-keys";
 
 /**
  * Wat de publieke site aan inhoud toont.
@@ -98,3 +101,56 @@ export async function getSocials(): Promise<{
 
   return Object.values(fromDb).some(Boolean) ? fromDb : codeSocials;
 }
+
+export type SiteImage = {
+  src: string;
+  width: number;
+  height: number;
+  /** Alleen bij het bestand uit de code: de vervaging tijdens het laden. */
+  blurDataURL?: string;
+};
+
+/**
+ * Een van de twee vaste beelden.
+ *
+ * Staat er een geüpload bestand in de database, dan wint dat. Anders het bestand
+ * uit `public/assets`, dat bij de import zijn eigen afmetingen en vervaging
+ * meebrengt.
+ *
+ * De afmetingen komen bij een geüpload bestand uit de database, waar de browser
+ * ze bij het uploaden heeft neergezet. Ontbreken ze — een rij van voor die
+ * afspraak, of een mislukte uitlezing — dan valt hij terug op het bestand uit de
+ * code. Een plaatje zonder afmetingen laten renderen zou de pagina laten
+ * springen zodra het binnenkomt, en dat is erger dan het oude logo tonen.
+ */
+async function image(slot: ImageSlot, fallback: SiteImage): Promise<SiteImage> {
+  const content = await loadContent();
+
+  const src = content[storageKey(slot)]?.trim();
+  if (!src) return fallback;
+
+  const width = Number(content[storageKey(`${slot}.w`)]);
+  const height = Number(content[storageKey(`${slot}.h`)]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width < 1 || height < 1) {
+    console.warn(`[inhoud] ${slot} heeft geen bruikbare afmetingen; code-versie gebruikt`);
+    return fallback;
+  }
+
+  return { src, width, height };
+}
+
+export const getWordmark = () =>
+  image("image.wordmark", {
+    src: wordmarkFile.src,
+    width: wordmarkFile.width,
+    height: wordmarkFile.height,
+    blurDataURL: wordmarkFile.blurDataURL,
+  });
+
+export const getHeroBackground = () =>
+  image("image.hero", {
+    src: heroBackground.src,
+    width: heroBackground.width,
+    height: heroBackground.height,
+    blurDataURL: heroBackground.blurDataURL,
+  });

@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ContentForm } from "@/components/beheer/ContentForm";
+import { ImageManager, type SlotState } from "@/components/beheer/ImageManager";
 import { PhotoManager } from "@/components/beheer/PhotoManager";
 import { VideoManager } from "@/components/beheer/VideoManager";
 import { Shell } from "@/components/beheer/Shell";
 import { getCopy } from "@/content";
 import { loadContent, loadMedia } from "@/lib/portal/content";
-import { TEXT_KEYS, storageKey } from "@/lib/portal/content-keys";
+import { IMAGE_SLOTS, TEXT_KEYS, storageKey } from "@/lib/portal/content-keys";
 import { getSession } from "@/lib/portal/session";
+import { getHeroBackground, getWordmark } from "@/lib/site-content";
 
 export const metadata: Metadata = { title: "Inhoud" };
 
@@ -32,7 +34,19 @@ export default async function InhoudPage() {
     );
   }
 
-  const [content, media] = await Promise.all([loadContent(), loadMedia()]);
+  const [content, media, wordmark, hero] = await Promise.all([
+    loadContent(),
+    loadMedia(),
+    getWordmark(),
+    getHeroBackground(),
+  ]);
+
+  // Of het huidige beeld een geüpload bestand is of het bestand uit de code.
+  // Dat verschil bepaalt of "terugzetten" iets te doen heeft.
+  const slots: SlotState[] = [
+    { key: IMAGE_SLOTS[0].key, ...wordmark, custom: Boolean(content[storageKey(IMAGE_SLOTS[0].key)]) },
+    { key: IMAGE_SLOTS[1].key, ...hero, custom: Boolean(content[storageKey(IMAGE_SLOTS[1].key)]) },
+  ];
 
   // De tekst uit de code als plaatshouder meegeven, zodat je in het formulier
   // ziet wat er nu op de site staat in plaats van een leeg veld.
@@ -63,6 +77,7 @@ export default async function InhoudPage() {
     <Shell session={session} title="Inhoud">
       <div className="flex flex-col gap-10">
         <ContentForm values={values} />
+        <ImageManager slots={slots} />
         <PhotoManager photos={photos} />
         <VideoManager videos={videos} />
       </div>

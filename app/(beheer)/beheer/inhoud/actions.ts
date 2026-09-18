@@ -10,11 +10,19 @@ import {
   removeMedia,
   saveContent,
 } from "@/lib/portal/content";
-import { SOCIAL_KEYS, SPOTIFY_KEYS, TEXT_KEYS } from "@/lib/portal/content-keys";
+import {
+  SOCIAL_KEYS,
+  SPOTIFY_KEYS,
+  TEXT_KEYS,
+  isImageSlot,
+} from "@/lib/portal/content-keys";
 import { getSession } from "@/lib/portal/session";
 import { youtubeId } from "@/lib/portal/youtube";
 
 export type SaveState = { ok: boolean; message: string } | null;
+
+/** Alleen adressen uit de eigen Blob-opslag; zie next.config.ts bij `images`. */
+const BLOB_URL = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
 
 const LOCALES = ["nl", "en"] as const;
 const MAX_LENGTH = 2000;
@@ -151,7 +159,7 @@ export async function addPhoto(
   // next.config.ts; een ander adres zou next/image toch weigeren, en deze
   // controle zorgt dat je dat meteen te horen krijgt in plaats van later op een
   // kapotte fotopagina.
-  if (!/^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url)) {
+  if (!BLOB_URL.test(url)) {
     return { ok: false, message: "Dat adres komt niet uit de eigen opslag." };
   }
   if (!alt) {
@@ -168,6 +176,81 @@ export async function addPhoto(
   refreshPublicPages();
 
   return { ok: true, message: "De foto staat erbij." };
+}
+
+/**
+ * Een van de twee vaste beelden vervangen.
+ *
+ * De afmetingen komen mee omdat `next/image` ze nodig heeft om ruimte vrij te
+ * houden voor het plaatje er is. Zonder die twee getallen springt de pagina op
+ * het moment dat het binnenkomt, en dat is precies wat het ontwerp met
+ * `priority` op de hero probeert te voorkomen.
+ */
+export async function saveImage(
+  _previous: SaveState,
+  formData: FormData,
+): Promise<SaveState> {
+  const { error, session } = await admin();
+  if (error) return { ok: false, message: error };
+
+  const slot = formData.get("slot");
+  if (!isImageSlot(slot)) return { ok: false, message: "Onbekend beeld." };
+
+  const url = String(formData.get("url") ?? "").trim();
+  if (!BLOB_URL.test(url)) {
+    return { ok: false, message: "Dat adres komt niet uit de eigen opslag." };
+  }
+
+  const width = Math.round(Number(formData.get("width")));
+  const height = Math.round(Number(formData.get("height")));
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width < 1 || height < 1) {
+    return {
+      ok: false,
+      message: "De afmetingen van het bestand konden niet gelezen worden.",
+    };
+  }
+
+  const saved = await saveContent(
+    [
+      { key: slot, locale: "", value: url },
+      { key: `${slot}.w`, locale: "", value: String(width) },
+      { key: `${slot}.h`, locale: "", value: String(height) },
+    ],
+    session.email,
+  );
+  if (!saved) return { ok: false, message: "Opslaan mislukt." };
+
+  await log({ actor: session.email, action: "image.save", subject: slot, detail: url });
+  refreshPublicPages();
+
+  return { ok: true, message: "Vervangen. Kijk op de homepage." };
+}
+
+/** Terug naar het bestand uit de code. */
+export async function resetImage(
+  _previous: SaveState,
+  formData: FormData,
+): Promise<SaveState> {
+  const { error, session } = await admin();
+  if (error) return { ok: false, message: error };
+
+  const slot = formData.get("slot");
+  if (!isImageSlot(slot)) return { ok: false, message: "Onbekend beeld." };
+
+  const saved = await saveContent(
+    [
+      { key: slot, locale: "", value: "" },
+      { key: `${slot}.w`, locale: "", value: "" },
+      { key: `${slot}.h`, locale: "", value: "" },
+    ],
+    session.email,
+  );
+  if (!saved) return { ok: false, message: "Terugzetten mislukt." };
+
+  await log({ actor: session.email, action: "image.reset", subject: slot });
+  refreshPublicPages();
+
+  return { ok: true, message: "Terug op het bestand uit de code." };
 }
 
 export async function deleteMedia(

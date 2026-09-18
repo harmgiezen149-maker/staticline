@@ -81,5 +81,38 @@ export const SPOTIFY_KEYS: SettingKey[] = [
   },
 ];
 
+/**
+ * De twee vaste beelden van de site.
+ *
+ * Het wordmark mag vervangen worden door een ander aangeleverd bestand — dat is
+ * iets anders dan het hertekenen, herkleuren of uitrekken dat CLAUDE.md verbiedt.
+ * Het bandlogo moest nog komen, en als het er is hoort het erin te kunnen zonder
+ * dat er een commit aan te pas komt.
+ *
+ * Bij het wordmark worden ook de afmetingen bewaard. `next/image` heeft die
+ * nodig om ruimte vrij te houden voordat het plaatje geladen is; zonder die twee
+ * getallen springt de pagina op het moment dat het binnenkomt. Bij een bestand
+ * uit de code komen ze uit de import, bij een geüpload bestand leest de browser
+ * ze uit voordat hij uploadt.
+ */
+export const IMAGE_SLOTS = [
+  {
+    key: "image.wordmark",
+    label: "Wordmark",
+    where: "Het grote logo in de hero, op elke pagina bovenaan",
+  },
+  {
+    key: "image.hero",
+    label: "Achtergrond van de hero",
+    where: "De foto achter het logo op de homepage",
+  },
+] as const;
+
+export type ImageSlot = (typeof IMAGE_SLOTS)[number]["key"];
+
+export function isImageSlot(value: unknown): value is ImageSlot {
+  return IMAGE_SLOTS.some((slot) => slot.key === value);
+}
+
 /** De sleutel waaronder een waarde in de database staat. */
 export const storageKey = (key: string, locale = "") => `${key}|${locale}`;
