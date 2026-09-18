@@ -27,9 +27,13 @@ export default async function BeheerPage() {
             In de Band App
           </h2>
           <p className="text-muted">
-            Agenda, setlists, riders, podiumplannen en contacten staan in de Band
-            App. Die blijft de plek waar de band ze bijhoudt; hier staat alleen
-            wat de website zelf bezit.
+            De agenda en de bandgegevens zijn hiervandaan bij te werken, onder
+            Band App. Dat zijn dezelfde rijen die de band op de repetitie ziet,
+            geen kopie.
+          </p>
+          <p className="text-muted">
+            Setlists, riders, podiumplannen en contacten worden in de app zelf
+            bijgehouden. Daar is een tweede scherm voor geen winst.
           </p>
           <a
             href="https://static-line-bandapp.vercel.app"

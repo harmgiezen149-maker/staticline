@@ -384,6 +384,57 @@ blijft meetellen voor je opslag.
 
 ---
 
+## 7. Band App bijwerken — `SITE_API_TOKEN`
+
+Met deze sleutel kan `/beheer/bandapp` de bandgegevens en de agenda in de Band
+App aanpassen. Zonder blijft dat scherm leesbaar maar zegt het dat de koppeling
+nog niet ingesteld is.
+
+### 7.1 Waarom dit nodig is
+
+De Band App kent alleen zijn eigen sessiekoekje, en dat staat op zijn eigen
+domein. Een browser op `staticline.nl` heeft dat niet en kan het ook niet
+krijgen. Daarom is er in die app een aparte route bijgekomen, `/api/site`, met
+een gedeelde sleutel in de Authorization-kop — dezelfde opzet als de cron-route
+die daar al stond.
+
+### 7.2 Een sleutel maken
+
+```
+openssl rand -base64 48
+```
+
+### 7.3 Op twee plekken zetten
+
+**Dezelfde waarde**, bij allebei de projecten in Vercel:
+
+| Project | Waarvoor |
+| --- | --- |
+| `staticline` | om de aanroep te ondertekenen |
+| `static-line-bandapp` | om hem te herkennen |
+
+Loopt dit uit de pas, dan weigert de Band App elke aanroep en zegt het
+beheerscherm dat de sleutel is afgewezen.
+
+Daarna allebei opnieuw deployen.
+
+### 7.4 Wat de website daar mag
+
+Alleen de bandgegevens (naam, bio, logo) en de shows. Bewust niet:
+
+- **Repetities.** Die zijn intern; de website ziet ze niet en kan ze niet
+  aanmaken, wijzigen of verwijderen.
+- **De interne velden van een show** — `sub`, `address`, `loadIn` en `fee`. Daar
+  staan adressen en afspraken in die niet op een website thuishoren.
+- **Setlists, riders, podiumplannen en contacten.** Die worden in de app zelf
+  bijgehouden, vaak op een telefoon tijdens een repetitie. Een tweede scherm
+  ervoor levert niets op.
+
+Wie wat wijzigde komt in het logboek op `/beheer` te staan, niet in de Band App.
+Daar zit geen inlog voor deze aanroepen, hier wel.
+
+---
+
 ## Niet nodig
 
 `BAND_APP_URL` heeft een standaardwaarde in de code

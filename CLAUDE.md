@@ -38,6 +38,14 @@ zelf gebouwd heeft en dagelijks gebruikt. Hij draait op
 Wat deze site zelf bezit — boekingen, nieuwsbriefabonnees, pagina-inhoud — staat
 in een eigen database.
 
+**Schrijven gaat ook via HTTP.** `/beheer/bandapp` past de bandgegevens en de
+agenda in de Band App aan, via `app/api/site/route.js` daar: een aparte route met
+een gedeelde sleutel in de Authorization-kop, omdat het sessiekoekje van die app
+op zijn eigen domein staat. Het rekenwerk blijft daar — `fromParts`, `eventView`
+en `publicFields` zijn dezelfde helpers die zijn eigen schermen gebruiken, zodat
+`mon`/`day`/`time`/`past` niet uit de pas kunnen lopen met `startsAt`. Deze site
+stuurt alleen wat de beheerder invulde. Zet die logica nooit aan deze kant.
+
 Moet er een veld bij in de Band App? Dan een **PR op band-app**, strikt additief
 (nieuwe kolommen met een default, nooit hernoemen of verwijderen), met
 `npm run check:schema` gedraaid. Nooit rechtstreeks naar `main` daar: één push
@@ -183,6 +191,7 @@ sleutel ontbreekt.
 | `PORTAL_SECRET` | ondertekent het sessiekoekje van `/beheer`; minimaal 32 tekens |
 | `PORTAL_ADMINS` + `PORTAL_MEMBERS` | kommalijsten met wie er in het besloten deel mag |
 | `BLOB_READ_WRITE_TOKEN` | de Vercel Blob-opslag voor de foto's; Vercel zet deze zelf zodra je een Blob-store koppelt |
+| `SITE_API_TOKEN` | schrijven naar de Band App vanuit `/beheer/bandapp`; dezelfde waarde moet bij béíde Vercel-projecten staan |
 
 De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
 gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel
