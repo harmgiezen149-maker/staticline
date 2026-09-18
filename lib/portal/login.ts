@@ -36,30 +36,41 @@ const perIp = makeLimiter({ max: 20, windowMs: TTL_MINUTES * 60 * 1000 });
 
 const hash = (token: string) => createHash("sha256").update(token).digest("hex");
 
+export type LinkResult = "ok" | "rate-limited" | "error";
+
 /**
  * Een inloglink aanvragen.
  *
- * Geeft altijd hetzelfde terug, ook voor een adres dat niet mag inloggen. Wie het
- * formulier gebruikt om uit te vragen wie er in de band zit, komt zo niets te
- * weten. Dat betekent ook dat een typefout in je eigen adres eruitziet als succes
- * — het scherm zegt daarom "als dit adres toegang heeft" en niet "verstuurd".
+ * Een bekend en een onbekend adres leveren allebei `"ok"` op. Wie het formulier
+ * gebruikt om uit te vragen wie er in de band zit, komt zo niets te weten.
+ *
+ * Maar een database die omvalt levert `"error"` op, en dat is met opzet: dat is
+ * geen informatie over een adres maar over de server. Dit stond eerst anders —
+ * álles gaf `"ok"` — en toen bleek in productie dat de tabel niet bestond terwijl
+ * het scherm vrolijk "kijk in je mail" zei. Een storing hoort zichtbaar te zijn.
+ *
+ * Dat een kapotte mailkoppeling daarmee verraadt dát een adres bestaat, is een
+ * bewuste ruil. Die toestand hoort niet te bestaan, en zolang hij bestaat is het
+ * belangrijker dat jij hem ziet.
  */
-export async function requestLink(email: string, ip: string): Promise<void> {
+export async function requestLink(email: string, ip: string): Promise<LinkResult> {
   const address = email.trim().toLowerCase();
   const now = Date.now();
 
-  if (!perIp(`i:${ip}`, now) || !perEmail(`e:${address}`, now)) return;
+  if (!perIp(`i:${ip}`, now) || !perEmail(`e:${address}`, now)) {
+    return "rate-limited";
+  }
 
   const role = roleFor(address);
   if (!role) {
     console.warn(`[beheer] inlogpoging voor onbekend adres vanaf ${ip}`);
-    return;
+    return "ok";
   }
 
   const sql = getDb();
   if (!sql) {
-    console.error("[beheer] geen database, dus geen inloglink");
-    return;
+    console.error("[beheer] geen DATABASE_URL, dus geen inloglink");
+    return "error";
   }
 
   const token = randomBytes(32).toString("base64url");
@@ -75,12 +86,12 @@ export async function requestLink(email: string, ip: string): Promise<void> {
     `;
   } catch (error) {
     console.error("[beheer] inloglink niet opgeslagen:", error);
-    return;
+    return "error";
   }
 
   const url = `${siteUrl()}/api/beheer/verify?token=${encodeURIComponent(token)}`;
 
-  await sendMail({
+  const sent = await sendMail({
     to: address,
     subject: "Inloggen op het beheer van staticline.nl",
     lines: [
@@ -93,7 +104,13 @@ export async function requestLink(email: string, ip: string): Promise<void> {
     ],
   });
 
+  if (!sent) {
+    console.error("[beheer] inloglink niet verstuurd — staat RESEND_API_KEY er?");
+    return "error";
+  }
+
   await log({ actor: address, action: "login.request", detail: `vanaf ${ip}` });
+  return "ok";
 }
 
 export type Consumed =

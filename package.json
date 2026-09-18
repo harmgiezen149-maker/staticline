@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --experimental-strip-types --test 'lib/**/*.test.ts'",
-    "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs"
+    "db:setup": "node --experimental-strip-types --env-file-if-exists=.env.local scripts/db-setup.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

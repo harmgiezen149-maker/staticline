@@ -14,9 +14,9 @@ import { useState } from "react";
  * iets verstuurd is. Het zou niet moeten beweren van wel.
  */
 export function LoginForm() {
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle",
-  );
+  const [state, setState] = useState<
+    "idle" | "sending" | "sent" | "error" | "too-many"
+  >("idle");
   const [email, setEmail] = useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -29,7 +29,9 @@ export function LoginForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      setState(res.ok ? "sent" : "error");
+      if (res.ok) setState("sent");
+      else if (res.status === 429) setState("too-many");
+      else setState("error");
     } catch {
       setState("error");
     }
@@ -74,9 +76,19 @@ export function LoginForm() {
         />
       </label>
 
+      {state === "too-many" && (
+        <p className="text-danger">
+          Je hebt net al een paar links aangevraagd. Wacht een kwartier, of kijk
+          of er al een in je mailbox staat.
+        </p>
+      )}
+
       {state === "error" && (
         <p className="text-danger">
-          Het lukte niet om een link aan te vragen. Probeer het zo nog eens.
+          Er ging iets mis aan onze kant, dus er is niets verstuurd. Staan de
+          tabellen er (<span className="font-mono text-12">npm run db:setup</span>
+          ) en is <span className="font-mono text-12">RESEND_API_KEY</span>{" "}
+          ingesteld? De logs van Vercel zeggen welke van de twee het is.
         </p>
       )}
 
