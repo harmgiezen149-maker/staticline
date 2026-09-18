@@ -361,6 +361,29 @@ adres er ook uitziet als succes.
 
 ---
 
+## 6. Foto's — `BLOB_READ_WRITE_TOKEN`
+
+De foto's op de homepage en de fotopagina worden geüpload via
+`/beheer/inhoud`. Ze komen in Vercel Blob te staan, niet in de repo.
+
+In Vercel bij dit project onder **Storage → Create → Blob**. Vercel zet
+`BLOB_READ_WRITE_TOKEN` daarna zelf bij de omgevingsvariabelen; je hoeft hem niet
+over te typen. Daarna opnieuw deployen.
+
+Toegestaan zijn JPEG, PNG, WebP en AVIF, tot 10 MB per bestand. Dat staat in
+`app/api/beheer/upload/route.ts`.
+
+Het uploaden gaat rechtstreeks van de browser naar de opslag; deze site geeft er
+alleen een kortlopende sleutel voor af, die alleen aan een ingelogde beheerder
+wordt afgegeven. Dat is geen overdaad: een serverloze functie op Vercel neemt
+hooguit 4,5 MB aan verzoek aan, en een fatsoenlijke bandfoto zit daar overheen.
+
+Een foto verwijderen haalt ook het bestand uit de opslag. Alleen de regel
+weghalen zou een bestand achterlaten dat niemand meer kan vinden maar dat wel
+blijft meetellen voor je opslag.
+
+---
+
 ## Niet nodig
 
 `BAND_APP_URL` heeft een standaardwaarde in de code

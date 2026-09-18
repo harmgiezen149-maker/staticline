@@ -138,17 +138,25 @@ export async function addMedia(
   }
 }
 
-export async function removeMedia(id: number): Promise<boolean> {
+/**
+ * Een rij verwijderen en teruggeven wat er stond.
+ *
+ * Wat er stond is nodig om bij een foto ook het bestand uit de Blob-opslag te
+ * halen. Na het verwijderen is die informatie weg, dus hij komt hier mee terug.
+ */
+export async function removeMedia(
+  id: number,
+): Promise<{ kind: string; url: string } | null> {
   const sql = getDb();
-  if (!sql) return false;
+  if (!sql) return null;
 
   try {
     const rows = (await sql`
-      DELETE FROM site_media WHERE id = ${id} RETURNING id
-    `) as { id: number }[];
-    return rows.length > 0;
+      DELETE FROM site_media WHERE id = ${id} RETURNING kind, url
+    `) as { kind: string; url: string }[];
+    return rows[0] ?? null;
   } catch (error) {
     console.error("[inhoud] media niet verwijderd:", error);
-    return false;
+    return null;
   }
 }

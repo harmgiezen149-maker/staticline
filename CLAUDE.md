@@ -182,6 +182,7 @@ sleutel ontbreekt.
 | `SITE_URL` | het volledige adres voor links in die mails; standaard `https://www.staticline.nl` |
 | `PORTAL_SECRET` | ondertekent het sessiekoekje van `/beheer`; minimaal 32 tekens |
 | `PORTAL_ADMINS` + `PORTAL_MEMBERS` | kommalijsten met wie er in het besloten deel mag |
+| `BLOB_READ_WRITE_TOKEN` | de Vercel Blob-opslag voor de foto's; Vercel zet deze zelf zodra je een Blob-store koppelt |
 
 De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
 gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel
@@ -202,8 +203,11 @@ wint dat; staat er niets, dan blijft wat er in de code staat. Daardoor kan het
 beheerscherm nooit een pagina leeg of stuk maken, en werkt alles ook zonder die
 tabellen.
 
-Foto's uploaden kan nog niet: daar is een Vercel Blob-opslag voor nodig die nog
-niet aangezet is. Spotify, video's, sociale links en een paar lopende teksten wel.
+Foto's gaan naar Vercel Blob. De browser uploadt daar rechtstreeks heen en deze
+site geeft er alleen een kortlopende sleutel voor af — een serverloze functie op
+Vercel neemt hooguit 4,5 MB aan verzoek aan, en daar zit een persfoto zo
+overheen. `next.config.ts` staat alleen die ene host toe bij `images`; verruim die
+lijst niet, dan wordt deze site een gratis afbeeldingsproxy.
 
 ## Voor wie dit is
 

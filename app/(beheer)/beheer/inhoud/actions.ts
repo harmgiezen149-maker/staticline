@@ -1,5 +1,6 @@
 "use server";
 
+import { del } from "@vercel/blob";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 import { log } from "@/lib/portal/audit";
@@ -127,6 +128,48 @@ export async function addVideo(
   return { ok: true, message: `"${title}" staat erbij.` };
 }
 
+/**
+ * Een geüploade foto aanmelden.
+ *
+ * Het bestand staat op dat moment al in de opslag: de browser heeft het daar
+ * rechtstreeks heen gestuurd. Deze stap zet de rij in de database, en
+ * controleert opnieuw op beheerdersrechten — dat de upload gelukt is, zegt niets
+ * over wie deze aanroep doet.
+ */
+export async function addPhoto(
+  _previous: SaveState,
+  formData: FormData,
+): Promise<SaveState> {
+  const { error, session } = await admin();
+  if (error) return { ok: false, message: error };
+
+  const url = String(formData.get("url") ?? "").trim();
+  const alt = String(formData.get("alt") ?? "").trim().slice(0, 300);
+  const caption = String(formData.get("caption") ?? "").trim().slice(0, 300);
+
+  // Alleen adressen uit de eigen Blob-opslag. Die host staat als enige in
+  // next.config.ts; een ander adres zou next/image toch weigeren, en deze
+  // controle zorgt dat je dat meteen te horen krijgt in plaats van later op een
+  // kapotte fotopagina.
+  if (!/^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url)) {
+    return { ok: false, message: "Dat adres komt niet uit de eigen opslag." };
+  }
+  if (!alt) {
+    return {
+      ok: false,
+      message: "Beschrijf wat er op de foto te zien is. Dat is wat een blinde bezoeker voorgelezen krijgt.",
+    };
+  }
+
+  const added = await addMedia({ kind: "photo", url, alt, caption }, session.email);
+  if (!added) return { ok: false, message: "Toevoegen mislukt." };
+
+  await log({ actor: session.email, action: "photo.add", subject: url, detail: alt });
+  refreshPublicPages();
+
+  return { ok: true, message: "De foto staat erbij." };
+}
+
 export async function deleteMedia(
   _previous: SaveState,
   formData: FormData,
@@ -141,6 +184,19 @@ export async function deleteMedia(
 
   const removed = await removeMedia(id);
   if (!removed) return { ok: false, message: "Verwijderen mislukt." };
+
+  // Bij een foto ook het bestand zelf weghalen. Alleen de rij verwijderen laat
+  // een bestand achter dat niemand meer kan vinden maar dat wel meetelt voor de
+  // opslag — en dat blijft groeien zonder dat iemand het merkt.
+  if (removed.kind === "photo") {
+    try {
+      await del(removed.url);
+    } catch (blobError) {
+      // De rij is weg, dus de foto staat niet meer op de site. Het achtergebleven
+      // bestand is vervelend maar geen reden om te melden dat het mislukt is.
+      console.error("[inhoud] bestand niet uit de opslag verwijderd:", blobError);
+    }
+  }
 
   await log({ actor: session.email, action: "media.remove", subject: String(id) });
   refreshPublicPages();
