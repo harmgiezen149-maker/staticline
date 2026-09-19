@@ -1,49 +1,104 @@
 {
-  "_": "Lengtelimieten en verboden woorden voor de herschrijfmodule. Los van de code, zodat ze aan te passen zijn zonder dat er iemand aan de module hoeft te komen. Houd ze in de pas met content/tone-of-voice.md — de blocklist volgt de Niet-lijsten daaruit.",
+  "_": "Lengtelimieten, bronnen en verboden woorden voor de schrijfmodule. Los van de code, zodat ze aan te passen zijn zonder dat er iemand aan de module hoeft te komen. Houd ze in de pas met content/tone-of-voice.md — de blocklist volgt de Niet-lijsten daaruit.",
+  "_sources": "Per teksttype: welke bronnen standaard aanstaan in de schrijfstand, en welke kiezer erbij hoort. Sleutels: band, members, upcoming, past, setlist, site, socials — zie lib/tov/factsheet.ts. Vink niet meer aan dan nodig: hoe breder het feitenblad, hoe meer er waar is en hoe minder de controle op verzonnen feiten betekent. `subject` is none, member, gig of past_gig.",
+  "band": {
+    "_": "Feiten over de band die nergens anders staan. De naam en de bio komen uit de Band App; de plaats staat daar niet als apart veld en is wel een feit dat in bijna elke tekst thuishoort.",
+    "name": "Static Line",
+    "city": "Ede"
+  },
   "maxInputChars": 4000,
+  "maxBriefChars": 600,
   "textTypes": [
     {
       "id": "bio",
-      "label": "Bio / Over ons",
+      "label": "Bandbio",
       "maxWords": 90,
       "maxWordsLong": 200,
       "perspective": "wij",
-      "hint": "Wie en waar, wat we spelen, wat je live krijgt, hoe je ons boekt."
+      "hint": "Wie en waar, wat we spelen, wat je live krijgt, hoe je ons boekt.",
+      "sources": ["band", "members", "setlist"],
+      "subject": "none"
+    },
+    {
+      "id": "member_bio",
+      "label": "Lid-bio",
+      "maxWords": 70,
+      "perspective": "derde persoon",
+      "hint": "Naam, instrument, wat hij inbrengt. Geen cv en geen loopbaan.",
+      "sources": ["band", "members"],
+      "subject": "member"
     },
     {
       "id": "show_news",
       "label": "Show of nieuws",
       "maxWords": 60,
       "perspective": "wij",
-      "hint": "Datum, plek, tijd en kaartjes eerst. Daarna hooguit één droge zin."
+      "hint": "Datum, plek, tijd en kaartjes eerst. Daarna hooguit één droge zin.",
+      "sources": ["band", "upcoming"],
+      "subject": "gig"
     },
     {
       "id": "social",
       "label": "Social post",
       "maxWords": 40,
       "perspective": "wij",
-      "hint": "Eén moment, één gedachte. Hashtags aan het eind."
+      "hint": "Eén moment, één gedachte. Hashtags aan het eind.",
+      "sources": ["band", "upcoming"],
+      "subject": "gig"
+    },
+    {
+      "id": "gig_report",
+      "label": "Verslag van een optreden",
+      "maxWords": 150,
+      "perspective": "wij",
+      "hint": "Hoe het was, niet hoe goed het was. Wat er gebeurde, wat er misging, wie er stond.",
+      "sources": ["band", "past"],
+      "subject": "past_gig"
+    },
+    {
+      "id": "newsletter",
+      "label": "Nieuwsbrief",
+      "maxWords": 250,
+      "perspective": "wij",
+      "hint": "Wat er sinds de vorige keer gebeurd is, wat eraan komt, en één ding om te doen.",
+      "sources": ["band", "upcoming", "past"],
+      "subject": "none"
+    },
+    {
+      "id": "site_text",
+      "label": "Websitetekst",
+      "maxWords": 120,
+      "perspective": "wij",
+      "hint": "Kort, feitelijk, leest los van de rest van de pagina.",
+      "sources": ["band", "members", "setlist", "upcoming"],
+      "subject": "none"
     },
     {
       "id": "booking_email",
       "label": "Boekingsmail",
       "maxWords": 140,
       "perspective": "wij",
-      "hint": "Wie we zijn in twee zinnen, waarom dit podium, wat we sturen, wat je nodig hebt."
+      "hint": "Wie we zijn in twee zinnen, waarom dit podium, wat we sturen, wat je nodig hebt.",
+      "sources": ["band", "members", "setlist", "upcoming"],
+      "subject": "none"
     },
     {
       "id": "one_sheet",
       "label": "One-sheet",
       "maxWords": 180,
       "perspective": "derde persoon",
-      "hint": "Derde persoon, feitelijk, invloeden, korte bio, contact."
+      "hint": "Derde persoon, feitelijk, invloeden, korte bio, contact.",
+      "sources": ["band", "members", "setlist", "upcoming", "socials"],
+      "subject": "none"
     },
     {
       "id": "press_release",
       "label": "Persbericht",
       "maxWords": 300,
       "perspective": "derde persoon",
-      "hint": "Kop, lead, kern, citaat van een bandlid, feiten en contact."
+      "hint": "Kop, lead, kern, citaat van een bandlid, feiten en contact.",
+      "sources": ["band", "members", "upcoming"],
+      "subject": "gig"
     }
   ],
   "blocklist": {

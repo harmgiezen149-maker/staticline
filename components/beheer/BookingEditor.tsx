@@ -55,7 +55,7 @@ export function BookingEditor({
           name="note"
           rows={4}
           defaultValue={note}
-          className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+          className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
         />
       </label>
 

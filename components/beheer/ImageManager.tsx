@@ -132,7 +132,7 @@ function Slot({
   const busy = state.kind === "busy";
 
   return (
-    <div className="flex flex-col gap-3 border border-line-default p-4">
+    <div className="flex flex-col gap-3 border border-line p-4">
       <div className="flex flex-col">
         <span className="font-display text-18 font-bold tracking-tight2 uppercase">
           {label}
@@ -164,7 +164,7 @@ function Slot({
           type="file"
           name="bestand"
           accept="image/jpeg,image/png,image/webp,image/avif"
-          className="border border-line-default bg-inset px-4 py-2 text-primary file:mr-4 file:border-0 file:bg-inset file:font-mono file:text-12 file:text-muted file:uppercase"
+          className="border border-line bg-inset px-4 py-2 text-primary file:mr-4 file:border-0 file:bg-inset file:font-mono file:text-12 file:text-muted file:uppercase"
         />
         <button
           type="submit"

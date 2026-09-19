@@ -30,7 +30,7 @@ const LINKS = [
 export function Shell({ session, title, children }: Props) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-line-default">
+      <header className="border-b border-line">
         <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-4 px-5 py-4">
           <nav className="flex items-center gap-6">
             {LINKS.map((link) => (

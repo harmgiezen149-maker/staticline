@@ -69,7 +69,7 @@ export default async function BoekingenPage({
         ) : (
           <ul className="flex flex-col">
             {bookings.map((booking) => (
-              <li key={booking.id} className="border-b border-line-default">
+              <li key={booking.id} className="border-b border-line">
                 <Link
                   href={`/beheer/boekingen/${booking.id}`}
                   className="flex flex-col gap-1 py-3 transition-colors duration-[120ms] hover:text-accent"

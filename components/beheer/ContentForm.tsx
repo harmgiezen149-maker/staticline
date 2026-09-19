@@ -74,7 +74,7 @@ export function ContentForm({
                     rows={3}
                     defaultValue={values[`${field.key}|${locale}`] ?? ""}
                     placeholder={values[`fallback:${field.key}|${locale}`] ?? ""}
-                    className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+                    className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
                   />
                 ) : (
                   <input
@@ -82,7 +82,7 @@ export function ContentForm({
                     name={`${field.key}|${locale}`}
                     defaultValue={values[`${field.key}|${locale}`] ?? ""}
                     placeholder={values[`fallback:${field.key}|${locale}`] ?? ""}
-                    className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+                    className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
                   />
                 )}
               </label>
@@ -148,7 +148,7 @@ function Settings({
             name={`${field.key}|`}
             defaultValue={values[`${field.key}|`] ?? ""}
             placeholder={field.hint}
-            className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
           />
         </label>
       ))}

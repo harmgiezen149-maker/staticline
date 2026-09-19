@@ -80,7 +80,7 @@ function Row({ item }: { item: TranslationItem }) {
   );
 
   return (
-    <li className="flex flex-col gap-3 border border-line-default p-4">
+    <li className="flex flex-col gap-3 border border-line p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <span className="font-display text-18 font-bold tracking-tight2 uppercase">
           {item.label}
@@ -114,7 +114,7 @@ function Row({ item }: { item: TranslationItem }) {
             name="text"
             rows={item.source.length > 120 ? 5 : 2}
             defaultValue={item.translation}
-            className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
           />
         </label>
 

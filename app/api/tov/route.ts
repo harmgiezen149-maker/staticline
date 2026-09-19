@@ -3,11 +3,18 @@ import { NextResponse } from "next/server";
 
 import { log } from "@/lib/portal/audit";
 import { makeLimiter } from "@/lib/rate-limit";
-import { MAX_INPUT_CHARS, TEXT_TYPES, textTypeById } from "@/lib/tov/config";
-import { rewrite } from "@/lib/tov/rewrite";
+import {
+  MAX_BRIEF_CHARS,
+  MAX_INPUT_CHARS,
+  TEXT_TYPES,
+  textTypeById,
+} from "@/lib/tov/config";
+import { parseRequest } from "@/lib/tov/request";
+import { runTov } from "@/lib/tov/run";
+import { loadSourceOptions } from "@/lib/tov/sources";
 
 /**
- * De herschrijfmodule, ook bruikbaar vanuit de Band App.
+ * De schrijfmodule, ook bruikbaar vanuit de Band App.
  *
  * Eén implementatie voor twee schermen. De tone of voice, de lengtelimieten en
  * de blocklist staan hier; de Band App heeft een pagina die dit adres aanroept.
@@ -39,20 +46,34 @@ function authorized(req: Request): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-/** Welke teksttypen er zijn, zodat de Band App zijn eigen keuzelijst kan vullen. */
+/**
+ * Waar de Band App zijn scherm mee vult.
+ *
+ * De teksttypen met hun bronnen, en de keuzelijsten voor leden en shows. Die
+ * lijsten komen uit dezelfde Band App, maar wel via deze kant: dan staan de
+ * datums in beide schermen in dezelfde opmaak en op dezelfde tijdzone, en is er
+ * één plek waar dat fout kan gaan in plaats van twee.
+ */
 export async function GET(request: Request) {
   if (!authorized(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const options = await loadSourceOptions().catch(() => null);
+
   return NextResponse.json({
     maxInputChars: MAX_INPUT_CHARS,
-    textTypes: TEXT_TYPES.map(({ id, label, maxWords, hint }) => ({
+    maxBriefChars: MAX_BRIEF_CHARS,
+    textTypes: TEXT_TYPES.map(({ id, label, maxWords, maxWordsLong, hint, sources, subject }) => ({
       id,
       label,
       maxWords,
+      maxWordsLong,
       hint,
+      sources,
+      subject,
     })),
+    options: options ?? { members: [], upcoming: [], past: [], available: false },
   });
 }
 
@@ -61,32 +82,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  let body: { text?: unknown; textType?: unknown; context?: unknown; actor?: unknown };
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "onleesbaar" }, { status: 400 });
   }
 
-  const input = String(body.text ?? "").trim();
-  const context = String(body.context ?? "").trim().slice(0, 1000);
   // Wie het vraagt, zoals de Band App hem kent. Alleen om te begrenzen en te
   // loggen; er gaat geen tekst het logboek in.
   const actor = String(body.actor ?? "bandapp").trim().slice(0, 160) || "bandapp";
 
-  if (!input) return NextResponse.json({ error: "geen-tekst" }, { status: 400 });
-  if (input.length > MAX_INPUT_CHARS) {
-    return NextResponse.json({ error: "te-lang" }, { status: 400 });
-  }
-
   const type = textTypeById(String(body.textType ?? ""));
   if (!type) return NextResponse.json({ error: "onbekend-type" }, { status: 400 });
+
+  const parsed = parseRequest(body, {
+    maxInputChars: MAX_INPUT_CHARS,
+    maxBriefChars: MAX_BRIEF_CHARS,
+  });
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
   if (!perPersoon(`bandapp:${actor}`)) {
     return NextResponse.json({ error: "too-many" }, { status: 429 });
   }
 
-  const result = await rewrite({ input, type, context });
+  const result = await runTov(parsed.value, type);
   if (!result.ok) {
     const status = result.error === "not-configured" || result.error === "no-tov" ? 503 : 502;
     return NextResponse.json({ error: result.error }, { status });
@@ -94,7 +114,7 @@ export async function POST(request: Request) {
 
   await log({
     actor: `bandapp:${actor}`,
-    action: "tov.rewrite",
+    action: parsed.value.mode === "brief" ? "tov.write" : "tov.rewrite",
     subject: type.id,
     detail: `tone of voice ${result.version}, ${result.nl.wordCount}/${result.en.wordCount} woorden`,
   });

@@ -1,13 +1,18 @@
 /**
- * Wat er in code te controleren valt aan een herschreven tekst.
+ * Wat er in code te controleren valt aan een geschreven tekst.
  *
  * Dit is het deel dat niet van een oordeel afhangt. Een model kan zeggen dat het
  * de feiten heeft laten staan; deze functies rékenen na of dat zo is. Links,
  * mentions, hashtags en tijden worden letterlijk vergeleken, het aantal woorden
  * wordt geteld, en de verboden woorden worden opgezocht.
  *
+ * Twee kanten op, en dat is het verschil met de eerste versie. Wat uit de bron
+ * verdwenen is én wat er niet in stond en toch in de tekst staat — zie
+ * `findInvented` voor waarom dat tweede er pas bij kwam toen de module ook
+ * zonder brontekst ging schrijven.
+ *
  * Zonder imports en zonder `server-only`, zodat `npm test` het kan draaien. Zie
- * lib/tov/rewrite.ts voor het deel dat het model aanroept.
+ * lib/tov/write.ts voor het deel dat het model aanroept.
  */
 
 export type FlagType =
@@ -15,6 +20,8 @@ export type FlagType =
   | "missing_info"
   | "too_long"
   | "suspicious_input"
+  | "invented"
+  | "no_source"
   | "check_failed";
 
 export type Flag = { type: FlagType; message: string };
@@ -94,8 +101,48 @@ export function findBlocked(text: string, blocklist: string[]): string[] {
 /** Een gedachtestreepje leest snel als AI; zie de tone of voice. */
 export const hasEmDash = (text: string) => /[—–]/.test(text);
 
+/**
+ * Feiten die erbij verzonnen zijn.
+ *
+ * De controle hierboven kijkt maar één kant op: staat er iets uit de bron niet
+ * meer in de tekst. Dat was genoeg zolang er alleen herschreven werd — een model
+ * met een brontekst verzint zelden een tijdstip erbij.
+ *
+ * Bij schrijven vanaf een onderwerp draait dat om. Vraag om een aankondiging en
+ * het model wil een aanvangstijd; heeft het die niet, dan vult het er een in. De
+ * tone of voice verbiedt dat, maar een instructie is geen controle.
+ *
+ * Wat hard gecontroleerd wordt en wat alleen een vlag geeft, is een afweging
+ * tussen vals alarm en gemiste fouten:
+ *
+ * - **Links, tijden en mentions**: hard. Een link of een @-account dat niet in de
+ *   bron staat is altijd fout — het model kán de echte niet kennen. Hetzelfde
+ *   voor een tijdstip: dat is het geval waarvoor deze controle bestaat.
+ * - **Getallen**: alleen een vlag. Een jaartal in een zin, een huisnummer, "vier
+ *   leden" als cijfer — te veel daarvan is onschuldig om er een fout van te maken.
+ * - **Hashtags**: niet gecontroleerd. Een social post hóórt hashtags te krijgen
+ *   die niet in de bron staan; dat staat zo in de opbouw van dat teksttype.
+ */
+export function findInvented(bron: Tokens, doel: Tokens) {
+  const erbij = (bronnen: string[], doelen: string[]) =>
+    doelen.filter((waarde) => !bronnen.includes(waarde));
+
+  return {
+    links: erbij(bron.links, doel.links),
+    times: erbij(bron.times, doel.times),
+    mentions: erbij(bron.mentions, doel.mentions),
+    numbers: erbij(bron.numbers, doel.numbers),
+  };
+}
+
 export type CheckInput = {
-  input: string;
+  /**
+   * Waar de feiten vandaan komen. Bij herschrijven is dat de aangeleverde
+   * tekst, bij schrijven het feitenblad uit lib/tov/factsheet.ts. In beide
+   * gevallen geldt dezelfde regel: wat hier niet in staat, hoort niet in de
+   * uitvoer te staan.
+   */
+  source: string;
   output: string;
   maxWords: number;
   blocklist: string[];
@@ -114,11 +161,11 @@ export type CheckResult = {
  *
  * `problems` gaat naar het model voor de ene herziening. `flags` gaat naar het
  * scherm. Het verschil is opzet: "je gebruikte het woord unieke" is bruikbaar
- * voor een herschrijving, "er ontbrak een starttijd in je invoer" is iets wat de
+ * voor een herschrijving, "er ontbrak een starttijd in de bron" is iets wat de
  * gebruiker moet weten en het model niet kan oplossen.
  */
 export function checkOutput({
-  input,
+  source,
   output,
   maxWords,
   blocklist,
@@ -126,13 +173,13 @@ export function checkOutput({
   const problems: string[] = [];
   const flags: Flag[] = [];
 
-  const bron = extractTokens(input);
+  const bron = extractTokens(source);
   const doel = extractTokens(output);
 
   const ontbreekt = (wat: string, bronnen: string[], doelen: string[]) => {
     const kwijt = bronnen.filter((waarde) => !doelen.includes(waarde));
     if (kwijt.length > 0) {
-      problems.push(`Deze ${wat} uit de invoer staan niet meer in de tekst: ${kwijt.join(", ")}. Zet ze er ongewijzigd in.`);
+      problems.push(`Deze ${wat} uit de bron staan niet meer in de tekst: ${kwijt.join(", ")}. Zet ze er ongewijzigd in.`);
     }
     return kwijt;
   };
@@ -146,7 +193,32 @@ export function checkOutput({
   if (getallenKwijt.length > 0) {
     flags.push({
       type: "missing_info",
-      message: `Deze getallen uit je invoer staan niet in de tekst: ${getallenKwijt.join(", ")}. Controleer of dat klopt.`,
+      message: `Deze getallen uit de bron staan niet in de tekst: ${getallenKwijt.join(", ")}. Controleer of dat klopt.`,
+    });
+  }
+
+  // Het omgekeerde: wat er niet in de bron stond en toch in de tekst staat.
+  const verzonnen = findInvented(bron, doel);
+
+  const erbij = (wat: string, waarden: string[]) => {
+    if (waarden.length === 0) return;
+    problems.push(
+      `Deze ${wat} staan niet in de bron en zijn er dus bij verzonnen: ${waarden.join(", ")}. Haal ze weg.`,
+    );
+    flags.push({
+      type: "invented",
+      message: `Er stonden ${wat} in de tekst die nergens uit de bron komen: ${waarden.join(", ")}.`,
+    });
+  };
+
+  erbij("links", verzonnen.links);
+  erbij("tijden", verzonnen.times);
+  erbij("mentions", verzonnen.mentions);
+
+  if (verzonnen.numbers.length > 0) {
+    flags.push({
+      type: "missing_info",
+      message: `Deze getallen staan niet in de bron: ${verzonnen.numbers.join(", ")}. Controleer ze voor je de tekst gebruikt.`,
     });
   }
 

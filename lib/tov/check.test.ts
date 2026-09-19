@@ -6,6 +6,7 @@ import {
   countWords,
   extractTokens,
   findBlocked,
+  findInvented,
   hasEmDash,
 } from "./check.ts";
 
@@ -37,7 +38,7 @@ test("een getal in een link telt niet apart mee", () => {
 
 test("een ontbrekende link is een probleem voor het model", () => {
   const r = checkOutput({
-    input: "Kaartjes via https://loburg.nl/tickets",
+    source: "Kaartjes via https://loburg.nl/tickets",
     output: "Kaartjes via de zaal.",
     maxWords: 60,
     blocklist: BLOCK,
@@ -49,7 +50,7 @@ test("een ontbrekende link is een probleem voor het model", () => {
 
 test("een ongewijzigde hashtag levert geen probleem op", () => {
   const r = checkOutput({
-    input: "Repetitie #grunge",
+    source: "Repetitie #grunge",
     output: "Oefenruimte. Vier uur. #grunge",
     maxWords: 40,
     blocklist: BLOCK,
@@ -60,7 +61,7 @@ test("een ongewijzigde hashtag levert geen probleem op", () => {
 
 test("te lang levert zowel een probleem als een melding op", () => {
   const r = checkOutput({
-    input: "kort",
+    source: "kort",
     output: "een twee drie vier vijf zes",
     maxWords: 3,
     blocklist: BLOCK,
@@ -73,7 +74,7 @@ test("te lang levert zowel een probleem als een melding op", () => {
 
 test("een verboden woord wordt gevonden, ongeacht hoofdletters", () => {
   const r = checkOutput({
-    input: "iets",
+    source: "iets",
     output: "Een Unieke avond.",
     maxWords: 40,
     blocklist: BLOCK,
@@ -99,7 +100,7 @@ test("een gedachtestreepje wordt gezien", () => {
 test("een verdwenen getal is een melding en geen probleem", () => {
   // Het model kan er niets mee; de gebruiker moet het weten.
   const r = checkOutput({
-    input: "Entree 12 euro.",
+    source: "Entree 12 euro.",
     output: "Entree aan de deur.",
     maxWords: 60,
     blocklist: BLOCK,
@@ -112,4 +113,78 @@ test("een verdwenen getal is een melding en geen probleem", () => {
 test("woorden tellen zoals een mens ze telt", () => {
   assert.equal(countWords("  Eén   twee\ndrie "), 3);
   assert.equal(countWords(""), 0);
+});
+
+test("een verzonnen aanvangstijd is een probleem", () => {
+  // Het geval waarvoor findInvented bestaat: de bron noemt geen tijd, het model
+  // vult er een in omdat een aankondiging er nu eenmaal een heeft.
+  const r = checkOutput({
+    source: "AGENDA — KOMEND\n- 10 november 2026 · Loburg, Wageningen · aangekondigd",
+    output: "10 november. Loburg, Wageningen. Deur open 20:30.",
+    maxWords: 60,
+    blocklist: BLOCK,
+  });
+
+  assert.ok(r.problems.some((p) => p.includes("20:30")));
+  assert.ok(r.flags.some((f) => f.type === "invented"));
+});
+
+test("een verzonnen link en mention zijn een probleem", () => {
+  const r = checkOutput({
+    source: "Loburg, Wageningen.",
+    output: "Kaartjes: https://loburg.nl/tickets. Met dank aan @loburg.",
+    maxWords: 60,
+    blocklist: BLOCK,
+  });
+
+  assert.ok(r.problems.some((p) => p.includes("https://loburg.nl/tickets")));
+  assert.ok(r.problems.some((p) => p.includes("@loburg")));
+});
+
+test("een hashtag die er niet in stond mag er wel bij", () => {
+  // Een social post hoort hashtags te krijgen; die staan niet in de agenda.
+  const r = checkOutput({
+    source: "10 november. Loburg.",
+    output: "10 november. Loburg. #staticline",
+    maxWords: 40,
+    blocklist: BLOCK,
+  });
+
+  assert.deepEqual(r.problems, []);
+});
+
+test("een getal dat er niet in stond is een melding en geen probleem", () => {
+  const r = checkOutput({
+    source: "Loburg, Wageningen.",
+    output: "4 man op het podium in Loburg, Wageningen.",
+    maxWords: 40,
+    blocklist: BLOCK,
+  });
+
+  assert.deepEqual(r.problems, []);
+  assert.ok(r.flags.some((f) => f.type === "missing_info"));
+});
+
+test("een voluit geschreven getal wordt niet gezien", () => {
+  // De grens van deze controle, expres vastgelegd: `extractTokens` zoekt
+  // cijfers. "Vier man" komt er ongemerkt doorheen, "4 man" niet. Dat is de
+  // reden dat getallen een melding geven en geen fout — een controle die de
+  // helft mist, hoort geen tekst tegen te houden.
+  const r = checkOutput({
+    source: "Loburg, Wageningen.",
+    output: "Vier man op het podium in Loburg, Wageningen.",
+    maxWords: 40,
+    blocklist: BLOCK,
+  });
+
+  assert.deepEqual(r.problems, []);
+  assert.deepEqual(r.flags, []);
+});
+
+test("findInvented kijkt de andere kant op dan de rest", () => {
+  const bron = extractTokens("20:00 https://a.nl");
+  const doel = extractTokens("21:00 https://a.nl");
+
+  assert.deepEqual(findInvented(bron, doel).times, ["21:00"]);
+  assert.deepEqual(findInvented(bron, doel).links, []);
 });

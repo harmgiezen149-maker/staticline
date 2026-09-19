@@ -97,7 +97,7 @@ export default async function AanvraagPage({
             {rows.map(([label, value]) => (
               <div
                 key={label}
-                className="flex flex-wrap gap-x-4 border-b border-line-default py-2"
+                className="flex flex-wrap gap-x-4 border-b border-line py-2"
               >
                 <dt className="w-48 shrink-0 text-muted">{label}</dt>
                 <dd className={value ? "" : "text-faint"}>

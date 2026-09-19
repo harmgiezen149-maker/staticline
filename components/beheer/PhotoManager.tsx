@@ -124,7 +124,7 @@ export function PhotoManager({ photos }: { photos: PhotoItem[] }) {
             type="file"
             name="bestand"
             accept="image/jpeg,image/png,image/webp,image/avif"
-            className="border border-line-default bg-inset px-4 py-3 text-primary file:mr-4 file:border-0 file:bg-inset file:font-mono file:text-12 file:text-muted file:uppercase"
+            className="border border-line bg-inset px-4 py-3 text-primary file:mr-4 file:border-0 file:bg-inset file:font-mono file:text-12 file:text-muted file:uppercase"
           />
         </label>
 
@@ -136,7 +136,7 @@ export function PhotoManager({ photos }: { photos: PhotoItem[] }) {
             type="text"
             name="alt"
             placeholder="Static Line op het podium in Loburg"
-            className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
           />
         </label>
 
@@ -148,7 +148,7 @@ export function PhotoManager({ photos }: { photos: PhotoItem[] }) {
             type="text"
             name="caption"
             placeholder="Loburg 2026"
-            className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
           />
         </label>
 
@@ -180,14 +180,14 @@ function PhotoRow({ photo }: { photo: PhotoItem }) {
 
   if (state?.ok) {
     return (
-      <li className="border-b border-line-default py-2 text-muted">
+      <li className="border-b border-line py-2 text-muted">
         De foto is verwijderd.
       </li>
     );
   }
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line-default py-2">
+    <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-2">
       <span className="flex items-center gap-4">
         <Image
           src={photo.url}

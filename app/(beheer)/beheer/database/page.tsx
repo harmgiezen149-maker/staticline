@@ -40,7 +40,7 @@ export default async function DatabasePage() {
               {EXPECTED_TABLES.map((table) => (
                 <li
                   key={table}
-                  className="flex items-baseline gap-3 border-b border-line-default py-2"
+                  className="flex items-baseline gap-3 border-b border-line py-2"
                 >
                   <span
                     className={`font-mono text-11 uppercase ${

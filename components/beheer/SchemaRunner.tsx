@@ -58,7 +58,7 @@ function Result({ state }: { state: NonNullable<ActionState> }) {
         {state.results.map((entry, index) => (
           <li
             key={index}
-            className="flex flex-col gap-1 border-b border-line-default py-2"
+            className="flex flex-col gap-1 border-b border-line py-2"
           >
             <span className="flex items-baseline gap-3">
               <span

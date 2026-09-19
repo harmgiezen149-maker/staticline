@@ -52,7 +52,7 @@ export default async function BeheerPage() {
               {entries.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line-default py-2"
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line py-2"
                 >
                   <time
                     dateTime={entry.created_at}

@@ -34,7 +34,7 @@ export function BandForm({
           type="text"
           name="name"
           defaultValue={name}
-          className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+          className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
         />
       </label>
 
@@ -46,7 +46,7 @@ export function BandForm({
           name="bio"
           rows={6}
           defaultValue={bio}
-          className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+          className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
         />
       </label>
 
@@ -59,7 +59,7 @@ export function BandForm({
           name="logoUrl"
           defaultValue={logoUrl}
           placeholder="https://…"
-          className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+          className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
         />
       </label>
 

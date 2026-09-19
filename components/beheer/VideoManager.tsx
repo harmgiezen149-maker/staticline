@@ -48,7 +48,7 @@ export function VideoManager({ videos }: { videos: VideoItem[] }) {
             type="text"
             name="url"
             placeholder="https://www.youtube.com/watch?v=…"
-            className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
           />
         </label>
 
@@ -58,7 +58,7 @@ export function VideoManager({ videos }: { videos: VideoItem[] }) {
             type="text"
             name="title"
             placeholder="Loburg, 10 november 2026"
-            className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
           />
         </label>
 
@@ -89,14 +89,14 @@ function VideoRow({ video }: { video: VideoItem }) {
 
   if (state?.ok) {
     return (
-      <li className="border-b border-line-default py-2 text-muted">
+      <li className="border-b border-line py-2 text-muted">
         {video.title} is verwijderd.
       </li>
     );
   }
 
   return (
-    <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line-default py-2">
+    <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line py-2">
       <span className="flex flex-wrap items-baseline gap-x-3">
         <span>{video.title}</span>
         <span className="font-mono text-11 text-faint">{video.youtubeId}</span>

@@ -97,7 +97,7 @@ export default async function BandAppPage() {
           ) : (
             <ul className="flex flex-col">
               {data.gigs.map((gig) => (
-                <li key={gig.id} className="border-b border-line-default">
+                <li key={gig.id} className="border-b border-line">
                   <Link
                     href={`/beheer/bandapp/${gig.id}`}
                     className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3 transition-colors duration-[120ms] hover:text-accent"

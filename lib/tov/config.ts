@@ -5,6 +5,8 @@ import { join } from "node:path";
 
 import raw from "@/content/tov-config.json";
 
+import type { SourceKey } from "./factsheet";
+
 import { loadContent } from "@/lib/portal/content";
 import { storageKey } from "@/lib/portal/content-keys";
 
@@ -27,6 +29,9 @@ import { storageKey } from "@/lib/portal/content-keys";
  * blijft het bestand de versie waar je op terugvalt.
  */
 
+/** Waar de tekst over gaat, en dus welke kiezer erbij hoort. */
+export type SubjectKind = "none" | "member" | "gig" | "past_gig";
+
 export type TextType = {
   id: string;
   label: string;
@@ -34,10 +39,18 @@ export type TextType = {
   maxWordsLong?: number;
   perspective: string;
   hint: string;
+  /** Welke bronnen standaard aanstaan in de schrijfstand. */
+  sources: SourceKey[];
+  subject: SubjectKind;
 };
+
+/** Feiten over de band die niet uit de Band App komen. Zie tov-config.json. */
+export const BAND_FACTS = raw.band as { name: string; city: string };
 
 export const TEXT_TYPES = raw.textTypes as TextType[];
 export const MAX_INPUT_CHARS = raw.maxInputChars;
+/** De opdracht is kort van nature; een lange opdracht is meestal een brontekst. */
+export const MAX_BRIEF_CHARS = raw.maxBriefChars;
 export const BLOCKLIST = raw.blocklist as { nl: string[]; en: string[] };
 
 /** De sleutel waaronder een eigen tone of voice in de database staat. */
@@ -55,8 +68,16 @@ export function textTypeById(id: string): TextType | null {
  * geen lange bio bedoelt en wie er tweehonderd plakt geen korte. Honderdtwintig
  * woorden is de grens.
  */
-export function maxWordsFor(type: TextType, inputWords: number): number {
+export function maxWordsFor(
+  type: TextType,
+  inputWords: number,
+  long?: boolean,
+): number {
   if (!type.maxWordsLong) return type.maxWords;
+  // In de schrijfstand zegt de lengte van de opdracht niets over de lengte van
+  // de tekst — "schrijf een bio" is vier woorden. Daar staat daarom een knopje
+  // kort/lang, en die keuze gaat hier vóór de meting.
+  if (typeof long === "boolean") return long ? type.maxWordsLong : type.maxWords;
   return inputWords > 120 ? type.maxWordsLong : type.maxWords;
 }
 

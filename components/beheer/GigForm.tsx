@@ -91,7 +91,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
               type="date"
               name="date"
               defaultValue={gig?.date ?? ""}
-              className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+              className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
             />
           </label>
 
@@ -103,7 +103,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
               type="time"
               name="time"
               defaultValue={gig?.time ?? ""}
-              className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+              className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
             />
           </label>
         </div>
@@ -117,7 +117,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
           <select
             name="publicStatus"
             defaultValue={gig?.publicStatus ?? "announced"}
-            className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+            className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
           >
             {STATUSSEN.map((status) => (
               <option key={status.value} value={status.value}>
@@ -140,7 +140,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
           placeholder="Met support, deuren 20:00"
         />
 
-        <fieldset className="flex flex-col gap-3 border border-line-default p-4">
+        <fieldset className="flex flex-col gap-3 border border-line p-4">
           <legend className="flex flex-col">
             <span className="font-mono text-11 text-faint uppercase">
               Op de kaart
@@ -161,7 +161,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
               // Geen `name`: dit veld is een hulpmiddel en wordt niet opgeslagen.
               placeholder="https://www.google.com/maps/place/…"
               onChange={(event) => applyLink(event.target.value)}
-              className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+              className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
             />
           </label>
 
@@ -179,7 +179,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
                 value={lat}
                 onChange={(event) => setLat(event.target.value)}
                 placeholder="51.9692"
-                className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+                className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
               />
             </label>
 
@@ -194,7 +194,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
                 value={lng}
                 onChange={(event) => setLng(event.target.value)}
                 placeholder="5.6654"
-                className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+                className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
               />
             </label>
           </div>
@@ -240,7 +240,7 @@ function Field({
         name={name}
         defaultValue={value ?? ""}
         placeholder={placeholder}
-        className="border border-line-default bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
+        className="border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong"
       />
     </label>
   );
@@ -259,7 +259,7 @@ function DeleteGig({ id, title }: { id: number; title: string }) {
   );
 
   return (
-    <details className="border border-line-default p-4">
+    <details className="border border-line p-4">
       <summary className="cursor-pointer font-mono text-12 text-muted uppercase">
         Deze show verwijderen
       </summary>

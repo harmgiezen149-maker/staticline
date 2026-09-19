@@ -39,14 +39,14 @@ export function SubscriberRow({
   // het gewoon.
   if (state?.ok) {
     return (
-      <li className="border-b border-line-default py-2 text-muted">
+      <li className="border-b border-line py-2 text-muted">
         {state.message}
       </li>
     );
   }
 
   return (
-    <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line-default py-2">
+    <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line py-2">
       <span className="flex flex-wrap items-baseline gap-x-3">
         <span>{email}</span>
         <span className="font-mono text-11 text-faint uppercase">
