@@ -68,9 +68,16 @@ Die komen uit besluiten die al genomen zijn. Niet opnieuw openen in code.
   decoratieve verlopen — het enige verloop is de leesbaarheidsoverlay in de hero.
 - **Eén beweging bij het scrollen, en niet meer.** De regel was "geen scroll- of
   entree-animaties"; die is bewust verruimd tot precies dit: een blok komt 6px
-  omhoog in 160ms, en de lijn onder een sectiekop tekent zichzelf in 180ms. Klasse
-  `onthul` en `streep`, allebei in `globals.css`. Verder alleen de
-  kleurovergangen van 120ms. Geen stagger per rij, geen hero, geen besloten deel,
+  omhoog terwijl het in beeld komt, en de lijn onder een sectiekop tekent
+  zichzelf. Klasse `onthul` en `streep`, allebei in `globals.css`. Verder alleen
+  de kleurovergangen van 120ms.
+  **Het bereik bepaalt hoe dit voelt, niet een duur.** Bij een
+  voortgangstijdlijn wordt `animation-duration` genegeerd; de voortgang komt van
+  de scrollpositie. `cover 0% cover 25%` is nagemeten in Chromium en loopt over
+  ruim tweehonderd pixels midden in beeld. Een bereik op `entry` stond er eerst
+  en was fout: dat speelde zich af in de onderste negentig pixels van het
+  scherm, waar niemand kijkt, en was klaar voordat je het blok kon lezen. Verander
+  dit bereik niet op gevoel — meet het na. Geen stagger per rij, geen hero, geen besloten deel,
   geen formuliervelden — dat is precies het handschrift waar de eerste mockup op
   afgerekend werd. Het gaat via scroll-gestuurde CSS en niet via een
   IntersectionObserver: nul kilobyte JavaScript, en elke sectie blijft een

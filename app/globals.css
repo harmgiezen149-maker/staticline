@@ -188,12 +188,20 @@
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .onthul {
-      animation: sl-onthul 160ms cubic-bezier(0.2, 0, 0, 1) both;
+      animation: sl-onthul cubic-bezier(0.2, 0, 0, 1) both;
       animation-timeline: view();
-      /* Klaar als het blok voor 30% binnen is. Wat bij het laden al in beeld
-         staat, is de reeks voorbij en staat er dus meteen — de hero en de
-         eerstvolgende sectie hoeven geen uitzondering te zijn. */
-      animation-range: entry 0% entry 30%;
+      /* Het bereik bepaalt hoe dit voelt, niet een duur: bij een
+         voortgangstijdlijn wordt `animation-duration` genegeerd en komt de
+         voortgang van de scrollpositie. Een duur meegeven suggereert een
+         besturing die er niet is.
+         `entry 0% entry 30%` stond hier eerst en was fout: nagemeten in Chromium
+         liep die van 811px tot 750px vanaf de bovenkant van het scherm — het
+         hele effect speelde zich af in de onderste negentig pixels, waar niemand
+         kijkt, en tegen de tijd dat je het blok kon lezen was het klaar.
+         `cover 0% cover 25%` loopt van 815px tot 570px: ruim tweehonderd pixels,
+         midden in beeld. Wat bij het laden al in beeld staat, is het bereik
+         voorbij en staat er meteen — de hero hoeft geen uitzondering te zijn. */
+      animation-range: cover 0% cover 25%;
     }
 
     /* De lijn onder een sectiekop tekent zichzelf van links naar rechts.
@@ -216,9 +224,11 @@
       height: var(--streep-dikte, 1px);
       background: var(--streep-kleur, currentColor);
       transform-origin: left center;
-      animation: sl-streep 180ms cubic-bezier(0.2, 0, 0, 1) both;
+      animation: sl-streep cubic-bezier(0.2, 0, 0, 1) both;
       animation-timeline: view();
-      animation-range: entry 0% entry 35%;
+      /* Iets later klaar dan het blok zelf, zodat de lijn zich trekt terwijl de
+         kop al leesbaar is in plaats van ervoor. */
+      animation-range: cover 0% cover 32%;
     }
   }
 }
