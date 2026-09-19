@@ -83,7 +83,9 @@ export function TovForm({
 
         <div className="flex flex-col gap-1">
           <span className={LABEL}>Wat wil je doen</span>
-          <div className="flex flex-wrap gap-0">
+          {/* Op een telefoon onder elkaar en allebei even breed; vanaf tablet
+              naast elkaar op hun eigen breedte, randen tegen elkaar aan. */}
+          <div className="flex flex-col sm:flex-row">
             {(
               [
                 ["rewrite", "Herschrijven", "Je hebt al een tekst"],

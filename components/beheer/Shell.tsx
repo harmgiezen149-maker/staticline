@@ -32,7 +32,13 @@ export function Shell({ session, title, children }: Props) {
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-line">
         <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <nav className="flex items-center gap-6">
+          {/* Wrappen, niet scrollen. Acht items passen op een telefoon nooit op
+              één regel; zonder `flex-wrap` werd de balk breder dan het scherm en
+              schoof de hele pagina mee, zodat de inhoud niet meer in dezelfde
+              kolom stond. Een zijwaarts schuivende balk was het alternatief, maar
+              die verbergt waar je heen kunt — en dit deel wordt backstage op een
+              telefoon gebruikt, waar je niet wilt zoeken. */}
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6">
             {LINKS.map((link) => (
               <Link
                 key={link.href}
