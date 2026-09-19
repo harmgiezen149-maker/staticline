@@ -1,0 +1,65 @@
+{
+  "_": "Lengtelimieten en verboden woorden voor de herschrijfmodule. Los van de code, zodat ze aan te passen zijn zonder dat er iemand aan de module hoeft te komen. Houd ze in de pas met content/tone-of-voice.md — de blocklist volgt de Niet-lijsten daaruit.",
+  "maxInputChars": 4000,
+  "textTypes": [
+    {
+      "id": "bio",
+      "label": "Bio / Over ons",
+      "maxWords": 90,
+      "maxWordsLong": 200,
+      "perspective": "wij",
+      "hint": "Wie en waar, wat we spelen, wat je live krijgt, hoe je ons boekt."
+    },
+    {
+      "id": "show_news",
+      "label": "Show of nieuws",
+      "maxWords": 60,
+      "perspective": "wij",
+      "hint": "Datum, plek, tijd en kaartjes eerst. Daarna hooguit één droge zin."
+    },
+    {
+      "id": "social",
+      "label": "Social post",
+      "maxWords": 40,
+      "perspective": "wij",
+      "hint": "Eén moment, één gedachte. Hashtags aan het eind."
+    },
+    {
+      "id": "booking_email",
+      "label": "Boekingsmail",
+      "maxWords": 140,
+      "perspective": "wij",
+      "hint": "Wie we zijn in twee zinnen, waarom dit podium, wat we sturen, wat je nodig hebt."
+    },
+    {
+      "id": "one_sheet",
+      "label": "One-sheet",
+      "maxWords": 180,
+      "perspective": "derde persoon",
+      "hint": "Derde persoon, feitelijk, invloeden, korte bio, contact."
+    },
+    {
+      "id": "press_release",
+      "label": "Persbericht",
+      "maxWords": 300,
+      "perspective": "derde persoon",
+      "hint": "Kop, lead, kern, citaat van een bandlid, feiten en contact."
+    }
+  ],
+  "blocklist": {
+    "nl": [
+      "unieke", "uniek", "passie", "gepassioneerd", "meeslepend", "authentiek",
+      "ontdek", "duik in", "reis", "sonisch", "veelbelovend", "opkomende",
+      "niet te missen", "geweldig", "episch", "verheugd",
+      "trots om aan te kondigen", "een verrassende mix van", "in de wereld van",
+      "nemen je mee", "blijf op de hoogte", "rauwe energie", "de beste"
+    ],
+    "en": [
+      "passionate", "unique", "journey", "sonic", "immersive", "dive into",
+      "delve", "electrifying", "epic", "raw energy", "unforgettable",
+      "must-see", "up-and-coming", "thrilled to announce", "proud to announce",
+      "a unique blend of", "in the world of", "take you on", "stay tuned",
+      "banger", "killer", "unmissable", "the best"
+    ]
+  }
+}

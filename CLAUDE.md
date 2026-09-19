@@ -211,7 +211,8 @@ sleutel ontbreekt.
 | `PORTAL_ADMINS` + `PORTAL_MEMBERS` | kommalijsten met wie er in het besloten deel mag |
 | `BLOB_READ_WRITE_TOKEN` | de Vercel Blob-opslag voor de foto's; Vercel zet deze zelf zodra je een Blob-store koppelt |
 | `SITE_API_TOKEN` | schrijven naar de Band App vanuit `/beheer/bandapp`; dezelfde waarde moet bij béíde Vercel-projecten staan |
-| `ANTHROPIC_API_KEY` | de teksten uit de Band App naar het Engels vertalen in `/beheer/vertalingen`; zonder deze kan het nog met de hand |
+| `ANTHROPIC_API_KEY` | de teksten uit de Band App naar het Engels vertalen in `/beheer/vertalingen`, en de herschrijfmodule op `/beheer/tov`; zonder deze kan het vertalen nog met de hand |
+| `TOV_MODEL` | optioneel; welk model de herschrijfmodule gebruikt, standaard `claude-opus-5` |
 
 De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
 gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel
@@ -239,6 +240,15 @@ geen Engels, en dit is pagina-inhoud. Bij elke vertaling staat een hash van de
 Nederlandse brontekst. Wijzigt het origineel, dan geldt de vertaling als verouderd
 en toont de site het Nederlands — liever een Nederlandse zin op een Engelse pagina
 dan een Engelse zin die iets anders beweert.
+
+De tone of voice staat in `content/tone-of-voice.md`, met een versienummer, en
+de lengtelimieten en de blocklist in `content/tov-config.json`. Allebei los van de
+code, zodat de toon bij te stellen is zonder dat er iemand aan de module hoeft te
+komen; het markdownbestand staat daarom in `outputFileTracingIncludes`. Staat er
+een eigen versie in de database, dan wint die. `/beheer/tov` is open voor elk
+bandlid en niet alleen de beheerder, en `/api/tov` doet hetzelfde voor de pagina
+in de Band App — één implementatie, zodat de blocklist en de checklist niet uit
+de pas kunnen lopen met de tone of voice.
 
 Foto's gaan naar Vercel Blob. De browser uploadt daar rechtstreeks heen en deze
 site geeft er alleen een kortlopende sleutel voor af — een serverloze functie op

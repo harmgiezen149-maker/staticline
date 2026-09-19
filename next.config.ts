@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
    */
   outputFileTracingIncludes: {
     "/beheer/database": ["./db/**/*.sql"],
+    // De tone of voice wordt als markdownbestand van schijf gelezen; zie
+    // lib/tov/config.ts. Next traceert alleen wat het in de code ziet staan.
+    "/beheer/tov": ["./content/tone-of-voice.md"],
+    "/api/tov": ["./content/tone-of-voice.md"],
   },
 
   images: {
