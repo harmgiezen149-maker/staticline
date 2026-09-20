@@ -446,7 +446,7 @@ Vercel bij het `staticline`-project en deploy opnieuw.
 
 ### Wat het kost
 
-Zo goed als niets. Het gaat om een bandbio en vier ledenteksten, en alleen wat
+Zo goed als niets. Het gaat om een bandbio en een tekst per lid, en alleen wat
 ontbreekt of verouderd is wordt opnieuw vertaald. De hele band in één keer zit in
 de orde van twee cent.
 

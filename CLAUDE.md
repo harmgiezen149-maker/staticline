@@ -198,12 +198,15 @@ in de Band App iets anders bleek:
 
 - **De eerste show is Loburg op 10 november 2026**, niet Doornroosje in Nijmegen.
   Dat laatste stond in de briefing en in het ontwerp, maar staat niet in de agenda.
-- **De band heeft vier leden**: Harm Giezen (bas), Vedran (leadzang), Niels Verdel
-  (drums), Quinten van Dreven (ritmegitaar). Het ontwerp zei "Drie man". De copy
-  noemt daarom geen aantal meer.
-- **Het is een coverband** — negentien nummers, allemaal van anderen. Er staat
-  nergens "releaseshow"; de statuswaarde `release` bestaat wel in het model maar
-  wordt niet gebruikt.
+- **De bezetting staat in de Band App en verandert.** Het ontwerp zei "Drie man";
+  dat klopte al niet toen de site gebouwd werd, en inmiddels is het aantal weer
+  anders. Noem daarom nergens een aantal — niet in de copy, niet in een
+  opmerking, niet hier. Wie er speelt komt uit `/api/public` en wordt op geen
+  enkele plek overgeschreven.
+- **Het is een coverband**: de setlist is werk van anderen. Ook die staat in de
+  Band App en groeit, dus ook daar geen aantal noemen. Er staat nergens
+  "releaseshow"; de statuswaarde `release` bestaat wel in het model maar wordt
+  niet gebruikt.
 - Bandbio, bandlogo en fotografie ontbreken nog. De fotosectie toont zolang de
   benoemde placeholders uit het ontwerp.
 

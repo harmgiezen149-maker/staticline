@@ -1,8 +1,8 @@
 /**
  * Wie er in het besloten deel mag, en met welke rechten.
  *
- * Geen gebruikerstabel. De band heeft vier leden en dat aantal verandert zelden;
- * twee omgevingsvariabelen in Vercel zijn daarvoor sneller te beheren dan een
+ * Geen gebruikerstabel. Dit zijn een handvol adressen die zelden wijzigen; twee
+ * omgevingsvariabelen in Vercel zijn daarvoor sneller te beheren dan een
  * uitnodigingsstroom met een eigen scherm, en er is niets te lekken omdat er geen
  * wachtwoorden zijn.
  *

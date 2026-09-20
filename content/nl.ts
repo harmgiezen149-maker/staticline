@@ -7,8 +7,9 @@ import type { Copy } from "./types";
  * veranderd ten opzichte van het ontwerp, allebei omdat de werkelijkheid anders
  * bleek:
  *
- * - De subkop noemde "Drie man, geen omweg". Er staan vier leden in de Band App,
- *   en de bezetting kan wijzigen; de tekst noemt daarom geen aantal meer.
+ * - De subkop noemde "Drie man, geen omweg". De bezetting staat in de Band App en
+ *   verandert; geen enkele tekst hier noemt daarom een aantal. Wie er speelt komt
+ *   uit die app en wordt nergens overgeschreven.
  * - Het ontwerp presenteerde de eerste show als releaseshow met support. Dat is
  *   niet wat er speelt, en de band speelt covers. De copy blijft daarom open,
  *   zodat er niets herschreven hoeft te worden zodra er eigen werk is.
@@ -92,7 +93,7 @@ export const nl: Copy = {
     intro: "",
     members: "Bandleden",
     bioEmpty:
-      "De bandtekst wordt nog geschreven. Tot die tijd: vier man, gitaren te hard, en een voorkeur voor nummers uit de jaren negentig die nog steeds pijn doen.",
+      "De bandtekst wordt nog geschreven. Tot die tijd: gitaren te hard, en een voorkeur voor nummers uit de jaren negentig die nog steeds pijn doen.",
     membersEmpty: "De bezetting wordt nog ingevuld.",
     noRole: "Bandlid",
     more: "Meer over de band",

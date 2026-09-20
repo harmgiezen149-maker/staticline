@@ -29,7 +29,7 @@ import Anthropic from "@anthropic-ai/sdk";
  */
 const MODEL = "claude-opus-5";
 
-/** Ruim voor een bandbio met vier ledenteksten erbij. */
+/** Ruim voor een bandbio met de ledenteksten erbij, hoeveel leden het er ook zijn. */
 const MAX_TOKENS = 8000;
 
 const SYSTEM = `Je vertaalt teksten van een Nederlandse rockband naar het Engels voor hun website.
