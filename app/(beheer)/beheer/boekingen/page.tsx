@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Shell } from "@/components/beheer/Shell";
+import { syncStatuses } from "@/lib/portal/booking-sync";
 import {
   type Status,
   STATUSES,
@@ -41,12 +42,32 @@ export default async function BoekingenPage({
     ? params.status
     : undefined;
 
+  /**
+   * Eerst bijtrekken wat er in de Band App staat, dan pas lezen.
+   *
+   * Daar handelt de band een aanvraag af, dus daar staat de echte stand. Deze
+   * volgorde is niet vrijblijvend: de lijst hieronder filtert en telt met SQL,
+   * en een filter op "nieuw" zou anders aanvragen tonen die daar allang geboekt
+   * zijn. Zie lib/portal/booking-sync.ts.
+   */
+  const sync = await syncStatuses();
+
   const [bookings, totals] = await Promise.all([list(filter), counts()]);
   const all = Object.values(totals).reduce((sum, n) => sum + n, 0);
 
   return (
     <Shell session={session} title="Boekingen">
       <div className="flex flex-col gap-6">
+        {/* Alleen als er iets mis is. Een regel die er altijd staat om te melden
+            dat alles goed gaat, leest niemand nog na een week. */}
+        {sync.state === "onbereikbaar" && (
+          <p className="border border-line-strong px-4 py-3 text-muted">
+            De Band App is niet bereikbaar, dus dit is de laatst bekende stand.
+            Een aanvraag die daar net afgehandeld is, kan hier nog op een oudere
+            status staan.
+          </p>
+        )}
+
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
           <Filter href="/beheer/boekingen" active={!filter} label="Alles" count={all} />
           {STATUSES.map((status) => (

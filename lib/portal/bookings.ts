@@ -38,6 +38,15 @@ export type Booking = {
   status: string;
   note: string;
   forwarded: boolean;
+  /**
+   * Het id van dezelfde aanvraag in de Band App, of `null`.
+   *
+   * Gevuld betekent: die app is de baas over `status` hierboven, en wat hier
+   * staat is een afspiegeling. Leeg betekent: deze aanvraag heeft de Band App
+   * nooit bereikt, of kwam binnen voordat die koppeling bestond — dan is de
+   * stand hier de enige die er is. Zie booking-sync.ts.
+   */
+  band_app_id: number | null;
   created_at: string;
   updated_at: string | null;
   updated_by: string;
@@ -45,7 +54,7 @@ export type Booking = {
 
 const COLUMNS = `id, kind, name, email, phone, wanted_date, location, wanted_time,
   duration, event_type, budget, room_size, parking, backstage, pa, message,
-  status, note, forwarded, created_at, updated_at, updated_by`;
+  status, note, forwarded, band_app_id, created_at, updated_at, updated_by`;
 
 /**
  * De aanvragen, nieuwste eerst.
@@ -139,5 +148,53 @@ export async function update(
   } catch (error) {
     console.error("[beheer] aanvraag niet bijgewerkt:", error);
     return false;
+  }
+}
+
+/**
+ * De aanvragen die aan de Band App gekoppeld zijn, met hun huidige stand hier.
+ *
+ * Alleen de drie velden die de synchronisatie nodig heeft. Een volledige lijst
+ * ophalen om er drie kolommen uit te gebruiken is zonde bij elk beheerscherm dat
+ * geopend wordt.
+ */
+export async function linked(): Promise<
+  { id: number; band_app_id: number; status: string }[]
+> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  try {
+    return (await sql`
+      SELECT id, band_app_id, status
+      FROM booking_submissions
+      WHERE band_app_id IS NOT NULL
+    `) as { id: number; band_app_id: number; status: string }[];
+  } catch (error) {
+    console.error("[beheer] koppelingen niet gelezen:", error);
+    return [];
+  }
+}
+
+/**
+ * De afspiegeling van de stand bijwerken.
+ *
+ * Alleen de stand, en bewust zonder `updated_at` en `updated_by`: dit is geen
+ * wijziging van een mens op dit scherm, het is het overnemen van wat er in de
+ * Band App staat. Die twee kolommen horen te blijven wijzen naar wie hier voor
+ * het laatst iets deed.
+ */
+export async function mirrorStatus(id: number, status: Status): Promise<void> {
+  const sql = getDb();
+  if (!sql) return;
+
+  try {
+    await sql`
+      UPDATE booking_submissions
+      SET status = ${status}, handled = ${status !== "new"}
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    console.error("[beheer] stand niet overgenomen:", error);
   }
 }

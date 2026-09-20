@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { pushStatus } from "@/lib/portal/booking-sync";
 import { type Status, isStatus } from "@/lib/portal/booking-status";
-import { update } from "@/lib/portal/bookings";
+import { get, update } from "@/lib/portal/bookings";
 import { log } from "@/lib/portal/audit";
 import { getSession } from "@/lib/portal/session";
 
@@ -39,6 +40,27 @@ export async function saveBooking(
     return { ok: false, message: "Onbekende status." };
   }
 
+  const booking = await get(id);
+  if (!booking) {
+    return { ok: false, message: "Onbekende aanvraag." };
+  }
+
+  /**
+   * Eerst de Band App, dan pas hier.
+   *
+   * Daar staat de stand waar de band naar kijkt; deze site volgt. Andersom
+   * opslaan zou opleveren wat deze koppeling juist moet voorkomen: een aanvraag
+   * die hier op "geboekt" staat en daar nog op "nieuw".
+   *
+   * Is de aanvraag niet gekoppeld — nooit aangekomen, of binnengekomen voordat
+   * deze koppeling bestond — dan is de stand hier de enige die er is, en wordt
+   * hij hier gewoon opgeslagen.
+   */
+  if (booking.band_app_id !== null && status !== booking.status) {
+    const pushed = await pushStatus(booking.band_app_id, status as Status);
+    if (!pushed.ok) return { ok: false, message: pushed.message };
+  }
+
   const saved = await update(id, status as Status, note, session.email);
   if (!saved) {
     return { ok: false, message: "Opslaan mislukt. Kijk in de logs van Vercel." };
@@ -48,7 +70,7 @@ export async function saveBooking(
     actor: session.email,
     action: "booking.update",
     subject: String(id),
-    detail: `status ${status}`,
+    detail: `status ${status}${booking.band_app_id !== null ? ", ook in de Band App" : ""}`,
   });
 
   // De lijst en dit scherm tonen allebei de status, dus allebei verversen.

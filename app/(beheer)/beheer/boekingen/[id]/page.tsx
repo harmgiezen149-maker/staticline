@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { BookingEditor } from "@/components/beheer/BookingEditor";
 import { Shell } from "@/components/beheer/Shell";
 import { getCopy } from "@/content";
+import { syncStatuses } from "@/lib/portal/booking-sync";
 import { type Status, STATUS_LABELS, get } from "@/lib/portal/bookings";
 import { getSession } from "@/lib/portal/session";
 
@@ -33,6 +34,11 @@ export default async function AanvraagPage({
 }: PageProps<"/beheer/boekingen/[id]">) {
   const session = await getSession();
   if (!session) redirect("/beheer/login");
+
+  // Ook hier bijtrekken en niet alleen op de lijst: dit adres is los te
+  // openen, uit een bladwijzer of een link. Dan hoort er te staan wat de band
+  // ziet, niet wat hier het laatst bewaard werd.
+  const sync = await syncStatuses();
 
   // In Next 16 is params een promise.
   const { id } = await params;
@@ -89,6 +95,23 @@ export default async function AanvraagPage({
               hier.
             </p>
           )}
+          {/* Waar de status vandaan komt. Dat is geen detail: het bepaalt of een
+              wijziging hier ook in de app zichtbaar wordt, en of de band met
+              hetzelfde postvak werkt als jij. */}
+          {booking.band_app_id === null ? (
+            booking.forwarded && (
+              <p className="text-muted">
+                Deze aanvraag is niet gekoppeld aan de Band App — hij kwam binnen
+                voordat die koppeling bestond. De status hieronder geldt alleen
+                hier; in de app heeft hij zijn eigen stand.
+              </p>
+            )
+          ) : sync.state === "onbereikbaar" ? (
+            <p className="text-muted">
+              De Band App is niet bereikbaar, dus dit is de laatst bekende status.
+              Wijzigen kan nu niet.
+            </p>
+          ) : null}
         </section>
 
         <section className="flex flex-col gap-3">

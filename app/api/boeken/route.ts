@@ -68,13 +68,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "captcha" }, { status: 400 });
   }
 
-  const forwarded = await forwardToBandApp(booking);
-  const stored = await store(booking, forwarded);
+  // Het id dat de Band App teruggeeft gaat mee de database in. Daarmee praten
+  // de twee schermen daarna over dezelfde aanvraag en kan de stand op één plek
+  // staan; zie lib/portal/booking-sync.ts.
+  const bandAppId = await forwardToBandApp(booking);
+  const stored = await store(booking, bandAppId);
 
   // Alleen als allebei mislukt is, is de aanvraag echt weg. Dan hoort de
   // bezoeker dat te weten, zodat hij kan mailen in plaats van te denken dat het
   // gelukt is.
-  if (!forwarded && !stored) {
+  if (bandAppId === null && !stored) {
     return NextResponse.json({ error: "upstream" }, { status: 502 });
   }
 
@@ -89,8 +92,12 @@ export async function POST(request: Request) {
  *
  * Dit is de stap die telt voor de band: daar krijgen ze de pushmelding. Gooit
  * niet, maar meldt of het gelukt is — de aanroeper beslist wat dat betekent.
+ *
+ * Geeft het id terug dat de aanvraag daar gekregen heeft, of `null` als het niet
+ * gelukt is. Dat id is de koppeling tussen de twee kopieën: zonder komt de stand
+ * er weer los van te staan, en dat was precies het probleem.
  */
-async function forwardToBandApp(booking: Booking): Promise<boolean> {
+async function forwardToBandApp(booking: Booking): Promise<number | null> {
   try {
     const res = await fetch(`${BAND_APP_URL}/api/booking`, {
       method: "POST",
@@ -110,17 +117,23 @@ async function forwardToBandApp(booking: Booking): Promise<boolean> {
 
     if (!res.ok) {
       console.error(`[boeken] de Band App gaf ${res.status}`);
-      return false;
+      return null;
     }
-    return true;
+
+    const data = (await res.json().catch(() => ({}))) as { id?: unknown };
+    const id = Number(data.id);
+    // Een oudere Band App geeft alleen `{ ok: true }` terug. Dan is de aanvraag
+    // daar wel aangekomen — dat is het belangrijkste — maar is er niets om aan
+    // te koppelen, en houdt deze site zijn eigen stand bij.
+    return Number.isInteger(id) && id > 0 ? id : null;
   } catch (error) {
     console.error("[boeken] de Band App is niet bereikbaar:", error);
-    return false;
+    return null;
   }
 }
 
 /** De volledige aanvraag opslaan. Geeft false als er geen database is of het misging. */
-async function store(booking: Booking, forwarded: boolean): Promise<boolean> {
+async function store(booking: Booking, bandAppId: number | null): Promise<boolean> {
   const sql = getDb();
 
   if (!sql) {
@@ -134,13 +147,14 @@ async function store(booking: Booking, forwarded: boolean): Promise<boolean> {
     await sql`
       INSERT INTO booking_submissions
         (kind, name, email, phone, wanted_date, location, wanted_time, duration,
-         event_type, budget, room_size, parking, backstage, pa, message, forwarded)
+         event_type, budget, room_size, parking, backstage, pa, message,
+         forwarded, band_app_id)
       VALUES
         (${booking.kind}, ${booking.name}, ${booking.email}, ${booking.phone},
          ${booking.date}, ${booking.location}, ${booking.time}, ${booking.duration},
          ${booking.eventType}, ${booking.budget}, ${booking.roomSize},
          ${booking.parking}, ${booking.backstage}, ${booking.pa},
-         ${booking.message}, ${forwarded})
+         ${booking.message}, ${bandAppId !== null}, ${bandAppId})
     `;
     return true;
   } catch (error) {

@@ -26,3 +26,37 @@ export const STATUS_LABELS: Record<Status, string> = {
 export function isStatus(value: unknown): value is Status {
   return (STATUSES as readonly unknown[]).includes(value);
 }
+
+/**
+ * Welke aanvragen een andere stand blijken te hebben in de Band App.
+ *
+ * Het rekenwerk van lib/portal/booking-sync.ts, hier apart omdat die module
+ * `server-only` importeert en de database aanraakt — dezelfde splitsing als bij
+ * seal.ts en mail-html.ts. Wat de moeite van een test waard is, hoort niet vast
+ * te zitten aan een module die alleen op de server kan bestaan.
+ *
+ * Twee gevallen worden bewust overgeslagen:
+ *
+ * - **Een id dat niet terugkwam.** Dan bestaat de aanvraag daar niet meer; hij
+ *   is in de Band App weggegooid. Deze site is het archief en hoort niet mee te
+ *   verdwijnen, dus de stand hier blijft staan.
+ * - **Een stand die deze site niet kent.** Een nieuwere Band App zou er een bij
+ *   kunnen krijgen. Die overnemen zou een waarde in de database zetten waar het
+ *   scherm hier geen label voor heeft.
+ */
+export function changedStatuses(
+  rows: { id: number; band_app_id: number; status: string }[],
+  statuses: Record<number, string>,
+): { id: number; status: Status }[] {
+  const uitkomst: { id: number; status: Status }[] = [];
+
+  for (const row of rows) {
+    const daar = statuses[row.band_app_id];
+    if (daar === undefined) continue;
+    if (!isStatus(daar)) continue;
+    if (daar === row.status) continue;
+    uitkomst.push({ id: row.id, status: daar });
+  }
+
+  return uitkomst;
+}

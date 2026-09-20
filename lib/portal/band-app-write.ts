@@ -128,3 +128,50 @@ export async function write(
     return { ok: false, error: "unreachable" };
   }
 }
+
+/**
+ * De stand van een aantal boekingsaanvragen, zoals de Band App hem kent.
+ *
+ * De Band App is de baas over die stand. Daar komt de pushmelding binnen en
+ * daar kijkt de band; deze site bewaart het uitgebreide archief maar volgt de
+ * stand. Zie lib/portal/booking-sync.ts voor hoe dat samenkomt.
+ *
+ * `null` als de Band App niet bereikbaar is of de koppeling niet ingesteld is.
+ * De aanroeper laat dan de laatst bekende stand staan — een beheerscherm dat
+ * leeg blijft omdat een andere applicatie hapert, is erger dan een scherm met
+ * een regel eronder dat het even niet ververst kon worden.
+ */
+export async function fetchBookingStatuses(
+  ids: number[],
+): Promise<Record<number, string> | null> {
+  if (!writeConfigured() || ids.length === 0) return null;
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/site`, {
+      method: "POST",
+      headers: headers(),
+      cache: "no-store",
+      body: JSON.stringify({ action: "booking.statuses", ids }),
+    });
+
+    if (!res.ok) {
+      console.error(`[band-app] booking.statuses gaf ${res.status}`);
+      return null;
+    }
+
+    const data = (await res.json()) as { statuses?: Record<string, string> };
+    if (!data?.statuses || typeof data.statuses !== "object") {
+      console.error("[band-app] booking.statuses gaf een onverwachte vorm");
+      return null;
+    }
+
+    // De sleutels komen als tekst uit JSON; hier weer als getal, zodat de
+    // aanroeper met het id uit de database kan opzoeken.
+    return Object.fromEntries(
+      Object.entries(data.statuses).map(([id, status]) => [Number(id), String(status)]),
+    );
+  } catch (error) {
+    console.error("[band-app] booking.statuses niet bereikbaar:", error);
+    return null;
+  }
+}

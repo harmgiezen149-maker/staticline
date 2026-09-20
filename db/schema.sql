@@ -180,3 +180,21 @@ CREATE TABLE IF NOT EXISTS site_media (
 
 CREATE INDEX IF NOT EXISTS site_media_kind_idx
   ON site_media (kind, sort_order, id);
+
+-- De koppeling met de Band App, per aanvraag.
+--
+-- Elke aanvraag wordt doorgestuurd naar de Band App; daar krijgt de band de
+-- pushmelding. Tot nu toe was dat eenrichtingsverkeer en hield elke kant zijn
+-- eigen stand bij: zette je een aanvraag daar op "geboekt", dan stond hij hier
+-- nog op "nieuw". Twee postvakken die niet van elkaar weten.
+--
+-- Nu geeft /api/booking daar het id van de nieuwe rij terug en staat dat
+-- hieronder. Daarmee praten de twee schermen over dezelfde aanvraag, en is de
+-- Band App de baas over de stand — `status` hierboven is sindsdien een
+-- afspiegeling, bijgewerkt zodra het beheerscherm geopend wordt.
+--
+-- Leeg betekent: niet gekoppeld. Dat geldt voor aanvragen die binnenkwamen
+-- voordat deze kolom bestond, en voor aanvragen die de Band App nooit bereikt
+-- hebben. Die houden hun eigen stand, hier bij te werken.
+ALTER TABLE booking_submissions
+  ADD COLUMN IF NOT EXISTS band_app_id bigint;

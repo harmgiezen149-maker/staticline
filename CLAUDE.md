@@ -46,6 +46,19 @@ en `publicFields` zijn dezelfde helpers die zijn eigen schermen gebruiken, zodat
 `mon`/`day`/`time`/`past` niet uit de pas kunnen lopen met `startsAt`. Deze site
 stuurt alleen wat de beheerder invulde. Zet die logica nooit aan deze kant.
 
+**De stand van een boekingsaanvraag staat in de Band App, niet hier.** Een
+aanvraag via het formulier wordt hier bewaard met alle elf velden — dat is het
+archief — én doorgestuurd naar de Band App, waar de band er een pushmelding van
+krijgt. Die twee hielden allebei hun eigen status bij en liepen stil uit elkaar.
+Nu geeft `/api/booking` daar het id van de nieuwe rij terug, staat dat in
+`booking_submissions.band_app_id`, en is de kolom `status` hier een afspiegeling:
+`/beheer/boekingen` haalt hem op vóór het lezen en schrijft eerst naar de Band App
+voordat hij hier opslaat. Zie `lib/portal/booking-sync.ts`. Draai die volgorde
+niet om — dan ontstaat precies weer het verschil dat dit moest oplossen.
+
+Aanvragen zonder `band_app_id` zijn niet gekoppeld: ze kwamen binnen voordat deze
+koppeling bestond, of hebben de Band App nooit bereikt. Die houden hun eigen stand.
+
 Moet er een veld bij in de Band App? Dan een **PR op band-app**, strikt additief
 (nieuwe kolommen met een default, nooit hernoemen of verwijderen), met
 `npm run check:schema` gedraaid. Nooit rechtstreeks naar `main` daar: één push
