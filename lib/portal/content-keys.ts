@@ -70,14 +70,17 @@ export const SOCIAL_KEYS: SettingKey[] = [
 
 export const SPOTIFY_KEYS: SettingKey[] = [
   {
-    key: "spotify.type",
-    label: "Soort",
-    hint: "artist, album of playlist",
+    key: "spotify.id",
+    label: "Link",
+    hint: "Plak de deellink van Spotify, bijvoorbeeld https://open.spotify.com/artist/…",
   },
   {
-    key: "spotify.id",
-    label: "Id",
-    hint: "Het stuk achter de laatste schuine streep in de deellink",
+    // Blijft staan voor wie hier ooit een kaal id invulde. Staat er een link in
+    // het veld hierboven, dan wint het soort uit die link — anders levert een
+    // albumlink met "artist" eronder een embed op die niet laadt.
+    key: "spotify.type",
+    label: "Soort, als je hierboven alleen een id plakte",
+    hint: "artist, album of playlist",
   },
 ];
 

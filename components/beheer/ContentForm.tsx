@@ -93,7 +93,7 @@ export function ContentForm({
 
       <Settings
         title="Spotify"
-        intro="Uit de deellink van het artiestenprofiel. Laat het id leeg om de Spotify-sectie weg te laten."
+        intro="Plak de deellink van Spotify. Laat het veld leeg om de Spotify-sectie weg te laten."
         fields={SPOTIFY_KEYS}
         values={values}
       />

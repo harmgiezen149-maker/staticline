@@ -13,6 +13,7 @@ import wordmarkFile from "@/public/assets/staticline-wordmark.png";
 
 import type { BandAppMember, BandAppPublic } from "./band-app";
 import type { Locale } from "./i18n";
+import { parseSpotify, type SpotifyRef } from "./spotify";
 import { loadContent, loadMedia } from "./portal/content";
 import { type ImageSlot, storageKey } from "./portal/content-keys";
 import { loadTranslations, pick } from "./portal/translations";
@@ -59,25 +60,23 @@ export async function getVideos(): Promise<{ id: string; title: string }[]> {
   return rows.map((row) => ({ id: row.url, title: row.alt }));
 }
 
-const SPOTIFY_TYPES = ["artist", "album", "playlist"] as const;
-type SpotifyType = (typeof SPOTIFY_TYPES)[number];
-
-export async function getSpotify(): Promise<{
-  type: SpotifyType;
-  id: string;
-} | null> {
+/**
+ * Wat er in de Spotify-sectie geladen wordt.
+ *
+ * Het veld wordt gelezen en niet letterlijk overgenomen. Er stond "het stuk
+ * achter de laatste schuine streep", en wie daar de hele deellink in plakt —
+ * wat iedereen doet — kreeg een embed met "Page not found" op de muziekpagina.
+ * Zie lib/spotify.ts.
+ *
+ * Komt er niets bruikbaars uit, dan blijft de sectie weg. Dat is beter dan een
+ * kader met een foutmelding van Spotify erin.
+ */
+export async function getSpotify(): Promise<SpotifyRef | null> {
   const content = await loadContent();
-  const id = content[storageKey("spotify.id")]?.trim();
-  if (!id) return codeSpotify;
+  const raw = content[storageKey("spotify.id")]?.trim();
+  if (!raw) return codeSpotify;
 
-  const raw = content[storageKey("spotify.type")]?.trim();
-  // Iets anders dan de drie bekende soorten zou een embed opleveren die niet
-  // laadt. Dan liever een artiest, dat is verreweg het gewone geval.
-  const type = (SPOTIFY_TYPES as readonly string[]).includes(raw ?? "")
-    ? (raw as SpotifyType)
-    : "artist";
-
-  return { type, id };
+  return parseSpotify(raw, content[storageKey("spotify.type")]?.trim());
 }
 
 export async function getSocials(): Promise<{

@@ -53,14 +53,30 @@ export function ShowMap({ shows }: { shows: Show[] }) {
         attributionControl: true,
       });
 
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        {
-          maxZoom: 19,
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        },
-      ).addTo(map);
+      /**
+       * De tegels.
+       *
+       * Hier stond `basemaps.cartocdn.com/dark_all`. Dat was jarenlang gratis,
+       * maar CARTO vraagt er inmiddels een sleutel voor en drukt zonder die
+       * sleutel "API KEY REQUIRED" dwars over elke tegel — op de publieke
+       * agendapagina. Een kaart met een watermerk erover is erger dan geen kaart.
+       *
+       * Nu de gewone tegels van OpenStreetMap, die geen sleutel vragen. Die zijn
+       * licht, en dit ontwerp kent geen lichte vlakken; ze worden daarom in de
+       * browser donker gemaakt met een filter op de tegellaag (zie
+       * `.kaart-donker` in globals.css). Het filter zit op de laag en niet op de
+       * kaart, zodat de speld zijn accentkleur houdt.
+       *
+       * Geen sleutel in een omgevingsvariabele: de kaart is een extraatje naast
+       * de lijst erboven, en een extraatje hoort niet stuk te gaan omdat iemand
+       * vergeten is iets in te vullen.
+       */
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        className: "kaart-donker",
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
 
       const icon = L.divIcon({
         className: "",

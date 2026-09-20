@@ -232,3 +232,22 @@
     }
   }
 }
+
+/**
+ * De kaarttegels donker maken.
+ *
+ * De tegels van OpenStreetMap zijn licht, en dit ontwerp kent geen lichte
+ * vlakken. CARTO leverde vroeger een donkere variant, maar vraagt daar nu een
+ * sleutel voor en zet zonder die sleutel "API KEY REQUIRED" over elke tegel —
+ * zie components/ShowMap.tsx.
+ *
+ * Omkeren en de kleurcirkel een halve slag draaien geeft een donkere kaart waar
+ * groen nog groen is en water nog blauw. Daarna iets minder contrast, zodat het
+ * beeld niet harder is dan de pagina eromheen.
+ *
+ * Alleen op de tegellaag. Stond dit op de kaart zelf, dan zou de speld zijn
+ * accentkleur kwijtraken en als lichtblauw vierkantje terugkomen.
+ */
+.kaart-donker {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+}
