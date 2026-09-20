@@ -75,6 +75,15 @@ async function details(body: { ids?: unknown }) {
           {
             rows: filledBookingRows(booking),
             note: booking.note,
+            /**
+             * Alleen wat de aanvrager zelf schreef.
+             *
+             * Wat de Band App als `message` bewaart, is de samengevoegde tekst
+             * uit lib/booking.ts: de elf velden achter elkaar, met het eigen
+             * bericht eronder. Die velden staan hierboven al netjes in `rows`,
+             * dus zonder dit veld zou het scherm alles twee keer tonen.
+             */
+            message: booking.message,
             // Voor het vooraf invullen van een nieuw agenda-item. Ruw zoals de
             // aanvrager het schreef: "Loburg, Wageningen" hoort niet hier
             // opgeknipt te worden in een zaal en een plaats.
