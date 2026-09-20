@@ -58,35 +58,47 @@ export async function BandSection({ locale, bio, members }: Props) {
       {members.length > 0 && (
         <ul className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {members.map((member) => (
-            <li
-              key={member.id}
-              className="flex flex-col gap-3 border border-line bg-surface p-3 sm:p-4"
-            >
-              {member.photoUrl ? (
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-inset">
-                  <Image
-                    src={member.photoUrl}
-                    alt={member.name}
-                    fill
-                    sizes="(min-width: 1025px) 25vw, 50vw"
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                // Hetzelfde streeppatroon als de fotoplaceholders, zodat een
-                // ontbrekende foto er niet uitziet als een fout.
-                <div className="aspect-[3/4] w-full bg-[repeating-linear-gradient(135deg,#1C2126_0_10px,#12161A_10px_20px)]" />
-              )}
+            <li key={member.id} className="contents">
+              {/* De hele kaart is de link en niet alleen de foto. Op een telefoon
+                  is een vlak van een paar vierkante centimeter het verschil
+                  tussen raak en mis, en de naam eronder hoort bij dezelfde
+                  persoon.
 
-              <div className="flex flex-col gap-1">
-                <p className="font-display text-18 font-semibold tracking-tight4 uppercase sm:text-22">
-                  {member.name}
-                </p>
-                <p className="font-mono text-11 tracking-wide14 text-muted uppercase">
-                  {[member.role, member.instrument].filter(Boolean).join(" · ") ||
-                    copy.band.noRole}
-                </p>
-              </div>
+                  Het anker is het id van dat lid in de Band App; /band zet
+                  hetzelfde id op zijn kaarten. Een anker en geen queryparameter:
+                  daarmee blijft die pagina statisch voorgerenderd, en zonder
+                  JavaScript zet de browser het aangeklikte lid bovenaan het
+                  scherm. Zie components/pages/BandPage.tsx. */}
+              <Link
+                href={`${localePath(locale, "/band")}#lid-${member.id}`}
+                className="group flex flex-col gap-3 border border-line bg-surface p-3 transition-colors duration-[120ms] hover:border-line-strong sm:p-4"
+              >
+                {member.photoUrl ? (
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-inset">
+                    <Image
+                      src={member.photoUrl}
+                      alt={member.name}
+                      fill
+                      sizes="(min-width: 1025px) 25vw, 50vw"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  // Hetzelfde streeppatroon als de fotoplaceholders, zodat een
+                  // ontbrekende foto er niet uitziet als een fout.
+                  <div className="aspect-[3/4] w-full bg-[repeating-linear-gradient(135deg,#1C2126_0_10px,#12161A_10px_20px)]" />
+                )}
+
+                <div className="flex flex-col gap-1">
+                  <p className="font-display text-18 font-semibold tracking-tight4 uppercase transition-colors duration-[120ms] group-hover:text-accent sm:text-22">
+                    {member.name}
+                  </p>
+                  <p className="font-mono text-11 tracking-wide14 text-muted uppercase">
+                    {[member.role, member.instrument].filter(Boolean).join(" · ") ||
+                      copy.band.noRole}
+                  </p>
+                </div>
+              </Link>
             </li>
           ))}
         </ul>

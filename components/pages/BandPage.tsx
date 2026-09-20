@@ -44,9 +44,33 @@ export async function BandPage({ locale }: { locale: Locale }) {
         ) : (
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {members.map((member) => (
+              /**
+               * Het anker waar de homepage naartoe wijst.
+               *
+               * `scroll-mt-8` houdt er ruimte boven, anders plakt de kaart
+               * tegen de bovenrand van het scherm. Dat scrollen is het werk dat
+               * hier gedaan moet worden en het gebeurt altijd — nagemeten op
+               * tweeëndertig pixels vanaf de bovenrand.
+               *
+               * `target:border-accent` is een extraatje daarbovenop, en het doet
+               * het maar in één van de twee gevallen: bij een directe laadbeurt
+               * van /band#lid-5 (een gedeelde link, een bladwijzer, verversen)
+               * wél, na een klik vanaf de homepage niet. De ingebouwde
+               * :target-selector kijkt naar de fragmentidentificatie van het
+               * document, en de App Router wisselt van pagina zonder er een
+               * nieuw document voor te laden.
+               *
+               * Het blijft staan omdat het in dat ene geval helpt en verder
+               * niets kost. Het wérkend krijgen na een klik vraagt óf een gewone
+               * <a> in plaats van <Link> — dan is elke klik een volledige
+               * laadbeurt in plaats van een directe overgang — óf JavaScript op
+               * een pagina die het verder niet nodig heeft. Geen van beide is
+               * een gekleurde rand waard.
+               */
               <li
                 key={member.id}
-                className="flex flex-col gap-3 border border-line bg-surface p-4"
+                id={`lid-${member.id}`}
+                className="flex scroll-mt-8 flex-col gap-3 border border-line bg-surface p-4 transition-colors duration-[120ms] target:border-accent"
               >
                 {member.photoUrl ? (
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-inset">
