@@ -58,6 +58,17 @@ const BASE_URL = (
 ).replace(/\/$/, "");
 
 /**
+ * Het adres van de Band App, voor een link op een scherm.
+ *
+ * Eén plek waar dat adres staat. Het stond ook letterlijk in het beheeroverzicht
+ * getypt, en dat is precies zo'n regel die achterblijft als de Band App ooit
+ * verhuist — bijvoorbeeld naar een eigen domein.
+ */
+export function bandAppUrl(): string {
+  return BASE_URL;
+}
+
+/**
  * Hoe lang een antwoord hergebruikt mag worden.
  *
  * De Band App zet er zelf `max-age=60` op. Vijf minuten is ruim genoeg voor een

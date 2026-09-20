@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
+import { InstallButton } from "@/components/beheer/InstallButton";
 import { Shell } from "@/components/beheer/Shell";
+import { bandAppUrl } from "@/lib/band-app";
 import { recent } from "@/lib/portal/audit";
 import { getSession } from "@/lib/portal/session";
 
@@ -36,11 +38,21 @@ export default async function BeheerPage() {
             bijgehouden. Daar is een tweede scherm voor geen winst.
           </p>
           <a
-            href="https://static-line-bandapp.vercel.app"
+            href={bandAppUrl()}
             className="self-start border border-line-strong px-5 py-2 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] hover:border-primary"
           >
             Naar de Band App
           </a>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h2 className="font-mono text-11 text-faint uppercase">Op je telefoon</h2>
+          <p className="text-muted">
+            Dit beheer is te installeren als app. Dan staat het met een eigen
+            icoon op je beginscherm en opent het zonder adresbalk, net als de
+            Band App. Het werkt verder hetzelfde en heeft bereik nodig.
+          </p>
+          <InstallButton />
         </section>
 
         <section className="flex flex-col gap-3">

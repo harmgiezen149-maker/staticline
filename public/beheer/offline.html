@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Geen verbinding — Beheer</title>
+    <!--
+      Eén los bestand, zonder Tailwind en zonder de letters van de site. Dit is
+      de pagina die getoond wordt als er geen netwerk is; alles wat hij nodig
+      heeft moet er dus al in staan. De kleuren komen uit styles/tokens.css en
+      staan hier met de hand overgeschreven — de enige plek in dit project waar
+      dat mag, omdat een stylesheet ophalen precies is wat hier niet lukt.
+    -->
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #0d0f12;
+        color: #ede5d4;
+        font-family: system-ui, -apple-system, sans-serif;
+        line-height: 1.6;
+      }
+      main { max-width: 32rem; }
+      h1 {
+        margin: 0 0 16px;
+        font-size: 26px;
+        line-height: 1.05;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+      }
+      p { margin: 0 0 16px; color: #9ba3ab; }
+      button {
+        border: 1px solid #4a545c;
+        background: none;
+        color: inherit;
+        padding: 8px 20px;
+        font: inherit;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+      }
+      button:hover { border-color: #ede5d4; }
+      button:focus-visible { outline: 2px solid #2aa5b5; outline-offset: 2px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Geen verbinding</h1>
+      <p>
+        Het beheer haalt alles live op, dus zonder bereik valt er niets te tonen.
+        Zodra je weer verbinding hebt, werkt het gewoon.
+      </p>
+      <button type="button" onclick="location.reload()">Opnieuw proberen</button>
+    </main>
+  </body>
+</html>

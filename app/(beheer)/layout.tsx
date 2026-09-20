@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
+import { PwaSetup } from "@/components/beheer/PwaSetup";
 import { fontVariables } from "@/lib/fonts";
 import "../globals.css";
 
@@ -21,12 +22,56 @@ export const metadata: Metadata = {
   // Niet in Google. Dit is geen geheim — de inlog beschermt de inhoud — maar een
   // beheerscherm hoort niet in de zoekresultaten van een bandnaam te staan.
   robots: { index: false, follow: false },
+  /**
+   * Hiermee is het beheer een app die je op je beginscherm kunt zetten.
+   *
+   * Alleen hier, en met opzet: de publieke site heeft geen manifest, want een
+   * bezoeker die de agenda leest hoeft niets te installeren. Zie
+   * app/(beheer)/beheer/manifest.webmanifest/route.ts.
+   */
+  manifest: "/beheer/manifest.webmanifest",
+  // iOS leest het manifest niet voor het icoon en de titel op het beginscherm;
+  // die komen van deze twee.
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "SL Beheer" },
+  icons: { icon: "/beheer/icon-192.png", apple: "/beheer/apple-touch-icon.png" },
 };
+
+export const viewport: Viewport = {
+  // De kleur van de balk om de geïnstalleerde app heen. Gelijk aan --bg-base en
+  // aan background_color in het manifest, zodat er niets zichtbaar verspringt.
+  themeColor: "#0d0f12",
+  // De onderste veilige zone (de gebarenbalk) benutten in plaats van eromheen
+  // werken, nu dit zonder adresbalk kan draaien.
+  viewportFit: "cover",
+};
+
+/**
+ * Chrome vuurt `beforeinstallprompt` zodra het de app installeerbaar vindt, en
+ * dat kan al gebeurd zijn voordat React geladen is. Een luisteraar in een
+ * component komt dan te laat en mist het event voorgoed, waardoor de knop nooit
+ * verschijnt. Daarom hier, in een script dat vóór de app draait; de knop leest
+ * het uit op `window`. Dezelfde oplossing als in de Band App.
+ */
+const VANG_INSTALLPROMPT = `
+window.installPrompt = null;
+window.addEventListener("beforeinstallprompt", function (e) {
+  e.preventDefault();
+  window.installPrompt = e;
+  window.dispatchEvent(new Event("installpromptchange"));
+});
+window.addEventListener("appinstalled", function () {
+  window.installPrompt = null;
+  window.dispatchEvent(new Event("installpromptchange"));
+});`;
 
 export default function BeheerLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="nl" className={fontVariables}>
-      <body className="bg-base text-primary">{children}</body>
+      <body className="bg-base text-primary">
+        <script dangerouslySetInnerHTML={{ __html: VANG_INSTALLPROMPT }} />
+        <PwaSetup />
+        {children}
+      </body>
     </html>
   );
 }
