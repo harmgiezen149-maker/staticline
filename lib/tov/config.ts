@@ -42,6 +42,15 @@ export type TextType = {
   /** Welke bronnen standaard aanstaan in de schrijfstand. */
   sources: SourceKey[];
   subject: SubjectKind;
+  /**
+   * Is dit een perstekst?
+   *
+   * Boekingsmail, one-sheet en persbericht gaan naar iemand die nog moet
+   * beslissen of hij ons boekt of over ons schrijft. Dezelfde stem, maar één
+   * tand rustiger: geen uitdaging richting de lezer, en de korte zin uit de
+   * energie-ondergrens is daar optioneel. Zie lib/tov/write.ts.
+   */
+  press?: boolean;
 };
 
 /** Feiten over de band die niet uit de Band App komen. Zie tov-config.json. */

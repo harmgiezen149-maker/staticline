@@ -3,7 +3,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 
 import { BLOCKLIST, type TextType, loadToneOfVoice, maxWordsFor } from "./config";
-import { type Flag, checkOutput, countWords } from "./check";
+import { type Flag, type Taal, checkOutput, countWords } from "./check";
 
 /**
  * De schrijfstap.
@@ -247,10 +247,45 @@ export async function write(args: WriteInput): Promise<RewriteResult> {
 
   const client = new Anthropic();
 
-  const nakijken = (antwoord: ModelAntwoord) => ({
-    nl: checkOutput({ source, output: antwoord.nl.text, maxWords, blocklist: BLOCKLIST.nl }),
-    en: checkOutput({ source, output: antwoord.en.text, maxWords, blocklist: BLOCKLIST.en }),
+  /**
+   * Wat er van de energie-ondergrens gemeten wordt, per teksttype.
+   *
+   * De korte zin vervalt bij persteksten, want die staat daar in de tone of
+   * voice als optioneel. De aanspreking van de lezer hangt aan het perspectief:
+   * een one-sheet en een persbericht staan in de derde persoon en spreken
+   * niemand aan; een boekingsmail is een perstekst en doet dat wél, en dat komt
+   * er hier vanzelf uit.
+   */
+  const energie = (lang: Taal) => ({
+    lang,
+    shortSentence: !type.press,
+    address: type.perspective === "wij",
   });
+
+  const nakijken = (antwoord: ModelAntwoord) => ({
+    nl: checkOutput({
+      source,
+      output: antwoord.nl.text,
+      maxWords,
+      blocklist: BLOCKLIST.nl,
+      energy: energie("nl"),
+    }),
+    en: checkOutput({
+      source,
+      output: antwoord.en.text,
+      maxWords,
+      blocklist: BLOCKLIST.en,
+      energy: energie("en"),
+    }),
+  });
+
+  // Welke taal het probleem betreft, staat erbij. Zonder dat krijgt het model
+  // één lijst waarin het moet raden welke van de twee teksten het bedoelt — en
+  // bij de energie-ondergrens is dat vaak maar één van de twee.
+  const benoem = (controle: ReturnType<typeof nakijken>) => [
+    ...controle.nl.problems.map((p) => `Nederlandse tekst: ${p}`),
+    ...controle.en.problems.map((p) => `Engelse tekst: ${p}`),
+  ];
 
   try {
     const beurten: { role: "user" | "assistant"; content: string }[] = [
@@ -261,7 +296,7 @@ export async function write(args: WriteInput): Promise<RewriteResult> {
     if (!antwoord) return { ok: false, error: "shape" };
 
     let controle = nakijken(antwoord);
-    const problemen = [...controle.nl.problems, ...controle.en.problems];
+    const problemen = benoem(controle);
 
     // Eén herziening, met wat er in code gevonden is als opdracht.
     if (problemen.length > 0) {
@@ -291,7 +326,7 @@ export async function write(args: WriteInput): Promise<RewriteResult> {
     ];
 
     // Wat na de herziening nog openstaat, wordt gemeld in plaats van verzwegen.
-    const rest = [...controle.nl.problems, ...controle.en.problems];
+    const rest = benoem(controle);
     if (rest.length > 0) {
       flags.push({
         type: "check_failed",

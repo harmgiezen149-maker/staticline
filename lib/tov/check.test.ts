@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  addressesReader,
   checkOutput,
   countWords,
   extractTokens,
   findBlocked,
   findInvented,
   hasEmDash,
+  hasShortSentence,
+  sentenceWordCounts,
 } from "./check.ts";
 
 const BLOCK = ["unieke", "blijf op de hoogte", "reis"];
@@ -187,4 +190,88 @@ test("findInvented kijkt de andere kant op dan de rest", () => {
 
   assert.deepEqual(findInvented(bron, doel).times, ["21:00"]);
   assert.deepEqual(findInvented(bron, doel).links, []);
+});
+
+test("een korte zin wordt geteld, hashtags en tijden tellen niet mee", () => {
+  // De bio uit de tone of voice: "Daartussen zit niks." is er één.
+  assert.equal(hasShortSentence("Melancholie of kale herrie. Daartussen zit niks."), true);
+
+  // Een social post die alleen door de hashtags aan een korte zin zou komen,
+  // haalt de ondergrens niet.
+  assert.equal(
+    hasShortSentence(
+      "We spelen op 10 november in Loburg in Wageningen en we gaan er meteen doorheen zonder opwarmronde. #grunge #rock",
+    ),
+    false,
+  );
+
+  // "20.00" is geen zinseinde; anders zou elke tijd een korte zin opleveren.
+  assert.deepEqual(sentenceWordCounts("Deuren 20.00 uur in Loburg"), [5]);
+});
+
+test("de lezer aanspreken wordt herkend, ook in een samentrekking", () => {
+  assert.equal(addressesReader("Je voelt de vloer trillen.", "nl"), true);
+  assert.equal(addressesReader("Static Line speelt in Loburg.", "nl"), false);
+  assert.equal(addressesReader("You'll feel the floor shake.", "en"), true);
+  assert.equal(addressesReader("Static Line plays Loburg.", "en"), false);
+});
+
+test("de energie-ondergrens levert een probleem op, en alleen als erom gevraagd is", () => {
+  const plat =
+    "Static Line speelt op 10 november in Loburg in Wageningen en dat wordt een avond met veel gitaren.";
+
+  const zonder = checkOutput({
+    source: plat,
+    output: plat,
+    maxWords: 60,
+    blocklist: BLOCK,
+  });
+  assert.deepEqual(zonder.problems, []);
+
+  const met = checkOutput({
+    source: plat,
+    output: plat,
+    maxWords: 60,
+    blocklist: BLOCK,
+    energy: { lang: "nl", shortSentence: true, address: true },
+  });
+
+  assert.ok(met.problems.some((p) => p.includes("maximaal vier woorden")));
+  assert.ok(met.problems.some((p) => p.includes("rechtstreeks aangesproken")));
+});
+
+test("een tekst die de ondergrens haalt, levert niets op", () => {
+  const goed = "10 november. Loburg, Wageningen. Je voelt de vloer trillen. Oordoppen mee.";
+
+  const r = checkOutput({
+    source: goed,
+    output: goed,
+    maxWords: 60,
+    blocklist: BLOCK,
+    energy: { lang: "nl", shortSentence: true, address: true },
+  });
+
+  assert.deepEqual(r.problems, []);
+});
+
+test("bij een perstekst is de korte zin optioneel en de aanspreking niet", () => {
+  const perstekst =
+    "Static Line komt uit Ede en speelt grunge met gitaren die scheuren en drums die in je ribben beuken.";
+
+  const r = checkOutput({
+    source: perstekst,
+    output: perstekst,
+    maxWords: 180,
+    blocklist: BLOCK,
+    energy: { lang: "nl", shortSentence: false, address: true },
+  });
+
+  assert.deepEqual(r.problems, []);
+});
+
+test("een afzwakker uit versie 2.0 wordt geblokkeerd", () => {
+  assert.deepEqual(findBlocked("Gewoon hard.", ["gewoon"]), ["gewoon"]);
+  assert.deepEqual(findBlocked("It's just loud.", ["just"]), ["just"]);
+  // Niet middenin een woord: "adjust" is geen afzwakker.
+  assert.deepEqual(findBlocked("We adjust the amps.", ["just"]), []);
 });

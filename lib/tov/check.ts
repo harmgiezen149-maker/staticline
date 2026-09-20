@@ -11,6 +11,13 @@
  * `findInvented` voor waarom dat tweede er pas bij kwam toen de module ook
  * zonder brontekst ging schrijven.
  *
+ * Sinds tone of voice 2.0 staat er ook één controle in die de andere kant op
+ * kijkt: niet of er iets fout in de tekst staat, maar of er iets goeds in
+ * ontbreekt. Zie `hasShortSentence` en `addressesReader`. Dat komt uit de
+ * klacht die in die versie zelf staat: de vorige toetste alleen op wat er niet
+ * in mocht, en daardoor kwam een broodnuchtere tekst er zonder problemen
+ * doorheen.
+ *
  * Zonder imports en zonder `server-only`, zodat `npm test` het kan draaien. Zie
  * lib/tov/write.ts voor het deel dat het model aanroept.
  */
@@ -102,6 +109,67 @@ export function findBlocked(text: string, blocklist: string[]): string[] {
 export const hasEmDash = (text: string) => /[—–]/.test(text);
 
 /**
+ * Hoe de lezer rechtstreeks aangesproken wordt, per taal.
+ *
+ * Niet uitputtend en dat hoeft ook niet: één treffer is genoeg om te weten dat
+ * de tekst de lezer aanspreekt. "you" dekt ook "you're" en "you'll", want de
+ * apostrof telt niet als letter bij de woordgrens in `findBlocked`.
+ */
+const AANSPREKING = {
+  nl: ["je", "jij", "jou", "jouw", "jullie"],
+  en: ["you", "your"],
+} as const;
+
+export type Taal = keyof typeof AANSPREKING;
+
+/** Spreekt de tekst de lezer ergens rechtstreeks aan? */
+export function addressesReader(text: string, lang: Taal): boolean {
+  return findBlocked(text, [...AANSPREKING[lang]]).length > 0;
+}
+
+// Een punt, uitroepteken of vraagteken, of een witregel. Puntkomma's en komma's
+// niet: die staan middenin een zin, en de tone of voice wil juist dat er punten
+// staan waar anderen komma's zetten.
+const ZINSEINDE = /[.!?…]+|\n+/;
+
+/**
+ * Het aantal woorden per zin.
+ *
+ * Links, hashtags en mentions gaan er eerst uit: "#grunge #rock" achteraan een
+ * social post is geen zin van twee woorden. Een tijd wordt vervangen door een
+ * woord, anders knipt "20.00" de zin doormidden.
+ *
+ * Een afkorting met een punt erin ("bijv.") telt hier als zinseinde en levert
+ * dus een korte zin op die er niet is. Dat is de kant op waar het fout mag
+ * gaan: deze meting kan een tekst alleen tegenhouden, nooit goedkeuren die niet
+ * goedgekeurd had moeten worden — een vals alarm kost een herschrijfronde,
+ * een gemiste treffer kost niets.
+ */
+export function sentenceWordCounts(text: string): number[] {
+  const schoon = text
+    .replace(LINK, " ")
+    .replace(TIME, "tijd")
+    .replace(HASHTAG, " ")
+    .replace(MENTION, " ");
+
+  return schoon
+    .split(ZINSEINDE)
+    .map(countWords)
+    .filter((aantal) => aantal > 0);
+}
+
+/**
+ * De energie-ondergrens, voor zover te meten.
+ *
+ * De tone of voice vraagt drie dingen van elke tekst: een fysieke klap, een
+ * directe aanspreking van de lezer, en een zin van maximaal vier woorden. De
+ * eerste is een oordeel en blijft aan het model. De andere twee zijn te tellen,
+ * en dat gebeurt hier.
+ */
+export const hasShortSentence = (text: string) =>
+  sentenceWordCounts(text).some((aantal) => aantal <= 4);
+
+/**
  * Feiten die erbij verzonnen zijn.
  *
  * De controle hierboven kijkt maar één kant op: staat er iets uit de bron niet
@@ -146,6 +214,15 @@ export type CheckInput = {
   output: string;
   maxWords: number;
   blocklist: string[];
+  /**
+   * Waar de energie-ondergrens op getoetst wordt.
+   *
+   * Weggelaten betekent: niet toetsen. Dat is met opzet zo en niet andersom —
+   * wat hier gemeten wordt hangt van het teksttype af (bij persteksten is de
+   * korte zin optioneel, zie `press` in content/tov-config.json), en dat weet
+   * alleen de aanroeper. lib/tov/write.ts vult het in.
+   */
+  energy?: { lang: Taal; shortSentence: boolean; address: boolean };
 };
 
 export type CheckResult = {
@@ -169,6 +246,7 @@ export function checkOutput({
   output,
   maxWords,
   blocklist,
+  energy,
 }: CheckInput): CheckResult {
   const problems: string[] = [];
   const flags: Flag[] = [];
@@ -238,6 +316,23 @@ export function checkOutput({
 
   if (hasEmDash(output)) {
     problems.push("Er staat een gedachtestreepje in. Gebruik een punt of een komma.");
+  }
+
+  // De energie-ondergrens. Dit zijn de enige twee problemen die de tekst niet
+  // op een fout betrappen maar op een gemis; het model lost ze op door er iets
+  // bij te schrijven, nooit door er een feit bij te verzinnen.
+  if (energy?.shortSentence && !hasShortSentence(output)) {
+    problems.push(
+      "Er staat geen korte zin in. De energie-ondergrens vraagt minstens één zin van maximaal vier woorden. Zet er één in, zonder een feit weg te laten of te verzinnen.",
+    );
+  }
+
+  if (energy?.address && !addressesReader(output, energy.lang)) {
+    problems.push(
+      energy.lang === "nl"
+        ? 'De lezer wordt nergens rechtstreeks aangesproken. Schrijf minstens één zin met "je", "jij" of "jullie".'
+        : 'De lezer wordt nergens rechtstreeks aangesproken. Schrijf minstens één zin met "you" of "your".',
+    );
   }
 
   return { problems, flags, wordCount };

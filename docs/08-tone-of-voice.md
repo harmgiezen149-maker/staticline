@@ -31,7 +31,11 @@ hier.
    is en geen instructie.
 2. **Narekenen in code.** `lib/tov/check.ts` vergelijkt links, mentions,
    hashtags en tijden letterlijk tussen invoer en uitvoer, telt de woorden, en
-   zoekt de verboden woorden en gedachtestreepjes op.
+   zoekt de verboden woorden en gedachtestreepjes op. Sinds versie 2.0 kijkt
+   het ook de andere kant op: staat er een zin van maximaal vier woorden in, en
+   wordt de lezer ergens aangesproken? Dat zijn twee van de drie eisen van de
+   energie-ondergrens; de derde, een fysieke klap, is een oordeel en blijft aan
+   het model.
 3. **Eén herziening.** Klopt er iets niet, dan gaat dat als opdracht terug naar
    het model. Eén keer, niet eindeloos.
 4. **Tonen.** Blijft er iets staan, dan zie je de tekst tóch, met een melding
@@ -48,6 +52,12 @@ zegt.
 **Een verdwenen getal is een melding, geen fout.** Het model kan er niets mee:
 als jij "entree 12 euro" schrijft en de tekst moet naar veertig woorden, dan kan
 dat sneuvelen. Je krijgt te zien welk getal weg is; jij beslist of dat erg is.
+
+**Afzwakkers worden geblokkeerd.** "gewoon", "eigenlijk", "kort gezegd",
+"just", "actually" — versie 2.0 zet die op de verboden lijst, want één
+afzwakker haalt een harde zin onderuit. Het zijn alledaagse woorden, dus dit
+slaat vaker aan dan de rest van de lijst. Kost dat te veel herschrijfrondes,
+haal ze dan weg uit `content/tov-config.json` en niet uit de code.
 
 **De achtergrond is geen bron voor feiten.** Wat je in dat veld zet stuurt de
 toon ("voor Instagram"), maar komt niet als feit in de tekst. Wil je dat een
@@ -70,6 +80,7 @@ net als elders in dit project een drempel en geen muur.
 
 ## De tests
 
-`npm test` dekt het narekenen: dertien tests op het uitlezen van links, tijden
-en getallen, op de woordentelling en op de blocklist. Het oordeel over de tóón
-is niet te automatiseren — dat lees je zelf na.
+`npm test` dekt het narekenen: vijfentwintig tests op het uitlezen van links,
+tijden en getallen, op de woordentelling, op de blocklist en op de
+energie-ondergrens. Het oordeel over de tóón is niet te automatiseren — dat
+lees je zelf na.

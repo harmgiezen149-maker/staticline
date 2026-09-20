@@ -1,5 +1,6 @@
 {
-  "_": "Lengtelimieten, bronnen en verboden woorden voor de schrijfmodule. Los van de code, zodat ze aan te passen zijn zonder dat er iemand aan de module hoeft te komen. Houd ze in de pas met content/tone-of-voice.md — de blocklist volgt de Niet-lijsten daaruit.",
+  "_": "Lengtelimieten, bronnen en verboden woorden voor de schrijfmodule. Los van de code, zodat ze aan te passen zijn zonder dat er iemand aan de module hoeft te komen. Houd ze in de pas met content/tone-of-voice.md — de blocklist volgt de Niet-lijsten daaruit. Sinds versie 2.0 staan de afzwakkers daar ook in (gewoon, eigenlijk, just, actually). Dat zijn alledaagse woorden, dus dit blokkeert vaker dan de rest; dat is de bedoeling, want één afzwakker haalt een harde zin onderuit. Loopt het uit de hand, haal ze hier weg en niet in de code.",
+  "_press": "`press` staat op de drie persteksten. Die gaan naar iemand die nog moet beslissen of hij ons boekt: dezelfde stem, maar geen uitdaging richting de lezer, en de korte zin uit de energie-ondergrens is daar optioneel. lib/tov/write.ts leest dit.",
   "_sources": "Per teksttype: welke bronnen standaard aanstaan in de schrijfstand, en welke kiezer erbij hoort. Sleutels: band, members, upcoming, past, setlist, site, socials — zie lib/tov/factsheet.ts. Vink niet meer aan dan nodig: hoe breder het feitenblad, hoe meer er waar is en hoe minder de controle op verzonnen feiten betekent. `subject` is none, member, gig of past_gig.",
   "band": {
     "_": "Feiten over de band die nergens anders staan. De naam en de bio komen uit de Band App; de plaats staat daar niet als apart veld en is wel een feit dat in bijna elke tekst thuishoort.",
@@ -15,7 +16,7 @@
       "maxWords": 90,
       "maxWordsLong": 200,
       "perspective": "wij",
-      "hint": "Wie en waar, wat we spelen, wat je live krijgt, hoe je ons boekt.",
+      "hint": "De klap, dan wie en waar, dan wat je live krijgt, dan hoe je ons boekt of komt kijken.",
       "sources": ["band", "members", "setlist"],
       "subject": "none"
     },
@@ -33,7 +34,7 @@
       "label": "Show of nieuws",
       "maxWords": 60,
       "perspective": "wij",
-      "hint": "Datum, plek, tijd en kaartjes eerst. Daarna hooguit één droge zin.",
+      "hint": "Datum, plek, tijd en kaartjes eerst, want die moeten kloppen. Daarna de klap.",
       "sources": ["band", "upcoming"],
       "subject": "gig"
     },
@@ -42,7 +43,7 @@
       "label": "Social post",
       "maxWords": 40,
       "perspective": "wij",
-      "hint": "Eén moment, één gedachte. Hashtags aan het eind.",
+      "hint": "Eén moment, één klap. Hashtags aan het eind.",
       "sources": ["band", "upcoming"],
       "subject": "gig"
     },
@@ -75,28 +76,31 @@
     },
     {
       "id": "booking_email",
+      "press": true,
       "label": "Boekingsmail",
       "maxWords": 140,
       "perspective": "wij",
-      "hint": "Wie we zijn in twee zinnen, waarom dit podium, wat we sturen, wat je nodig hebt.",
+      "hint": "Wie we zijn in twee zinnen, met de klap erin. Waarom dit podium. Wat we sturen. Wat we nodig hebben.",
       "sources": ["band", "members", "setlist", "upcoming"],
       "subject": "none"
     },
     {
       "id": "one_sheet",
+      "press": true,
       "label": "One-sheet",
       "maxWords": 180,
       "perspective": "derde persoon",
-      "hint": "Derde persoon, feitelijk, invloeden, korte bio, contact.",
+      "hint": "Derde persoon, feitelijk, invloeden, korte bio, contact. De klap zit in de bio-alinea, niet in het feitenblok.",
       "sources": ["band", "members", "setlist", "upcoming", "socials"],
       "subject": "none"
     },
     {
       "id": "press_release",
+      "press": true,
       "label": "Persbericht",
       "maxWords": 300,
       "perspective": "derde persoon",
-      "hint": "Kop, lead, kern, citaat van een bandlid, feiten en contact.",
+      "hint": "Kop, lead, kern, citaat van een bandlid, feiten en contact. De energie zit in de werkwoorden en in het citaat, niet in uitroeptekens.",
       "sources": ["band", "members", "upcoming"],
       "subject": "gig"
     }
@@ -108,7 +112,9 @@
       "niet te missen", "geweldig", "episch", "verheugd",
       "trots om aan te kondigen", "een verrassende mix van", "in de wereld van",
       "nemen je mee", "blijf op de hoogte", "rauwe energie", "de beste",
-      "energiek", "de sound van Seattle"
+      "energiek", "de sound van Seattle",
+      "gewoon", "eigenlijk", "best wel", "een beetje", "kort gezegd",
+      "geen gedoe", "redelijk", "aardig", "enigszins"
     ],
     "en": [
       "passionate", "unique", "journey", "sonic", "immersive", "dive into",
@@ -116,7 +122,9 @@
       "must-see", "up-and-coming", "thrilled to announce", "proud to announce",
       "a unique blend of", "in the world of", "take you on", "stay tuned",
       "banger", "killer", "unmissable", "the best", "amazing",
-      "the Seattle sound"
+      "the Seattle sound",
+      "just", "actually", "pretty much", "a bit", "in short", "no fuss",
+      "fairly", "quite", "somewhat"
     ]
   }
 }
