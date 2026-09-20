@@ -1,6 +1,6 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
+import { authorized } from "@/lib/portal/api-token";
 import { log } from "@/lib/portal/audit";
 import { makeLimiter } from "@/lib/rate-limit";
 import {
@@ -33,18 +33,6 @@ export const dynamic = "force-dynamic";
 
 /** Per persoon, niet per aanroeper: anders verbruikt één bandlid de hele emmer. */
 const perPersoon = makeLimiter({ max: 20, windowMs: 60 * 60 * 1000 });
-
-function authorized(req: Request): boolean {
-  const secret = process.env.SITE_API_TOKEN;
-  if (!secret || secret.length < 32) return false;
-
-  const header = req.headers.get("authorization") ?? "";
-  const given = header.startsWith("Bearer ") ? header.slice(7) : "";
-
-  const a = Buffer.from(given);
-  const b = Buffer.from(secret);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 /**
  * Waar de Band App zijn scherm mee vult.
