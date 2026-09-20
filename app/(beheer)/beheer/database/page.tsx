@@ -73,6 +73,15 @@ export default async function DatabasePage() {
               niets verloren — er staat geen enkele opdracht in die iets
               verwijdert.
             </p>
+            {/* De lijst hierboven kijkt naar tabellen, niet naar kolommen. Een
+                uitrol die er een kolom bij krijgt laat die lijst dus ongemoeid,
+                en dan ziet dit scherm er volledig uit terwijl er iets mist. Dat
+                is precies het geval waarin iemand deze knop niet indrukt. */}
+            <p className="text-muted">
+              De lijst hierboven kijkt alleen of de tabellen er staan. Komt er
+              bij een uitrol een kolom bij, dan zie je dat hier niet — druk dus
+              ook op de knop als er niets lijkt te ontbreken.
+            </p>
             <SchemaRunner />
           </section>
         </div>
