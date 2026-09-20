@@ -1,5 +1,5 @@
-import { getCopy } from "@/content";
 import { formatShowDate, type Locale } from "@/lib/i18n";
+import { getSiteCopy } from "@/lib/site-content";
 import { isClickable, type Show, type ShowStatus } from "@/lib/shows";
 
 /**
@@ -30,8 +30,8 @@ type Props = {
  * De posities staan daarom expliciet per breekpunt; automatische plaatsing zou op
  * tablet de status naar een tweede regel duwen.
  */
-export function ShowRow({ locale, show }: Props) {
-  const copy = getCopy(locale);
+export async function ShowRow({ locale, show }: Props) {
+  const copy = await getSiteCopy(locale);
   const clickable = isClickable(show);
 
   const content = (

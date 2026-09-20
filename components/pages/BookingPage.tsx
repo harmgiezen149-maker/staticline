@@ -1,8 +1,8 @@
 import { BookingForm } from "@/components/BookingForm";
 import { Empty, Page, Section } from "@/components/Page";
-import { getCopy } from "@/content";
 import { getRiderUrl } from "@/lib/band-app";
 import type { Locale } from "@/lib/i18n";
+import { getSiteCopy } from "@/lib/site-content";
 
 /**
  * De boekingspagina.
@@ -12,7 +12,7 @@ import type { Locale } from "@/lib/i18n";
  * eronder, en niet andersom.
  */
 export async function BookingPage({ locale }: { locale: Locale }) {
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
   const riderUrl = await getRiderUrl();
 
   return (

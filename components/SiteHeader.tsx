@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { getCopy } from "@/content";
 import { localePath, locales, type Locale } from "@/lib/i18n";
+import { getSiteCopy } from "@/lib/site-content";
 import { MobileNav } from "./MobileNav";
 
 import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
@@ -18,8 +18,8 @@ type Props = {
   path?: string;
 };
 
-export function SiteHeader({ locale, path = "/" }: Props) {
-  const copy = getCopy(locale);
+export async function SiteHeader({ locale, path = "/" }: Props) {
+  const copy = await getSiteCopy(locale);
 
   /**
    * Het ontwerp tekent drie navigatie-items: Shows, Foto's en Band. Toen dat

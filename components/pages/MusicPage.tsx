@@ -1,7 +1,6 @@
 import { Embed } from "@/components/Embed";
 import { Empty, Page, Section } from "@/components/Page";
-import { getCopy } from "@/content";
-import { getSpotify } from "@/lib/site-content";
+import { getSiteCopy, getSpotify } from "@/lib/site-content";
 import { fetchBandAppPublic } from "@/lib/band-app";
 import type { Locale } from "@/lib/i18n";
 
@@ -14,7 +13,7 @@ import type { Locale } from "@/lib/i18n";
  */
 export async function MusicPage({ locale }: { locale: Locale }) {
   const spotify = await getSpotify();
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
   const data = await fetchBandAppPublic();
 
   const sections = (data?.setlistSections ?? []).filter(

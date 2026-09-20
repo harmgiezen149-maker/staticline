@@ -1,10 +1,9 @@
 import Image from "next/image";
 
 import { Button } from "./Button";
-import { getCopy } from "@/content";
 import { formatShowDateLong, localePath, type Locale } from "@/lib/i18n";
 import type { Show } from "@/lib/shows";
-import { getHeroBackground, getText, getWordmark } from "@/lib/site-content";
+import { getHeroBackground, getSiteCopy, getWordmark } from "@/lib/site-content";
 
 
 type Props = {
@@ -15,16 +14,12 @@ type Props = {
 };
 
 export async function Hero({ locale, next, hasPlayed }: Props) {
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
 
-  // De twee ondertitels zijn via /beheer aan te passen. Staat er niets, dan komt
-  // de tekst uit content/ — zie lib/site-content.ts.
-  const [sub, subShort, background, wordmark] = await Promise.all([
-    getText("hero.sub", locale, copy.hero.sub),
-    getText("hero.subShort", locale, copy.hero.subShort),
-    getHeroBackground(),
-    getWordmark(),
-  ]);
+  // De ondertitels zitten al in `copy`: getSiteCopy legt aanpassingen uit
+  // /beheer/inhoud over de tekst uit content/ heen.
+  const [background, wordmark] = await Promise.all([getHeroBackground(), getWordmark()]);
+  const { sub, subShort } = copy.hero;
 
   // Het ontwerp zet hier vast "Eerste show — 10 november 2026". Dat klopt zolang
   // de band nog niets gespeeld heeft, en daarna niet meer. De tekst volgt daarom

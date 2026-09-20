@@ -4,6 +4,7 @@ import { del } from "@vercel/blob";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 import { log } from "@/lib/portal/audit";
+import { copyKeys } from "@/lib/portal/copy-keys";
 import {
   CONTENT_TAG,
   addMedia,
@@ -14,8 +15,8 @@ import {
 import {
   SOCIAL_KEYS,
   SPOTIFY_KEYS,
-  TEXT_KEYS,
   isImageSlot,
+  storageKey,
 } from "@/lib/portal/content-keys";
 import { getSession } from "@/lib/portal/session";
 import { codeText } from "@/lib/portal/copy-text";
@@ -82,37 +83,49 @@ export async function saveAll(
 
   const content = await loadContent();
 
+  /**
+   * Alleen wat er veranderd is.
+   *
+   * Het formulier stuurt alle velden mee, en dat zijn er inmiddels ruim
+   * tweehonderd. Ze allemaal wegschrijven zou bij elke opslag elke rij van een
+   * nieuwe `updated_at` en `updated_by` voorzien — dan zegt "wie heeft dit
+   * aangepast" niets meer — en het is werk voor niets.
+   */
+  const ongewijzigd = (key: string, locale: string, value: string) =>
+    (content[storageKey(key, locale)] ?? "") === value;
+
   const entries = [
-    ...TEXT_KEYS.flatMap((field) => {
-      const rows: { key: string; locale: string; value: string }[] =
-        LOCALES.map((locale) => ({
-          key: field.key,
-          locale,
-          value: read(`${field.key}|${locale}`),
-        }));
+    ...copyKeys().flatMap((key) => {
+      const rows: { key: string; locale: string; value: string }[] = LOCALES
+        .map((locale) => ({ key, locale, value: read(`${key}|${locale}`) }))
+        .filter((row) => !ongewijzigd(row.key, row.locale, row.value));
+
+      if (rows.length === 0) return [];
 
       // De bronhash meeschrijven. Wie hier opslaat, ziet het Nederlands en het
       // Engels onder elkaar staan en bevestigt daarmee dat ze bij elkaar horen —
       // ook als hij de Engelse tekst zelf heeft aangepast. Zonder dit zou een
       // eigen correctie daarna alsnog als verouderd gelden.
-      const dutch = rows.find((row) => row.locale === "nl")?.value || "";
-      const english = rows.find((row) => row.locale === "en")?.value || "";
-      const source = dutch || dutchText(field.key, content, codeText(field.key, "nl"));
+      const dutch = read(`${key}|nl`);
+      const english = read(`${key}|en`);
+      const source = dutch || dutchText(key, content, codeText(key, "nl"));
 
       rows.push({
-        key: siteHashKey(field.key),
+        key: siteHashKey(key),
         locale: "",
         value: english ? hashSource(source) : "",
       });
 
       return rows;
     }),
-    ...[...SOCIAL_KEYS, ...SPOTIFY_KEYS].map((field) => ({
-      key: field.key,
-      locale: "",
-      value: read(`${field.key}|`),
-    })),
+    ...[...SOCIAL_KEYS, ...SPOTIFY_KEYS]
+      .map((field) => ({ key: field.key, locale: "", value: read(`${field.key}|`) }))
+      .filter((row) => !ongewijzigd(row.key, row.locale, row.value)),
   ];
+
+  if (entries.length === 0) {
+    return { ok: true, message: "Er was niets gewijzigd." };
+  }
 
   const saved = await saveContent(entries, session.email);
   if (!saved) {
@@ -336,12 +349,22 @@ export async function translateSiteTexts(): Promise<SaveState> {
 
   const content = await loadContent();
 
-  const todo = TEXT_KEYS.map((field) => ({
-    key: field.key,
-    source: dutchText(field.key, content, codeText(field.key, "nl")),
-    english: (content[`${field.key}|en`] ?? "").trim(),
-    stale: siteTextStale(field.key, content, codeText(field.key, "nl")),
-  })).filter((item) => item.source && (!item.english || item.stale));
+  /**
+   * Wat er te vertalen valt.
+   *
+   * Alleen teksten die hier zijn aangepast. Staat het Nederlands nog zoals in
+   * content/nl.ts, dan staat het Engels in content/en.ts en klopt dat per
+   * definitie — die hoeven niet langs een model. Zonder deze voorwaarde zou
+   * één klik ruim honderd teksten laten vertalen die al vertaald zijn.
+   */
+  const todo = copyKeys()
+    .map((key) => ({
+      key,
+      source: (content[storageKey(key, "nl")] ?? "").trim(),
+      english: (content[storageKey(key, "en")] ?? "").trim(),
+      stale: siteTextStale(key, content, codeText(key, "nl")),
+    }))
+    .filter((item) => item.source && (!item.english || item.stale));
 
   if (todo.length === 0) {
     return { ok: true, message: "Alle Engelse teksten zijn ingevuld en actueel." };

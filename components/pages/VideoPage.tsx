@@ -1,7 +1,6 @@
 import { Embed } from "@/components/Embed";
 import { Empty, Page, Section } from "@/components/Page";
-import { getCopy } from "@/content";
-import { getVideos } from "@/lib/site-content";
+import { getSiteCopy, getVideos } from "@/lib/site-content";
 import type { Locale } from "@/lib/i18n";
 
 /**
@@ -13,7 +12,7 @@ import type { Locale } from "@/lib/i18n";
  */
 export async function VideoPage({ locale }: { locale: Locale }) {
   const videos = await getVideos();
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
 
   return (
     <Page

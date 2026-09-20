@@ -12,6 +12,9 @@ import heroBackground from "@/public/assets/background.jpg";
 import wordmarkFile from "@/public/assets/staticline-wordmark.png";
 
 import type { BandAppMember, BandAppPublic } from "./band-app";
+import { getCopy, type Copy } from "@/content";
+
+import { applyOverrides } from "./copy-paths";
 import type { Locale } from "./i18n";
 import { parseSpotify, type SpotifyRef } from "./spotify";
 import { loadContent, loadMedia } from "./portal/content";
@@ -29,6 +32,36 @@ import { loadTranslations, pick } from "./portal/translations";
  * tekst waarmee de site nu al live staat. En het werkt ook als de tabellen er
  * niet zijn, wat de eerste keer nu eenmaal zo is.
  */
+
+/**
+ * De teksten van de site, met wat er in /beheer/inhoud is aangepast eroverheen.
+ *
+ * Dit is wat elke publieke pagina hoort te lezen in plaats van `getCopy`. Die
+ * laatste geeft alleen wat er in content/nl.ts staat; deze legt de database
+ * eroverheen. Een leeg veld daar verandert niets — zie applyOverrides.
+ *
+ * Asynchroon, en daarom leest elk publiek component dat met `await`. De prijs is
+ * één regel per component; de opbrengst is dat elke tekst aan te passen is
+ * zonder commit. `loadContent` is gecachet met een tag die bij het opslaan
+ * vervalt, dus de pagina's blijven statisch.
+ *
+ * Niet voor `metadata`: dat is `meta` in content/types.ts, en die groep wordt
+ * bewust overgeslagen. Zie SKIPPED in lib/copy-paths.ts.
+ */
+export async function getSiteCopy(locale: Locale): Promise<Copy> {
+  const [content, base] = [await loadContent(), getCopy(locale)];
+
+  // Alleen de sleutels van deze taal, met de taalaanduiding eraf.
+  const achtervoegsel = `|${locale}`;
+  const overrides: Record<string, string> = {};
+  for (const [key, value] of Object.entries(content)) {
+    if (key.endsWith(achtervoegsel)) {
+      overrides[key.slice(0, -achtervoegsel.length)] = value;
+    }
+  }
+
+  return applyOverrides(base, overrides);
+}
 
 /** Een tekst ophalen met de tekst uit de code als terugval. */
 export async function getText(

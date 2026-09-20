@@ -1,10 +1,9 @@
 import "server-only";
 
-import { getCopy } from "@/content";
 import { fetchBandAppPublic } from "@/lib/band-app";
 import { formatShowDateLong, formatTime } from "@/lib/i18n";
 import { type Show, getShows } from "@/lib/shows";
-import { getSocials, getText } from "@/lib/site-content";
+import { getSiteCopy, getSocials } from "@/lib/site-content";
 
 import { BAND_FACTS, type SubjectKind, type TextType } from "./config";
 import {
@@ -215,25 +214,21 @@ function findSubject(
 /**
  * De teksten die op de site staan.
  *
- * Via `getText`, zodat een tekst die in `/beheer/inhoud` is aangepast hier
+ * Via `getSiteCopy`, zodat een tekst die in `/beheer/inhoud` is aangepast hier
  * hetzelfde is als op de pagina zelf. Nederlands: de module schrijft beide talen
  * rechtstreeks uit de bron, en de Nederlandse tekst is het origineel.
+ *
+ * Twee regels en niet alles wat op de site staat. Dit is een bron voor een
+ * feitenblad, geen kopie van de website: de regel onder het wordmark en de
+ * voettekst zeggen wie de band is, de knoplabels en foutmeldingen niet.
  */
 async function siteLines(): Promise<{ label: string; text: string }[]> {
-  const copy = getCopy("nl");
+  const copy = await getSiteCopy("nl");
 
-  const regels = await Promise.all([
-    getText("hero.sub", "nl", copy.hero.sub).then((text) => ({
-      label: "regel onder het wordmark",
-      text,
-    })),
-    getText("footer.note", "nl", copy.footer.note).then((text) => ({
-      label: "voettekst",
-      text,
-    })),
-  ]);
-
-  return regels.filter((regel) => regel.text.trim().length > 0);
+  return [
+    { label: "regel onder het wordmark", text: copy.hero.sub },
+    { label: "voettekst", text: copy.footer.note },
+  ].filter((regel) => regel.text.trim().length > 0);
 }
 
 async function socialLines(): Promise<{ label: string; url: string }[]> {

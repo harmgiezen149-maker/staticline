@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 import { ShowRow } from "./ShowRow";
-import { getCopy } from "@/content";
 import { localePath, type Locale } from "@/lib/i18n";
+import { getSiteCopy } from "@/lib/site-content";
 import type { Show } from "@/lib/shows";
 
 type Props = {
@@ -30,8 +30,8 @@ function formatCount(
   return template.replace("{count}", String(count));
 }
 
-export function ShowList({ locale, shows }: Props) {
-  const copy = getCopy(locale);
+export async function ShowList({ locale, shows }: Props) {
+  const copy = await getSiteCopy(locale);
 
   return (
     <section

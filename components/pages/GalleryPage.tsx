@@ -1,7 +1,6 @@
 import { Page } from "@/components/Page";
 import { PhotoGrid } from "@/components/PhotoGrid";
-import { getCopy } from "@/content";
-import { getPhotos } from "@/lib/site-content";
+import { getPhotos, getSiteCopy } from "@/lib/site-content";
 import type { Locale } from "@/lib/i18n";
 
 /**
@@ -13,7 +12,7 @@ import type { Locale } from "@/lib/i18n";
  */
 export async function GalleryPage({ locale }: { locale: Locale }) {
   const photos = await getPhotos();
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
 
   return (
     <Page locale={locale} path="/fotos" title={copy.gallery.title}>

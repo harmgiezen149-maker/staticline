@@ -3,12 +3,11 @@ import { Hero } from "@/components/Hero";
 import { Newsletter } from "@/components/Newsletter";
 import { NextShow } from "@/components/NextShow";
 import { PhotoGrid } from "@/components/PhotoGrid";
-import { getPhotos, localiseBand } from "@/lib/site-content";
+import { getPhotos, getSiteCopy, localiseBand } from "@/lib/site-content";
 import { ShowList } from "@/components/ShowList";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { Locale } from "@/lib/i18n";
-import { getCopy } from "@/content";
 import { fetchBandAppPublic } from "@/lib/band-app";
 import { getShows } from "@/lib/shows";
 
@@ -29,7 +28,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
   // één paginaweergave, dus dit is één verzoek aan de Band App en niet twee.
   const bandApp = await fetchBandAppPublic();
   const band = await localiseBand(bandApp, locale);
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
 
   return (
     <>

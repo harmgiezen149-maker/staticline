@@ -1,10 +1,9 @@
 import Image from "next/image";
 
 import { Empty, Page, Section } from "@/components/Page";
-import { getCopy } from "@/content";
 import { fetchBandAppPublic } from "@/lib/band-app";
 import type { Locale } from "@/lib/i18n";
-import { localiseBand } from "@/lib/site-content";
+import { getSiteCopy, localiseBand } from "@/lib/site-content";
 
 /**
  * Over de band, plus de bandleden.
@@ -14,7 +13,7 @@ import { localiseBand } from "@/lib/site-content";
  * instrument, korte tekst en foto — geen e-mail, telefoon of adres.
  */
 export async function BandPage({ locale }: { locale: Locale }) {
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
   const data = await fetchBandAppPublic();
   // Op /en de vertalingen uit /beheer/vertalingen, met het Nederlands als
   // terugval zodra het origineel gewijzigd is.

@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { getCopy } from "@/content";
 import type { BandAppMember } from "@/lib/band-app";
 import { localePath, type Locale } from "@/lib/i18n";
+import { getSiteCopy } from "@/lib/site-content";
 
 /**
  * De bandsectie op de homepage.
@@ -26,8 +26,8 @@ type Props = {
   members: BandAppMember[];
 };
 
-export function BandSection({ locale, bio, members }: Props) {
-  const copy = getCopy(locale);
+export async function BandSection({ locale, bio, members }: Props) {
+  const copy = await getSiteCopy(locale);
 
   // Alleen de eerste alinea. De bio in de Band App is vrije tekst waarin een
   // lege regel een alinea scheidt — dezelfde afspraak als op /band.

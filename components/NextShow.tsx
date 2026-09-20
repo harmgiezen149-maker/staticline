@@ -1,4 +1,3 @@
-import { getCopy } from "@/content";
 import {
   formatDayMonth,
   formatDayMonthYear,
@@ -7,6 +6,7 @@ import {
   type Locale,
 } from "@/lib/i18n";
 import { isClickable, type Show } from "@/lib/shows";
+import { getSiteCopy } from "@/lib/site-content";
 
 type Props = {
   locale: Locale;
@@ -20,8 +20,8 @@ type Props = {
  * te bereiken zijn nooit meer dan één scherm weg. Daarom staat hij direct onder
  * de hero en in de enige volvlakke accentkleur op de pagina.
  */
-export function NextShow({ locale, show }: Props) {
-  const copy = getCopy(locale);
+export async function NextShow({ locale, show }: Props) {
+  const copy = await getSiteCopy(locale);
 
   if (!show) {
     // Lege staat uit de handoff: de balk blijft staan, de inhoud verandert. Een

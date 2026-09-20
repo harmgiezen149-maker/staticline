@@ -1,8 +1,8 @@
 import { Empty, Page, Section } from "@/components/Page";
 import { ShowMap } from "@/components/ShowMap";
 import { ShowRow } from "@/components/ShowRow";
-import { getCopy } from "@/content";
 import type { Locale } from "@/lib/i18n";
+import { getSiteCopy } from "@/lib/site-content";
 import { getShows } from "@/lib/shows";
 
 /**
@@ -12,7 +12,7 @@ import { getShows } from "@/lib/shows";
  * agenda er hetzelfde uitziet als het blok op de homepage.
  */
 export async function AgendaPage({ locale }: { locale: Locale }) {
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
   const { upcoming, past } = await getShows();
 
   const withCoordinates = upcoming.filter(

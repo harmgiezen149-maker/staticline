@@ -239,6 +239,14 @@ De eigen database is twee tabellen in `db/schema.sql`, aangemaakt met
 `npm run db:setup`. Geen migratieframework: twee tabellen die zelden veranderen
 hebben geen gereedschap nodig dat zelf onderhoud vraagt.
 
+**Elke tekst van de site is aan te passen in `/beheer/inhoud`.** De sleutellijst
+wordt afgeleid uit `content/nl.ts` zelf — het puntpad van een tekst is zijn
+sleutel, en een tekst die erbij komt staat er vanzelf bij. Zie
+`lib/copy-paths.ts` en `lib/portal/copy-keys.ts`. Publieke componenten lezen
+daarom `getSiteCopy(locale)` en niet `getCopy(locale)`: die eerste legt de
+database over de code heen. Alleen `meta` blijft buiten schot, omdat die bij het
+bouwen wordt vastgelegd.
+
 Inhoud die nog ontbreekt heeft twee plekken, in deze volgorde: de database via
 `/beheer/inhoud`, en anders `content/media.ts` en `content/nl.ts` in de code.
 `lib/site-content.ts` legt die laag eroverheen — staat er iets in de database, dan

@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import { getCopy } from "@/content";
 import type { Locale } from "@/lib/i18n";
+import { getSiteCopy } from "@/lib/site-content";
 
 export type Photo = {
   src: string;
@@ -32,8 +32,8 @@ type Props = {
  * zijn daarom niet leeg maar benoemd, zodat duidelijk is wat er hoort te komen —
  * precies zoals de referentie-implementatie het doet.
  */
-export function PhotoGrid({ locale, photos = [], heading = true }: Props) {
-  const copy = getCopy(locale);
+export async function PhotoGrid({ locale, photos = [], heading = true }: Props) {
+  const copy = await getSiteCopy(locale);
 
   const cells: Array<Photo | { caption: string }> =
     photos.length > 0

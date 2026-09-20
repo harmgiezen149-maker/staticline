@@ -98,15 +98,32 @@ export async function saveContent(
   const sql = getDb();
   if (!sql) return false;
 
+  if (entries.length === 0) return true;
+
   try {
-    for (const entry of entries) {
-      await sql`
-        INSERT INTO site_content (key, locale, value, updated_by)
-        VALUES (${entry.key}, ${entry.locale}, ${entry.value}, ${actor})
-        ON CONFLICT (key, locale) DO UPDATE
-        SET value = ${entry.value}, updated_at = now(), updated_by = ${actor}
-      `;
-    }
+    /**
+     * Alles in één opdracht.
+     *
+     * Hier stond een lus met een aanroep per veld. Dat was prima toen het er drie
+     * waren; sinds élke tekst van de site aan te passen is, kunnen het er
+     * tientallen tegelijk zijn, en dan is dit tientallen keren heen en weer naar
+     * Neon — seconden wachten op een opslaanknop.
+     *
+     * De plaatshouders worden geteld en niet samengeplakt: `$1, $2, $3` met de
+     * waarden er los naast, zodat een apostrof in een tekst een apostrof blijft
+     * en geen SQL.
+     */
+    const values = entries
+      .map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3}, $${entries.length * 3 + 1})`)
+      .join(", ");
+
+    await sql.query(
+      `INSERT INTO site_content (key, locale, value, updated_by)
+       VALUES ${values}
+       ON CONFLICT (key, locale) DO UPDATE
+       SET value = EXCLUDED.value, updated_at = now(), updated_by = EXCLUDED.updated_by`,
+      [...entries.flatMap((e) => [e.key, e.locale, e.value]), actor],
+    );
     return true;
   } catch (error) {
     console.error("[inhoud] niet opgeslagen:", error);

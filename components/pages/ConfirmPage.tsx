@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 import { Page } from "@/components/Page";
-import { getCopy } from "@/content";
 import { localePath, type Locale } from "@/lib/i18n";
 import { confirmSubscriber } from "@/lib/newsletter";
+import { getSiteCopy } from "@/lib/site-content";
 
 /**
  * Waar de bevestigingslink uit de nieuwsbriefmail op uitkomt.
@@ -24,7 +24,7 @@ export async function ConfirmPage({
   locale: Locale;
   token?: string;
 }) {
-  const copy = getCopy(locale).confirm;
+  const copy = (await getSiteCopy(locale)).confirm;
   const result = await confirmSubscriber(token);
 
   const message = {

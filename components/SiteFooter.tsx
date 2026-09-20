@@ -1,7 +1,6 @@
 import Image from "next/image";
 
-import { getCopy } from "@/content";
-import { getSocials, getText } from "@/lib/site-content";
+import { getSiteCopy, getSocials } from "@/lib/site-content";
 import type { Locale } from "@/lib/i18n";
 
 import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
@@ -20,8 +19,7 @@ import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
  */
 export async function SiteFooter({ locale }: { locale: Locale }) {
   const socials = await getSocials();
-  const note = await getText("footer.note", locale, getCopy(locale).footer.note);
-  const copy = getCopy(locale);
+  const copy = await getSiteCopy(locale);
 
   // Instagram vooraan — dat was een expliciete wens.
   const links = [
@@ -43,7 +41,7 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
       />
 
       <p className="font-mono text-12 leading-[18px] tracking-wide8 text-muted">
-        {note}
+        {copy.footer.note}
       </p>
 
       {links.length > 0 && (
