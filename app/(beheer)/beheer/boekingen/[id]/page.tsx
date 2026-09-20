@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { BookingEditor } from "@/components/beheer/BookingEditor";
 import { Shell } from "@/components/beheer/Shell";
 import { getCopy } from "@/content";
+import { bookingRows } from "@/lib/portal/booking-fields";
 import { syncStatuses } from "@/lib/portal/booking-sync";
 import { type Status, STATUS_LABELS, get } from "@/lib/portal/bookings";
 import { getSession } from "@/lib/portal/session";
@@ -20,14 +21,6 @@ export const metadata: Metadata = { title: "Aanvraag" };
  */
 const copy = getCopy("nl");
 const fields = copy.booking.fields;
-const choices = copy.booking.choice;
-
-const CHOICE_LABELS: Record<string, string> = {
-  yes: choices.yes,
-  no: choices.no,
-  unknown: choices.unknown,
-  rent: choices.rent,
-};
 
 export default async function AanvraagPage({
   params,
@@ -47,23 +40,13 @@ export default async function AanvraagPage({
 
   const isBooking = booking.kind === "booking";
 
+  // De negen formuliervelden staan in lib/portal/booking-fields.ts, omdat het
+  // boekingsscherm in de Band App ze inmiddels ook toont. Hier mét de lege
+  // regels erbij: op dit scherm wil je zien dát iemand een veld oversloeg.
   const rows: [string, string][] = [
     [fields.email, booking.email],
     [fields.phone, booking.phone],
-    ...(isBooking
-      ? ([
-          [fields.date, booking.wanted_date],
-          [fields.location, booking.location],
-          [fields.time, booking.wanted_time],
-          [fields.duration, booking.duration],
-          [fields.eventType, booking.event_type],
-          [fields.budget, booking.budget],
-          [fields.roomSize, booking.room_size],
-          [fields.parking, CHOICE_LABELS[booking.parking] ?? booking.parking],
-          [fields.backstage, CHOICE_LABELS[booking.backstage] ?? booking.backstage],
-          [fields.pa, CHOICE_LABELS[booking.pa] ?? booking.pa],
-        ] as [string, string][])
-      : []),
+    ...bookingRows(booking).map(({ label, value }) => [label, value] as [string, string]),
   ];
 
   return (

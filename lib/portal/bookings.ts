@@ -198,3 +198,56 @@ export async function mirrorStatus(id: number, status: Status): Promise<void> {
     console.error("[beheer] stand niet overgenomen:", error);
   }
 }
+
+/**
+ * De aanvragen die bij deze Band App-ids horen.
+ *
+ * Opzoeken op `band_app_id` en niet op het eigen id: de Band App kent zijn eigen
+ * nummers en niet die van deze site. Zie lib/portal/booking-sync.ts voor hoe die
+ * koppeling ontstaat.
+ */
+export async function byBandAppIds(ids: number[]): Promise<Booking[]> {
+  const sql = getDb();
+  if (!sql || ids.length === 0) return [];
+
+  try {
+    const rows = await sql.query(
+      `SELECT ${COLUMNS} FROM booking_submissions WHERE band_app_id = ANY($1)`,
+      [ids],
+    );
+    return rows as Booking[];
+  } catch (error) {
+    console.error("[beheer] aanvragen niet opgezocht:", error);
+    return [];
+  }
+}
+
+/**
+ * Alleen de notitie bijwerken, opgezocht via de Band App.
+ *
+ * Los van `update` hierboven, dat status én notitie in één opdracht zet omdat ze
+ * daar van één formulier komen. In de Band App staat de notitie op zichzelf: de
+ * status zit daar al in de app zelf, en die hoort niet meegeschreven te worden
+ * omdat iemand een zin typt.
+ */
+export async function setNoteByBandAppId(
+  bandAppId: number,
+  note: string,
+  actor: string,
+): Promise<boolean> {
+  const sql = getDb();
+  if (!sql) return false;
+
+  try {
+    const rows = (await sql`
+      UPDATE booking_submissions
+      SET note = ${note}, updated_at = now(), updated_by = ${actor}
+      WHERE band_app_id = ${bandAppId}
+      RETURNING id
+    `) as { id: number }[];
+    return rows.length > 0;
+  } catch (error) {
+    console.error("[beheer] notitie niet bijgewerkt:", error);
+    return false;
+  }
+}
