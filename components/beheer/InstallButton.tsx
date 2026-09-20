@@ -2,6 +2,8 @@
 
 import { useState, useSyncExternalStore } from "react";
 
+import { InstallDiagnose } from "./InstallDiagnose";
+
 /**
  * Het event dat Chrome vuurt als het de app installeerbaar vindt.
  *
@@ -96,53 +98,61 @@ export function InstallButton() {
 
   if (omgeving === "geinstalleerd") return null;
 
-  if (prompt) {
-    return (
-      <button
-        type="button"
-        className={KNOP}
-        onClick={async () => {
-          await prompt.prompt();
-          // Eenmalig bruikbaar: na `prompt()` is dit event op.
-          window.installPrompt = null;
-          window.dispatchEvent(new Event("installpromptchange"));
-        }}
-      >
-        Op beginscherm zetten
-      </button>
-    );
-  }
-
-  if (omgeving === "anders") {
-    return (
-      <p className="text-muted">
-        Deze browser kan geen apps installeren. Open het beheer in Chrome of
-        Edge, dan kan het wel.
-      </p>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-3">
-      <button type="button" className={KNOP} onClick={() => setUitleg((v) => !v)}>
-        Hoe zet ik dit als app neer?
-      </button>
-      {uitleg &&
-        (omgeving === "ios" ? (
-          <p className="text-muted">
-            Op een iPhone of iPad doet Safari dit niet uit zichzelf. Tik onderin
-            op het deelteken (het vierkantje met de pijl omhoog), kies{" "}
-            <strong>Zet op beginscherm</strong> en bevestig.
-          </p>
-        ) : (
-          <p className="text-muted">
-            Kijk rechts in de adresbalk: daar staat een icoontje van een scherm
-            met een pijl omlaag. Zie je dat niet, dan zit het in het menu van de
-            browser — in Chrome onder{" "}
-            <strong>Casten, opslaan en delen → Pagina installeren als app</strong>,
-            in Edge onder <strong>Apps → Deze site als app installeren</strong>.
-          </p>
-        ))}
+      {prompt ? (
+        <button
+          type="button"
+          className={KNOP}
+          onClick={async () => {
+            await prompt.prompt();
+            // Eenmalig bruikbaar: na `prompt()` is dit event op, ook als je het
+            // venster wegklikt. Daarna valt dit component terug op de uitleg
+            // hieronder, want via het menu kan het nog wel.
+            window.installPrompt = null;
+            window.dispatchEvent(new Event("installpromptchange"));
+          }}
+        >
+          Nu installeren
+        </button>
+      ) : omgeving === "anders" ? (
+        <p className="text-muted">
+          Deze browser kan geen apps installeren. Open het beheer in Chrome of
+          Edge, dan kan het wel.
+        </p>
+      ) : (
+        <>
+          {/* Een knop die uitleg opent en niet installeert. Dat staat er met
+              zoveel woorden bij: een knop die "installeren" heet en alleen tekst
+              toont, leest als een knop die stuk is. */}
+          <button type="button" className={KNOP} onClick={() => setUitleg((v) => !v)}>
+            Lees hoe je dit installeert
+          </button>
+          {uitleg &&
+            (omgeving === "ios" ? (
+              <p className="text-muted">
+                Op een iPhone of iPad doet Safari dit niet uit zichzelf. Tik
+                onderin op het deelteken (het vierkantje met de pijl omhoog),
+                kies <strong>Zet op beginscherm</strong> en bevestig.
+              </p>
+            ) : (
+              <p className="text-muted">
+                Kijk rechts in de adresbalk: daar staat een icoontje van een
+                scherm met een pijl omlaag. Zie je dat niet, dan zit het in het
+                menu van de browser: in Chrome onder{" "}
+                <strong>
+                  Casten, opslaan en delen → Pagina installeren als app
+                </strong>
+                , in Edge onder{" "}
+                <strong>Apps → Deze site als app installeren</strong>.
+              </p>
+            ))}
+        </>
+      )}
+
+      {/* Altijd bereikbaar, ook als er wél een knop staat: als die klik niets
+          oplevert, is dit de enige manier om te zien waaróm. */}
+      <InstallDiagnose />
     </div>
   );
 }
