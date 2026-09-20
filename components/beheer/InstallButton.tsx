@@ -23,16 +23,26 @@ const STANDALONE = "(display-mode: standalone)";
  * Eén tekenreeks en geen object, omdat React deze waarde bij elke render
  * vergelijkt: een nieuw object bij elke aanroep zou een oneindige lus geven.
  */
-type Omgeving = "geinstalleerd" | "ios" | "anders";
+type Omgeving = "geinstalleerd" | "ios" | "chromium" | "anders";
 
 function leesOmgeving(): Omgeving {
   if (window.matchMedia(STANDALONE).matches) return "geinstalleerd";
 
-  // iPhone en iPad. `maxTouchPoints` erbij omdat een iPad zich sinds iPadOS als
-  // een Mac voordoet in de user agent.
   const ua = navigator.userAgent;
-  const apple = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  return apple ? "ios" : "anders";
+
+  // iPhone en iPad. `maxTouchPoints` erbij omdat een iPad zich sinds iPadOS als
+  // een Mac voordoet in de user agent. Dit moet vóór de Chromium-controle: een
+  // Chrome op een iPhone is onderhuids gewoon Safari en kan net zomin zelf
+  // installeren.
+  if (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
+    return "ios";
+  }
+
+  // Chrome, Edge, Brave, Opera. Die kunnen installeren, ook als ze het op dit
+  // moment niet uit zichzelf aanbieden.
+  if (/Chrome\/|Chromium\/|Edg\//.test(ua)) return "chromium";
+
+  return "anders";
 }
 
 function volgOmgeving(melden: () => void) {
@@ -51,24 +61,33 @@ function volgPrompt(melden: () => void) {
   return () => window.removeEventListener("installpromptchange", melden);
 }
 
+const KNOP =
+  "self-start border border-line-strong px-5 py-2 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] hover:border-primary";
+
 /**
- * De knop om het beheer op het beginscherm te zetten.
+ * De knop om het beheer als app te installeren.
  *
- * Drie toestanden, en die verschillen per toestel:
+ * Vier toestanden, en dat is er drie meer dan je zou hopen — maar browsers
+ * verschillen hier nu eenmaal, en de eerste versie van dit component liet in
+ * twee van de vier gevallen niets zien. Dat leest als een kapotte knop terwijl
+ * er niets kapot is.
  *
- * - **Android en desktop-Chrome** geven een `beforeinstallprompt`-event zodra ze
- *   de app installeerbaar vinden. Dat event wordt in de layout opgevangen,
- *   vóórdat React geladen is — anders is het weg voordat deze component bestaat.
- *   Zie app/(beheer)/layout.tsx.
- * - **iOS** kent dat event niet en zal het ook nooit krijgen. Daar gaat het via
- *   het deelmenu van Safari, en het enige wat hier kan is uitleggen hoe.
- * - **Al geïnstalleerd**: dan staat er niets. De app staat al waar hij hoort.
+ * - **Chrome of Edge dat het aanbiedt.** Dan is er een `beforeinstallprompt`
+ *   binnengekomen. Dat event wordt in de layout opgevangen, vóórdat React
+ *   geladen is — anders is het weg voordat dit component bestaat. Eén tik en
+ *   het staat er.
+ * - **Chrome of Edge dat het níét aanbiedt.** Dat gebeurt: het event komt maar
+ *   één keer, en wie het ooit weggeklikt heeft krijgt het voorlopig niet terug.
+ *   De installatie zelf kan nog gewoon, alleen via het menu van de browser.
+ *   Vandaar uitleg in plaats van niets.
+ * - **iOS.** Kent dat event niet en zal het ook nooit krijgen. Daar gaat het via
+ *   het deelmenu van Safari.
+ * - **Al geïnstalleerd.** Dan staat er niets. De app staat al waar hij hoort.
  *
- * `useSyncExternalStore` en geen `useEffect` met `useState`: dit zijn drie
- * dingen die de browser al weet en die wij alleen uitlezen. Tijdens het renderen
- * op de server is er geen browser, dus daar is het antwoord "anders" en is er
- * niets te zien; zodra de pagina in de browser staat, komt het echte antwoord
- * erbij. Dat is precies waar deze haak voor is.
+ * `useSyncExternalStore` en geen `useEffect` met `useState`: dit zijn dingen die
+ * de browser al weet en die wij alleen uitlezen. Tijdens het renderen op de
+ * server is er geen browser, dus daar is er niets te zien; zodra de pagina in de
+ * browser staat, komt het echte antwoord erbij.
  */
 export function InstallButton() {
   const omgeving = useSyncExternalStore<Omgeving>(volgOmgeving, leesOmgeving, () => "anders");
@@ -77,14 +96,11 @@ export function InstallButton() {
 
   if (omgeving === "geinstalleerd") return null;
 
-  const knop =
-    "self-start border border-line-strong px-5 py-2 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] hover:border-primary";
-
   if (prompt) {
     return (
       <button
         type="button"
-        className={knop}
+        className={KNOP}
         onClick={async () => {
           await prompt.prompt();
           // Eenmalig bruikbaar: na `prompt()` is dit event op.
@@ -97,24 +113,36 @@ export function InstallButton() {
     );
   }
 
-  // Geen prompt en geen iOS: de browser vindt de app (nog) niet installeerbaar,
-  // of het is er een die het niet kan. Dan is een knop die niets doet erger dan
-  // geen knop.
-  if (omgeving !== "ios") return null;
+  if (omgeving === "anders") {
+    return (
+      <p className="text-muted">
+        Deze browser kan geen apps installeren. Open het beheer in Chrome of
+        Edge, dan kan het wel.
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
-      <button type="button" className={knop} onClick={() => setUitleg((v) => !v)}>
-        Op beginscherm zetten
+      <button type="button" className={KNOP} onClick={() => setUitleg((v) => !v)}>
+        Hoe zet ik dit als app neer?
       </button>
-      {uitleg && (
-        <p className="text-muted">
-          Op een iPhone doet Safari dit zelf niet. Tik onderin op het deelteken
-          (het vierkantje met de pijl omhoog), kies{" "}
-          <strong>Zet op beginscherm</strong> en bevestig. Daarna staat het
-          beheer als app op je telefoon, zonder adresbalk.
-        </p>
-      )}
+      {uitleg &&
+        (omgeving === "ios" ? (
+          <p className="text-muted">
+            Op een iPhone of iPad doet Safari dit niet uit zichzelf. Tik onderin
+            op het deelteken (het vierkantje met de pijl omhoog), kies{" "}
+            <strong>Zet op beginscherm</strong> en bevestig.
+          </p>
+        ) : (
+          <p className="text-muted">
+            Kijk rechts in de adresbalk: daar staat een icoontje van een scherm
+            met een pijl omlaag. Zie je dat niet, dan zit het in het menu van de
+            browser — in Chrome onder{" "}
+            <strong>Casten, opslaan en delen → Pagina installeren als app</strong>,
+            in Edge onder <strong>Apps → Deze site als app installeren</strong>.
+          </p>
+        ))}
     </div>
   );
 }

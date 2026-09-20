@@ -46,11 +46,11 @@ export default async function BeheerPage() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <h2 className="font-mono text-11 text-faint uppercase">Op je telefoon</h2>
+          <h2 className="font-mono text-11 text-faint uppercase">Als app</h2>
           <p className="text-muted">
-            Dit beheer is te installeren als app. Dan staat het met een eigen
-            icoon op je beginscherm en opent het zonder adresbalk, net als de
-            Band App. Het werkt verder hetzelfde en heeft bereik nodig.
+            Dit beheer is te installeren. Dan staat het met een eigen icoon op je
+            beginscherm of in je taakbalk en opent het zonder adresbalk, net als
+            de Band App. Het werkt verder hetzelfde en heeft bereik nodig.
           </p>
           <InstallButton />
         </section>

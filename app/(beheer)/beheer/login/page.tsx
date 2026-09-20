@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { InstallButton } from "@/components/beheer/InstallButton";
 import { LoginForm } from "@/components/beheer/LoginForm";
 import { portalConfigured } from "@/lib/portal/access";
 
@@ -49,6 +50,20 @@ export default async function LoginPage({
             <p className="text-muted">Je bent uitgelogd.</p>
           )}
           <LoginForm />
+
+          {/* Ook hier, en niet alleen op het overzicht.
+              Het overzicht krijg je pas ná het inloggen, dus daar stond de knop
+              precies achter de deur die je nog open moest doen. Installeren kan
+              hier prima: deze pagina draagt hetzelfde manifest. */}
+          <div className="flex flex-col gap-3 border-t border-line pt-6">
+            <p className="font-mono text-11 text-faint uppercase">Als app</p>
+            <p className="text-muted">
+              Het beheer kan als app op je beginscherm of in je taakbalk, met een
+              eigen icoon en zonder adresbalk. Je blijft dan ingelogd zoals je
+              hier ook ingelogd blijft.
+            </p>
+            <InstallButton />
+          </div>
         </>
       )}
     </main>
