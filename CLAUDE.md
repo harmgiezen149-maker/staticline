@@ -138,6 +138,30 @@ overheen legde en de 404 daardoor niet te zien was.
 `"framework": "nextjs"` in `vercel.json` zet dat in de repo vast, zodat het niet
 afhangt van een instelling die iemand ooit in de Vercel-interface heeft staan.
 
+### En laat `git.deploymentEnabled` ook staan
+
+Daar staat sinds kort bij dat **alleen `main` uitrolt**. Elke andere tak, de
+werktak van een sessie voorop, wordt wel gepusht maar niet gebouwd.
+
+Dat is er niet om previews weg te halen maar om te tellen. Elke commit ging
+hiervoor twee keer naar Vercel — één preview voor de tak, één productie voor
+`main` — en elke bewaarde deployment houdt zijn eigen kopie van de build. In de
+eerste drie dagen van dit project waren dat er ruim zeventig, goed voor meer dan
+een gigabyte aan deployment storage, terwijl de andere projecten op een paar
+honderd megabyte staan. Dat is geen lek; het is gewoon vaak uitrollen, en de
+helft ervan keek niemand ooit na.
+
+De drie regels erin zijn met opzet drie. Vercel zegt niet of een `*` in zo'n
+patroon een schuine streep oversteekt, en een taknaam als
+`claude/iets-iets` hangt precies op die vraag. `*` en `**` staan er allebei, en
+`main` staat er expliciet op `true` omdat bij overlappende patronen één `true`
+genoeg is om toch uit te rollen. Zo kan geen van beide antwoorden op die vraag
+fout uitpakken.
+
+Wil je een tak tóch een keer live zien, dan kan dat nog steeds met een
+handmatige deployment vanuit de Vercel-interface of de API. Dat is een bewuste
+handeling in plaats van iets wat vanzelf gebeurt bij elke push.
+
 ## Breekpunten
 
 Het ontwerp werkt met twee grenzen, als max-width geschreven: 1024 en 640. In
@@ -161,7 +185,7 @@ components/         SiteHeader, Hero, NextShow, ShowList, ShowRow, PhotoGrid, Si
 content/            copy per taal; het type in content/types.ts dwingt af dat beide compleet zijn
 lib/                i18n, band-app-koppeling, showmodel, fonts
 styles/tokens.css   gegenereerd uit design-system/tokens.json — niet met de hand aanpassen
-design/             de design-handoff, alleen referentie, staat buiten de linter en de build
+design/             de design-handoff, alleen referentie, staat buiten de linter, de build en (via .vercelignore) de deployment
 design-system/      tokens, brandbook, logo's
 docs/               de briefings uit het handover-pakket
 ```

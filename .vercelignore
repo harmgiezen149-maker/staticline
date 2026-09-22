@@ -1,0 +1,20 @@
+# Wat niet mee hoeft naar Vercel.
+#
+# Werkt als .gitignore, maar dan voor wat er bij een deployment geüpload wordt.
+# Deze twee mappen horen in de repo — ze zijn de bron van het ontwerp — maar geen
+# enkele buildstap leest ze. `styles/tokens.css` staat gegenereerd en gecommit in
+# de repo, en verder noemt alleen wat commentaar `design-system`.
+#
+# Waarom dit er staat: elke bewaarde deployment houdt zijn eigen kopie. Zonder
+# dit bestand ging er zeventien megabyte referentiemateriaal mee, bij elke
+# deployment opnieuw, en dat waren er zeventig in drie dagen. Hoeveel het per
+# deployment scheelt is van buitenaf niet te meten — Vercel geeft de omvang van
+# een losse deployment niet vrij — maar het is materiaal dat daar niets te
+# zoeken heeft. Zie de vercel.json ernaast voor de andere helft van dezelfde
+# opruiming.
+#
+# Haal je hier iets weg, controleer dan eerst of de build het echt nodig heeft:
+# een ontbrekend bestand valt pas op Vercel op, niet bij `npm run build` hier.
+
+design
+design-system
