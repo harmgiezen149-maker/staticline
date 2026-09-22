@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { Analytics } from "@vercel/analytics/next";
 import { getCopy } from "@/content";
 import { fontVariables } from "@/lib/fonts";
 import { siteUrl } from "@/lib/site";
@@ -44,7 +45,10 @@ export const metadata: Metadata = {
 export default function NlLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="nl" className={fontVariables}>
-      <body className="bg-base text-primary">{children}</body>
+      <body className="bg-base text-primary">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

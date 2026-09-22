@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
+import { Analytics } from "@vercel/analytics/next";
 import { PwaSetup } from "@/components/beheer/PwaSetup";
 import { fontVariables } from "@/lib/fonts";
 import "../globals.css";
@@ -71,6 +72,7 @@ export default function BeheerLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: VANG_INSTALLPROMPT }} />
         <PwaSetup />
         {children}
+        <Analytics />
       </body>
     </html>
   );
