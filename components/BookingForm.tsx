@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Script from "next/script";
 
 import type { Copy } from "@/content";
 import type { BookingKind } from "@/lib/booking";
 import type { Locale } from "@/lib/i18n";
+import { motionOn, ms, tok } from "@/lib/motion/env";
 
 /**
  * Het boekingsformulier.
@@ -58,6 +59,116 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
   useEffect(() => {
     if (state === "ok") okRef.current?.focus();
   }, [state]);
+
+  /**
+   * Het wisselen tussen Boeking en Algemene vraag, in de beweging van v2.
+   *
+   * `kind` is wat er gekozen is, `shown` wat er in beeld staat. Die twee lopen
+   * even uit elkaar zolang de wissel speelt:
+   *
+   * - **Naar de vraag**: de drie boekingsblokken knippen weg, van onder naar
+   *   boven, en pas dan verdwijnen ze uit het formulier.
+   * - **Naar de boeking**: de blokken komen erbij en wipen van links in, na
+   *   elkaar.
+   *
+   * Wat eronder staat (het bericht, de verzendknop) verspringt daarbij niet
+   * maar schuift naar zijn nieuwe plek: de positie van vóór de wissel wordt
+   * gemeten en de verschuiving teruggespeeld als transform (FLIP). Alleen
+   * transform, opacity en clip-path, zoals MOTION.md voorschrijft.
+   *
+   * Zonder beweging (minder beweging, of de motion-laag draait niet) is het een
+   * gewone wissel. Wat in de boekingsvelden getypt was, verdwijnt bij het
+   * wisselen naar de vraag, net als voorheen: een vraag hoort geen datum en
+   * budget mee te sturen die de bezoeker niet meer ziet.
+   */
+  const [shown, setShown] = useState<BookingKind>("booking");
+  const extraRef = useRef<HTMLDivElement>(null);
+  const tailRef = useRef<HTMLDivElement>(null);
+  const tailFrom = useRef<number | null>(null);
+  const entering = useRef(false);
+
+  useEffect(() => {
+    if (kind === shown) return;
+    let cancelled = false;
+    const groups = [...(extraRef.current?.children ?? [])] as HTMLElement[];
+
+    (async () => {
+      if (kind === "question" && motionOn() && groups.length > 0) {
+        await Promise.all(
+          groups
+            .slice()
+            .reverse()
+            .map(
+              (group, i) =>
+                group.animate(
+                  [
+                    { opacity: 1, clipPath: "inset(0 0 0 0)" },
+                    { opacity: 0, clipPath: "inset(0 0 0 100%)" },
+                  ],
+                  {
+                    duration: ms("--dur-base"),
+                    delay: i * ms("--stagger-band"),
+                    easing: tok("--ease-cut"),
+                    fill: "forwards",
+                  },
+                ).finished,
+            ),
+        ).catch(() => {});
+        if (cancelled) return;
+      }
+      if (motionOn() && tailRef.current) {
+        tailFrom.current = tailRef.current.getBoundingClientRect().top;
+      }
+      entering.current = kind === "booking";
+      setShown(kind);
+    })();
+
+    return () => {
+      cancelled = true;
+      // Halverwege teruggekozen: de blokken die al aan het wegknippen waren,
+      // staan er meteen weer.
+      groups.forEach((group) =>
+        group.getAnimations().forEach((a) => a.cancel()),
+      );
+    };
+  }, [kind, shown]);
+
+  // Na de wissel, vóór de browser tekent: de nieuwe plek meten en de sprong
+  // als beweging terugspelen.
+  useLayoutEffect(() => {
+    const tail = tailRef.current;
+    if (tail && tailFrom.current !== null) {
+      const delta = tailFrom.current - tail.getBoundingClientRect().top;
+      tailFrom.current = null;
+      if (Math.abs(delta) > 1) {
+        tail.animate(
+          [
+            { transform: `translate3d(0, ${delta}px, 0)` },
+            { transform: "translate3d(0, 0, 0)" },
+          ],
+          { duration: ms("--dur-slow"), easing: tok("--ease-signal") },
+        );
+      }
+    }
+
+    if (entering.current && extraRef.current) {
+      entering.current = false;
+      [...extraRef.current.children].forEach((group, i) => {
+        (group as HTMLElement).animate(
+          [
+            { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+            { opacity: 1, clipPath: "inset(0 0 0 0)" },
+          ],
+          {
+            duration: ms("--dur-slow"),
+            delay: 120 + i * ms("--stagger-photo"),
+            easing: tok("--ease-signal"),
+            fill: "backwards",
+          },
+        );
+      });
+    }
+  }, [shown]);
 
   /**
    * Een mislukte poging afsluiten.
@@ -125,7 +236,7 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
     );
   }
 
-  const isBooking = kind === "booking";
+  const isBooking = shown === "booking";
 
   return (
     <>
@@ -152,7 +263,14 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
           <legend className="font-mono text-11 tracking-wide22 text-faint uppercase">
             {copy.kindLabel}
           </legend>
-          <div className="flex flex-col gap-2 sm:flex-row">
+          {/* De rode vulling is één laag die naar de gekozen optie schuift, in
+              plaats van twee knoppen die van kleur wisselen. Zie `.kind-switch`
+              in styles/motion.css. */}
+          <div
+            className="kind-switch relative grid grid-cols-1 gap-2 sm:grid-cols-2"
+            data-kind={kind}
+          >
+            <span className="kind-switch__fill" aria-hidden="true" />
             {(
               [
                 ["booking", copy.kindBooking],
@@ -161,9 +279,9 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
             ).map(([value, label]) => (
               <label
                 key={value}
-                className={`flex min-h-11 cursor-pointer items-center justify-center border px-6 py-3 font-display text-15 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] sm:flex-1 ${
+                className={`relative z-1 flex min-h-11 cursor-pointer items-center justify-center border px-6 py-3 font-display text-15 font-bold tracking-wide12 uppercase transition-colors duration-[160ms] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--focus-ring) ${
                   kind === value
-                    ? "border-accent bg-accent text-on-accent"
+                    ? "border-accent text-on-accent"
                     : "border-line-strong text-muted hover:border-primary hover:text-primary"
                 }`}
               >
@@ -213,7 +331,7 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
         </Group>
 
         {isBooking && (
-          <>
+          <div ref={extraRef} className="flex flex-col gap-10">
             <Group title={copy.groupWhen}>
               <Field label={copy.fields.date} name="date" copy={copy}>
                 <input
@@ -301,53 +419,56 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
                 ]}
               />
             </Group>
-          </>
+          </div>
         )}
 
-        <Group title={copy.groupMessage} single>
-          <Field label={copy.fields.message} name="message" copy={copy}>
-            <textarea
-              id="message"
-              name="message"
-              rows={6}
-              placeholder={copy.fields.messagePlaceholder}
-              className={`${inputClass} resize-y`}
-            />
-          </Field>
-        </Group>
+        {/* Alles hieronder schuift mee bij een wissel, zie boven. */}
+        <div ref={tailRef} className="flex flex-col gap-10">
+          <Group title={copy.groupMessage} single>
+            <Field label={copy.fields.message} name="message" copy={copy}>
+              <textarea
+                id="message"
+                name="message"
+                rows={6}
+                placeholder={copy.fields.messagePlaceholder}
+                className={`${inputClass} resize-y`}
+              />
+            </Field>
+          </Group>
 
-        {/* Honeypot: onzichtbaar voor mensen, onweerstaanbaar voor bots. */}
-        <input
-          type="text"
-          name="website"
-          tabIndex={-1}
-          autoComplete="off"
-          aria-hidden="true"
-          className="absolute left-[-9999px] h-0 w-0 opacity-0"
-        />
-
-        {siteKey && (
-          <div
-            className="cf-turnstile"
-            data-sitekey={siteKey}
-            data-theme="dark"
-            data-response-field-name="turnstileToken"
+          {/* Honeypot: onzichtbaar voor mensen, onweerstaanbaar voor bots. */}
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute left-[-9999px] h-0 w-0 opacity-0"
           />
-        )}
 
-        {state === "error" && (
-          <p role="alert" className="text-14 leading-[22px] text-danger">
-            {error}
-          </p>
-        )}
+          {siteKey && (
+            <div
+              className="cf-turnstile"
+              data-sitekey={siteKey}
+              data-theme="dark"
+              data-response-field-name="turnstileToken"
+            />
+          )}
 
-        <button
-          type="submit"
-          disabled={state === "sending"}
-          className="min-h-12 self-start bg-accent px-7 py-4 font-display text-16 font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[160ms] enabled:hover:bg-accent-alt enabled:hover:text-inset disabled:opacity-60"
-        >
-          {state === "sending" ? copy.sending : copy.submit}
-        </button>
+          {state === "error" && (
+            <p role="alert" className="text-14 leading-[22px] text-danger">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={state === "sending"}
+            className="min-h-12 self-start bg-accent px-7 py-4 font-display text-16 font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[160ms] enabled:hover:bg-accent-alt enabled:hover:text-inset disabled:opacity-60"
+          >
+            {state === "sending" ? copy.sending : copy.submit}
+          </button>
+        </div>
       </form>
     </>
   );
@@ -442,12 +563,7 @@ function ChoiceField({
             {/* Bewust niets voorgeselecteerd: drie vooraf ingevulde antwoorden
                 zien eruit alsof de bezoeker ze gegeven heeft. Niets aankruisen
                 betekent "onbekend" — zo leest lib/booking.ts het ook. */}
-            <input
-              type="radio"
-              name={name}
-              value={value}
-              className="sr-only"
-            />
+            <input type="radio" name={name} value={value} className="sr-only" />
             {optionLabel}
           </label>
         ))}

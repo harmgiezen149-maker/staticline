@@ -1265,3 +1265,37 @@ a.show-row:focus-visible .show-row__arrow {
     display: none;
   }
 }
+
+/* ─── Keuze Boeking / Algemene vraag ────────────────────────────────────── *
+ * Eén rode vulling die naar de gekozen optie schuift. Op mobiel staan de twee
+ * opties onder elkaar, dus schuift hij daar verticaal; vanaf tablet naast
+ * elkaar, dus horizontaal. De 8px is de ruimte tussen de twee (gap-2).
+ * Zie components/BookingForm.tsx voor de blokken eronder.
+ */
+.kind-switch__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(50% - 4px);
+  background: var(--accent);
+  pointer-events: none;
+  transition: transform var(--dur-slow) var(--ease-band);
+}
+.kind-switch[data-kind="question"] .kind-switch__fill {
+  transform: translate3d(0, calc(100% + 8px), 0);
+}
+@media (min-width: 641px) {
+  .kind-switch__fill {
+    width: calc(50% - 4px);
+    height: 100%;
+  }
+  .kind-switch[data-kind="question"] .kind-switch__fill {
+    transform: translate3d(calc(100% + 8px), 0, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kind-switch__fill {
+    transition: none;
+  }
+}
