@@ -25,11 +25,17 @@ export function Overlays({ copy }: { copy: Copy }) {
           <div className="loader__track" />
         </div>
         <div className="loader__line" />
-        <p className="loader__readout">
-          <span>{copy.motion.loaderLabel}</span>
-          <span className="loader__count">000</span>
-        </p>
-        <p className="loader__hint">{copy.motion.loaderHint}</p>
+        {/* Onder elkaar in plaats van naast elkaar: op deze maat passen ze niet
+            meer allebei op de onderste regel. De hint staat boven, zodat het
+            label met de teller onderaan blijft staan, waar het in het ontwerp
+            staat. */}
+        <div className="loader__text">
+          <p className="loader__hint">{copy.motion.loaderHint}</p>
+          <p className="loader__readout">
+            <span>{copy.motion.loaderLabel}</span>
+            <span className="loader__count">000</span>
+          </p>
+        </div>
       </div>
 
       {/* De kanaalwissel tussen pagina's. Vijf banden; op mobiel valt de

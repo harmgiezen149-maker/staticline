@@ -1005,39 +1005,63 @@ a.show-row:focus-visible .show-row__arrow {
   background: var(--text-primary);
   opacity: 0;
 }
-.loader__readout {
+.loader__text {
+  /* De tekst onderin de loader: het label met de teller, en de hint om over te
+   * slaan. Op verzoek minstens tien keer zo groot als de 11px uit het ontwerp,
+   * dus 110px en meer: een affiche over de ruis in plaats van een voetnoot.
+   *
+   * Tien keer past niet overal. De maat is daarom begrensd door het langste
+   * woord: "SEARCHING" (negen tekens) moet op één regel passen. Een teken in
+   * JetBrains Mono is 0,6em breed, met de letterafstand 0,66em; negen tekens is
+   * zo'n 6em. Vandaar (breedte − marge) / 6,2. Vanaf ongeveer 720px breed is
+   * dat 110px of meer, op desktop 120px; op een telefoon van 390px wordt het
+   * ±55px, omdat een groter woord daar letterlijk buiten beeld valt.
+   *
+   * `overflow-wrap: anywhere` als vangnet: de teksten zijn aan te passen in
+   * /beheer/inhoud, en een langer woord hoort dan af te breken in plaats van
+   * de pagina breder te maken dan het scherm. */
   position: absolute;
   left: 24px;
+  right: 24px;
   bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: min(120px, calc((100vw - 48px) / 6.2));
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.loader__readout {
   margin: 0;
   display: flex;
-  gap: 16px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  flex-wrap: wrap;
+  column-gap: 0.4em;
   color: var(--text-muted);
 }
 .loader__count {
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
+/* In het ontwerp in --text-faint, maar die kleur is alleen voor monolabels van
+   11–12px. Op deze maat is het geen label meer, dus --text-muted. */
 .loader__hint {
-  position: absolute;
-  right: 24px;
-  bottom: 20px;
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 @media (max-width: 640px) {
-  .loader__readout {
+  .loader__text {
     left: 20px;
+    right: 20px;
     bottom: 16px;
+    font-size: calc((100vw - 40px) / 6.2);
   }
+  /* Op mobiel geen hint, zoals in het ontwerp: tikken slaat over, en dat
+     hoeft een telefoon niet uitgelegd te worden. */
   .loader__hint {
     display: none;
   }

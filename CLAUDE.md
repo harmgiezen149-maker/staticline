@@ -241,6 +241,11 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   voorschrijft, op verzoek: zo waren ze nauwelijks te zien. De tijden staan als
   `--loader-*` en `--pt-*` in `styles/motion.css`, op één plek. Overslaan blijft
   snel, en met minder beweging blijft het een crossfade van 120 ms.
+- **De tekst in de loader is minstens tien keer zo groot** als de 11px uit het
+  ontwerp: 120px op desktop en tablet, onder elkaar in plaats van naast elkaar.
+  Op een telefoon past dat niet — "SEARCHING" op 110px is breder dan het
+  scherm — dus daar is de maat begrensd door het langste woord (±55px op
+  390px). Zie `.loader__text`.
 - **Een duur uit CSS lezen gaat via `toMs` in `lib/motion/env.ts`.** De
   minifier schrijft `2200ms` in de gebouwde CSS als `2.2s`; een kale
   `parseFloat` maakt daar 2,2 ms van. Dat is precies wat de loader eerst
