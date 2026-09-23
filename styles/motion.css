@@ -375,7 +375,17 @@
 .btn--primary {
   background: var(--accent);
   color: var(--text-on-accent);
-  --btn-fill: var(--accent-hover);
+  /* Hover wordt blauw (teal) in plaats van lichter rood, op verzoek. De tekst
+     wordt dan donker: lichte tekst op dit blauw haalt maar 2,6:1, donkere 6,7:1. */
+  --btn-fill: var(--accent-alt);
+  transition:
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    transform var(--dur-instant) ease;
+}
+.btn--primary:hover,
+.btn--primary:focus-visible {
+  color: var(--bg-inset);
 }
 .btn--ghost {
   border: 1px solid var(--border-strong);
@@ -471,7 +481,7 @@
 
 /* De kop-CTA is een kleine knop. */
 .site-header__cta {
-  --btn-fill: var(--accent-hover);
+  --btn-fill: var(--accent-alt);
 }
 
 /* ─── Mobiel menupaneel ─────────────────────────────────────────────────── *

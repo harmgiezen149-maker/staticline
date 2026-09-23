@@ -344,7 +344,7 @@ export function BookingForm({ copy, locale, siteKey }: Props) {
         <button
           type="submit"
           disabled={state === "sending"}
-          className="min-h-12 self-start bg-accent px-7 py-4 font-display text-16 font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[120ms] hover:bg-accent-hover disabled:opacity-60"
+          className="min-h-12 self-start bg-accent px-7 py-4 font-display text-16 font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[160ms] enabled:hover:bg-accent-alt enabled:hover:text-inset disabled:opacity-60"
         >
           {state === "sending" ? copy.sending : copy.submit}
         </button>

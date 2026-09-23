@@ -204,7 +204,7 @@ export function GigForm({ gig }: { gig?: GigValues }) {
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex items-center justify-center bg-accent px-6 py-3 font-display font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[120ms] hover:bg-accent-hover disabled:opacity-60"
+            className="inline-flex items-center justify-center bg-accent px-6 py-3 font-display font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[160ms] enabled:hover:bg-accent-alt enabled:hover:text-inset disabled:opacity-60"
           >
             {pending ? "Bezig…" : editing ? "Opslaan" : "Show toevoegen"}
           </button>

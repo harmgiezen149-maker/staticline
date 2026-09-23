@@ -246,6 +246,11 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   Op een telefoon past dat niet — "SEARCHING" op 110px is breder dan het
   scherm — dus daar is de maat begrensd door het langste woord (±55px op
   390px). Zie `.loader__text`.
+- **Rode knoppen worden blauw bij hover** (`--accent-alt`), niet lichter rood, op
+  verzoek. De tekst wordt dan donker (`--bg-inset`): lichte tekst op dit blauw
+  haalt maar 2,6:1, donkere 6,7:1. Geldt voor `.btn--primary` in
+  `styles/motion.css` en voor de formulierknoppen, die dit als
+  `enabled:hover:bg-accent-alt enabled:hover:text-inset` hebben.
 - **Een duur uit CSS lezen gaat via `toMs` in `lib/motion/env.ts`.** De
   minifier schrijft `2200ms` in de gebouwde CSS als `2.2s`; een kale
   `parseFloat` maakt daar 2,2 ms van. Dat is precies wat de loader eerst
