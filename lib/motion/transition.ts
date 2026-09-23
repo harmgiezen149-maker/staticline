@@ -1,5 +1,5 @@
 import { decode } from "./decode";
-import { motionOn, ms, reduced, tok } from "./env";
+import { motionOn, ms, reduced, tok, wait } from "./env";
 
 /**
  * Paginaovergangen: "Kanaalwissel".
@@ -54,13 +54,18 @@ export async function leave({
     return;
   }
 
+  // De tijden staan als tokens in styles/motion.css (`--pt-*`) en zijn bewust
+  // langer dan MOTION.md voorschrijft — zie daar waarom.
+  const close = ms("--pt-close");
+  const stagger = ms("--pt-stagger");
+
   const animations = bands.map((band, i) => {
     const from = i % 2 === 0 ? "-101%" : "101%";
     return band.animate(
       [{ transform: `translate3d(${from},0,0)` }, { transform: "translate3d(0,0,0)" }],
       {
-        duration: 360,
-        delay: i * ms("--stagger-band"),
+        duration: close,
+        delay: i * stagger,
         easing: tok("--ease-band"),
         fill: "forwards",
       },
@@ -70,13 +75,17 @@ export async function leave({
   const labelEl = pt.querySelector<HTMLElement>(".pt__label");
   if (labelEl && label) {
     labelEl.textContent = label;
+    labelEl.getAnimations().forEach((a) => a.cancel());
     setTimeout(() => {
       labelEl.style.opacity = "1";
-      decode(labelEl, { duration: 300, hot: 0.2 });
-    }, 220);
+      decode(labelEl, { duration: ms("--pt-label"), hot: 0.2 });
+    }, close * 0.6);
   }
 
   await Promise.all(animations.map((a) => a.finished)).catch(() => {});
+  // Dicht blijven tot het label gelezen kan worden. Zonder dit gaat het doek
+  // weer open op het moment dat het label net stil staat.
+  await wait(ms("--pt-hold"));
 }
 
 /**
@@ -103,7 +112,16 @@ export async function enter({
 
   const bands = visibleBands(pt);
   const labelEl = pt.querySelector<HTMLElement>(".pt__label");
-  if (labelEl) labelEl.style.opacity = "0";
+  if (labelEl && labelEl.style.opacity === "1") {
+    // Het label vervaagt terwijl de banden weglopen, in plaats van in één beeld.
+    labelEl
+      .animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, fill: "forwards" })
+      .finished.then(() => {
+        labelEl.style.opacity = "0";
+        labelEl.getAnimations().forEach((a) => a.cancel());
+      })
+      .catch(() => {});
+  }
 
   const animations = calm
     ? bands.map((band) =>
@@ -119,8 +137,8 @@ export async function enter({
         return band.animate(
           [{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(${to},0,0)` }],
           {
-            duration: 420,
-            delay: i * ms("--stagger-band"),
+            duration: ms("--pt-open"),
+            delay: i * ms("--pt-stagger"),
             easing: tok("--ease-band"),
             fill: "forwards",
           },

@@ -4,15 +4,18 @@ import { isMobile, motionOn, ms, root, tok, wait } from "./env";
 /**
  * De loader "Afstemmen": tv-sneeuw, dan één lijn, dan beeld.
  *
+ * De tijden staan als tokens in styles/motion.css (`--loader-*`), en zijn
+ * bewust langer dan MOTION.md voorschrijft — zie daar waarom.
+ *
  * Eén keer per sessie, alleen op de publieke site, en altijd over te slaan met
  * een klik, een tik of een toets. De pagina staat er al helemaal onder: de
  * loader ligt erbovenop en verbergt niets. Dat is geen detail — het wordmark in
  * de hero is het grootste element bij de eerste paint, en een loader die dat
  * verbergt schuift het meetpunt voor laadsnelheid (LCP) naar achteren.
  *
- * De teller loopt op echte gereedheid: fonts en het wordmark. Minstens 900 ms,
- * zodat het gebaar niet wegflitst op een snelle lijn, en nooit langer dan
- * 1200 ms, zodat een trage lijn er niet op hoeft te wachten.
+ * De teller loopt op echte gereedheid: fonts en het wordmark. Minstens
+ * `--loader-min`, zodat het gebaar niet wegflitst op een snelle lijn, en nooit
+ * langer dan `--loader-max`, zodat een trage lijn er niet op hoeft te wachten.
  */
 
 export const INTRO_SEEN = "sl-intro-seen";
@@ -81,8 +84,10 @@ export function runLoader(): Promise<{ skipped: boolean }> | null {
   }
 
   const mobile = isMobile();
-  const minT = mobile ? 700 : ms("--loader-min");
-  const maxT = mobile ? 1000 : ms("--loader-max");
+  const minT = ms(mobile ? "--loader-min-mobile" : "--loader-min");
+  const maxT = ms(mobile ? "--loader-max-mobile" : "--loader-max");
+  const collapseT = ms("--loader-collapse");
+  const openT = ms("--loader-open");
 
   const signal = loader.querySelector<HTMLElement>(".loader__signal");
   const line = loader.querySelector<HTMLElement>(".loader__line");
@@ -110,10 +115,12 @@ export function runLoader(): Promise<{ skipped: boolean }> | null {
   loader.addEventListener("pointerdown", skip, { once: true });
   window.addEventListener("keydown", skip, { once: true });
 
-  decode(readout.firstElementChild as HTMLElement | null, { duration: 360, hot: 0.2 });
+  decode(readout.firstElementChild as HTMLElement | null, { duration: 700, hot: 0.2 });
+  // De storingsband loopt één keer van boven naar beneden, over bijna de hele
+  // teltijd, zodat hij er nog is als de teller op 100 komt.
   track?.animate(
     [{ transform: "translate3d(0,-100%,0)" }, { transform: `translate3d(0,${innerHeight}px,0)` }],
-    { duration: ms("--dur-dramatic"), easing: "linear", iterations: 1 },
+    { duration: maxT * 0.9, easing: "linear", iterations: 1 },
   );
 
   // Gereed: de fonts en het gedecodeerde wordmark.
@@ -154,19 +161,21 @@ export function runLoader(): Promise<{ skipped: boolean }> | null {
     // De ruis klapt samen tot één lijn.
     readout.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: "forwards" });
     hint?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: "forwards" });
+    // Overslaan blijft snel: wie klikt, wil de pagina, niet de voorstelling.
     const collapse = signal.animate(
       [{ transform: "scaleY(1)" }, { transform: "scaleY(0.004)" }],
-      { duration: fast ? 120 : 240, easing: easeCut, fill: "forwards" },
+      { duration: fast ? 120 : collapseT, easing: easeCut, fill: "forwards" },
     );
     line.animate([{ opacity: 0 }, { opacity: 1 }], {
-      duration: 60,
-      delay: fast ? 80 : 180,
+      duration: fast ? 60 : 120,
+      delay: fast ? 80 : collapseT * 0.75,
       fill: "forwards",
     });
     await collapse.finished.catch(() => {});
     stopNoise();
     signal.style.visibility = "hidden";
-    await wait(fast ? 0 : 60);
+    // De lijn staat even alleen in beeld voordat hij opengaat.
+    await wait(fast ? 0 : 260);
 
     // De lijn opent zich tot beeld. De kop schuift tegelijk binnen, omdat
     // .sl-intro er nu af gaat.
@@ -174,7 +183,7 @@ export function runLoader(): Promise<{ skipped: boolean }> | null {
     // die klasse zou hij in één beeld verdwijnen in plaats van open te gaan.
     loader.classList.add("is-opening");
     root().classList.remove("sl-intro");
-    const duration = fast ? 260 : 500;
+    const duration = fast ? 260 : openT;
     top.animate([{ transform: "translate3d(0,0,0)" }, { transform: "translate3d(0,-100%,0)" }], {
       duration,
       easing: easeBand,
@@ -185,8 +194,8 @@ export function runLoader(): Promise<{ skipped: boolean }> | null {
       { duration, easing: easeBand, fill: "forwards" },
     );
     line.animate([{ opacity: 1 }, { opacity: 0 }], {
-      duration: 200,
-      delay: fast ? 0 : 120,
+      duration: fast ? 200 : 400,
+      delay: fast ? 0 : 240,
       fill: "forwards",
     });
 

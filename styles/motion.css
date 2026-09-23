@@ -47,7 +47,7 @@
   --dur-fast: 160ms;      /* hoverkleur, kanaalverschuiving, dimmen */
   --dur-base: 320ms;      /* header, hover-wipes, korte lijnen, cursorlabel */
   --dur-slow: 640ms;      /* sectie-entrees, band-wipes, tekst die opkomt */
-  --dur-dramatic: 1100ms; /* tracking-band in de loader */
+  --dur-dramatic: 1100ms; /* uit het ontwerp; de loader heeft sinds de vertraging eigen tokens (--loader-*) */
 
   /* Easing. Gangbare standaardcurves, bruikbaar in CSS én in de Web Animations
      API: lib/motion/env.ts leest ze hier uit, zodat er één bron is. */
@@ -81,9 +81,30 @@
   --line-weight: 2px;
 
   /* Grenzen aan de choreografie */
-  --loader-min: 900ms;
-  --loader-max: 1200ms;
   --intro-max: 2500ms;
+
+  /* Loader en paginawissel: bewust trager dan MOTION.md voorschrijft.
+   *
+   * Het ontwerp zet de loader op 0,9–1,2 s tellen plus 0,8 s dichtklappen en
+   * openen, en een paginawissel op ±1,1 s. Zo live gezet waren ze nauwelijks
+   * te zien: het doek was open voordat je wist dat het dicht was geweest. Op
+   * verzoek is alles hier ruim twee keer zo lang, en het kanaallabel blijft
+   * even staan zodat je het kunt lezen.
+   *
+   * Alleen de tijden, niet de volgorde of de vorm. Overslaan blijft snel (een
+   * klik op de loader), en met minder beweging blijft het een crossfade van
+   * 120 ms. Bijstellen kan hier, op één plek; lib/motion leest deze waarden. */
+  --loader-min: 2200ms;         /* teller loopt minstens zo lang */
+  --loader-max: 3000ms;         /* ...en nooit langer */
+  --loader-min-mobile: 2000ms;
+  --loader-max-mobile: 2600ms;
+  --loader-collapse: 520ms;     /* ruis klapt samen tot één lijn */
+  --loader-open: 1000ms;        /* de lijn opent zich tot beeld */
+  --pt-close: 750ms;            /* banden schuiven dicht */
+  --pt-stagger: 80ms;           /* tussen twee banden */
+  --pt-label: 600ms;            /* het kanaallabel decodeert */
+  --pt-hold: 450ms;             /* dicht blijven zodat het label te lezen is */
+  --pt-open: 850ms;             /* banden lopen door en gaan open */
 }
 
 /* Minder beweging: afstanden naar nul, beweging wordt een korte fade. Wat er per

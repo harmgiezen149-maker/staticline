@@ -237,6 +237,14 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
 - **Geen Lenis.** Zie hierboven.
 - **Het menu heeft vijf items en geen drie**: Muziek en Video bestaan als pagina,
   dus ze staan er ook in, met index 01–05.
+- **De loader en de paginawissel zijn ruim twee keer zo traag** als MOTION.md
+  voorschrijft, op verzoek: zo waren ze nauwelijks te zien. De tijden staan als
+  `--loader-*` en `--pt-*` in `styles/motion.css`, op één plek. Overslaan blijft
+  snel, en met minder beweging blijft het een crossfade van 120 ms.
+- **Een duur uit CSS lezen gaat via `toMs` in `lib/motion/env.ts`.** De
+  minifier schrijft `2200ms` in de gebouwde CSS als `2.2s`; een kale
+  `parseFloat` maakt daar 2,2 ms van. Dat is precies wat de loader eerst
+  onzichtbaar maakte, en het viel alleen in een productiebuild op.
 
 ## Wat niet ontworpen is
 
