@@ -5,8 +5,11 @@
 Publieke bandsite plus een besloten deel voor de band, voor het Edese
 Static Line. Live op **staticline.nl** vóór de eerste show op **10 november 2026**.
 
-Lees `docs/` voor je code schrijft. Het ontwerp van de homepage is af en bevroren;
-al het andere volgt het design system.
+Lees `docs/` voor je code schrijft. Het ontwerp is **v2**, in `design/v2/`: de
+homepage uit v1 met beweging als vast onderdeel van de identiteit. Layout,
+kleuren en letters zijn die van v1; wat v2 toevoegt staat in
+`design/v2/README.md` en `design/v2/MOTION.md`. Al het andere volgt het design
+system.
 
 ## Stack
 
@@ -79,35 +82,52 @@ Die komen uit besluiten die al genomen zijn. Niet opnieuw openen in code.
 - **Border radius is overal 0**, zonder uitzondering.
 - **Geen schaduwen** behalve de ene drop-shadow op het wordmark in de hero. Geen
   decoratieve verlopen — het enige verloop is de leesbaarheidsoverlay in de hero.
-- **Eén beweging bij het scrollen, en niet meer.** De regel was "geen scroll- of
-  entree-animaties"; die is bewust verruimd tot precies dit: een blok komt 6px
-  omhoog terwijl het in beeld komt, en de lijn onder een sectiekop tekent
-  zichzelf. Klasse `onthul` en `streep`, allebei in `globals.css`. Verder alleen
-  de kleurovergangen van 120ms.
-  **Het bereik bepaalt hoe dit voelt, niet een duur.** Bij een
-  voortgangstijdlijn wordt `animation-duration` genegeerd; de voortgang komt van
-  de scrollpositie. `cover 0% cover 25%` is nagemeten in Chromium en loopt over
-  ruim tweehonderd pixels midden in beeld. Een bereik op `entry` stond er eerst
-  en was fout: dat speelde zich af in de onderste negentig pixels van het
-  scherm, waar niemand kijkt, en was klaar voordat je het blok kon lezen. Verander
-  dit bereik niet op gevoel — meet het na. Geen stagger per rij, geen hero, geen besloten deel,
-  geen formuliervelden — dat is precies het handschrift waar de eerste mockup op
-  afgerekend werd. Het gaat via scroll-gestuurde CSS en niet via een
-  IntersectionObserver: nul kilobyte JavaScript, en elke sectie blijft een
-  servercomponent. Zet nergens `opacity: 0` in een basisstijl; zonder
-  ondersteuning hoort de pagina er te staan zoals hij er zonder dit alles uitziet.
+  v2 heeft twee goedgekeurde uitzonderingen en niet meer: de kanaalverschuiving
+  (AFW-1, een harde text-shadow in teal en oxiderood, alleen op monolabels die
+  decoderen en op knoplabels bij hover) en scanlines (AFW-2, alleen zolang een
+  loader, overgang, menu of lightbox opengaat). AFW-3, gloed op de loaderlijn, is
+  afgewezen.
+- **Beweging volgt `design/v2/MOTION.md`, en niets daarbuiten.** "Ruis → Lijn":
+  alles komt binnen als ruis en eindigt als een strakke lijn. De v1-regel "één
+  beweging bij het scrollen" is met v2 vervallen. Wat er wel vast staat:
+  - **Een begin-toestand staat alleen onder `html.motion`.** Nergens `opacity: 0`
+    in een basisstijl. Zonder JavaScript, met minder beweging, of als de
+    motion-laag niet binnen 2,5 s start, staat de pagina er zoals het statische
+    ontwerp hem tekent. Het script in `components/motion/MotionHead.tsx` zet die
+    toestand vóór de eerste paint, met dat vangnet.
+  - **Elke sectie blijft een servercomponent.** De markup zegt wat er gebeurt
+    (`data-reveal`, `data-decode`, `data-cursor`); één clientcomponent,
+    `components/motion/MotionLayer.tsx`, loopt daar na elke paginawissel overheen.
+    De logica staat in `lib/motion/`, de CSS in `styles/motion.css`.
+  - **Minder beweging is per effect geregeld**, niet met één regel die alles op
+    nul zet: een wipe wordt een fade van 160 ms, een entree staat er meteen, de
+    loader valt weg. Tabel in MOTION.md §7, uitvoering onderaan `styles/motion.css`.
+  - **Geen GSAP, Lenis, Barba of WebGL.** Web Animations API,
+    IntersectionObserver en CSS. Lenis noemt het ontwerp optioneel; hij is
+    bewust weggelaten, zie `lib/motion/scroll.ts`.
+  - **Het besloten deel krijgt alleen de lichte basis**: een rustige overgang en
+    een voortgangslijn (`components/motion/CalmLayer.tsx`). Geen loader, ruis,
+    decode of cursorlabel.
+  - **Geen knoop in `<body>` aanmaken of weghalen buiten React om.** De lagen
+    die de motion-laag bedient (loader, overgang, cursorlabel, lightbox,
+    voortgangslijn) staan als markup in de layout en worden alleen verborgen.
 - **Het wordmark is definitief.** Nooit hertekenen, herkleuren, uitrekken of
-  opnieuw natrekken. Gebruik de aangeleverde bestanden zoals ze zijn.
+  opnieuw natrekken. Gebruik de aangeleverde bestanden zoals ze zijn. Bewegen
+  doet hij alleen als geheel (verschuiven en vervagen), onthuld wordt hij alleen
+  met een masker. In de hero staat hij in de `<h1>` en is hij het LCP-element:
+  nooit op `opacity: 0` zetten, ook niet voor een entree.
 - **Ruimte komt uit de schaal** (4/8/12/16/24/32/48/64/96). Dat is precies de
   standaardschaal van Tailwind: `p-1` t/m `p-24`. Een eenmalige waarde heeft een
   reden nodig.
 - Elk bedienbaar element krijgt `outline: 2px solid var(--focus-ring)` met
-  `outline-offset: 2px` op `:focus-visible`. Dat staat één keer in `globals.css`.
+  `outline-offset: 2px` op `:focus-visible`. Dat staat één keer in `globals.css`,
+  en animeert nooit. Focus geeft dezelfde toestand als hover.
 - `--text-faint` (#6B747C) is alleen voor mono-labels van 11–12px. Nooit voor
   lopende tekst.
 - **Geen `display` in gedeelde basisklassen.** Zie `components/Button.tsx` voor
   waarom: een `hidden` van de aanroeper verliest dan willekeurig van een
-  `inline-flex` uit de basis.
+  `inline-flex` uit de basis. Dat geldt dubbel voor `styles/motion.css`: dat
+  bestand zit buiten de lagen van Tailwind en wint altijd van een utility.
 
 ## Taalroutering — waarom twee root layouts
 
@@ -185,14 +205,38 @@ components/         SiteHeader, Hero, NextShow, ShowList, ShowRow, PhotoGrid, Si
 content/            copy per taal; het type in content/types.ts dwingt af dat beide compleet zijn
 lib/                i18n, band-app-koppeling, showmodel, fonts
 styles/tokens.css   gegenereerd uit design-system/tokens.json — niet met de hand aanpassen
-design/             de design-handoff, alleen referentie, staat buiten de linter, de build en (via .vercelignore) de deployment
+design/             de design-handoffs, alleen referentie, staat buiten de linter, de build en (via .vercelignore) de deployment
+design/v2/          het huidige ontwerp: README, MOTION.md, referentie-HTML, prototype, schermen
+styles/motion.css   motion tokens en alle beweging, als gewone CSS
+lib/motion/         de motion-laag zonder React: entrees, decode, loader, overgangen, scroll
+components/motion/  het head-script, de lagen in de layout en de twee clientcomponenten
 design-system/      tokens, brandbook, logo's
 docs/               de briefings uit het handover-pakket
 ```
 
-`design/reference/` is een zelfstandige HTML-implementatie van de homepage. Het is
-**referentie, geen productiecode** — lees er waarden en structuur uit, bouw na in
-React. Kopieer `styles.css` niet en importeer `support.js` niet.
+`design/v2/reference/` is een zelfstandige HTML-implementatie van de homepage, en
+`design/v2/prototype/` een werkend prototype met alle beweging. Allebei
+**referentie, geen productiecode** — lees er waarden, structuur en timing uit,
+bouw na in React. Kopieer `styles.css` of `motion.js` niet. `design/reference/`
+is de v1-versie en staat er alleen nog voor de geschiedenis.
+
+### Waar deze site bewust van v2 afwijkt
+
+- **Routes en inhoud volgen de site, niet het prototype.** `/agenda` en niet
+  `/shows`, `/beheer` en niet `/portaal`. Doornroosje, Nijmegen en "drie man" uit
+  de handoff zijn voorbeeldtekst; wat er staat komt uit de Band App. De status
+  "Releaseshow" wordt niet gebruikt.
+- **De taalwissel is een volledige paginalading**, omdat Nederlands en Engels
+  elk een eigen root layout hebben (zie hieronder). v2 wil "zelfde pagina,
+  labels decoderen"; dat gaat nu over die lading heen: de scrollpositie wordt
+  bewaard en op de nieuwe pagina hersteld, en de labels decoderen daar.
+- **Letters via `next/font`** en niet de woff2-bestanden uit de handoff: dat is
+  al zelf gehost, met preload, en het zijn dezelfde families en gewichten.
+- **Het wordmark via `next/image`** en niet de verkleinde webp-bestanden: die
+  maakt dezelfde verkleiningen zelf, van het ongewijzigde bronbestand.
+- **Geen Lenis.** Zie hierboven.
+- **Het menu heeft vijf items en geen drie**: Muziek en Video bestaan als pagina,
+  dus ze staan er ook in, met index 01–05.
 
 ## Wat niet ontworpen is
 
@@ -200,7 +244,6 @@ De handoff dekt alleen de homepage. Alles hieronder is **geëxtrapoleerd** binne
 bestaande tokens en patronen; er zijn geen nieuwe kleuren, radii, schaduwen of
 bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
 
-- Het mobiele menupaneel (`components/MobileNav.tsx`)
 - De bandsectie op de homepage (`components/BandSection.tsx`), tussen de agenda
   en de foto's — volgt de sectiepatronen van `ShowList` en de ledenkaarten van
   `/band`, alleen compacter
@@ -214,6 +257,11 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
 Twee dingen zijn in de kop bijgekomen die niet ontworpen zijn: Muziek en Video.
 Ze verschijnen pas vanaf `lg:`, zodat de kop op tablet precies de drie items
 breed blijft die het ontwerp tekent.
+
+Het mobiele menupaneel was in v1 geëxtrapoleerd en is in v2 ontworpen; het staat
+niet meer in deze lijst. De beweging op de andere pagina's is wat v2 "gewone
+scroll-entrees" noemt: dezelfde kop met masker en lijn als op de homepage, en
+secties die opkomen.
 
 ## Wat er over de inhoud bekend is
 
