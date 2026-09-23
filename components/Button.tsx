@@ -8,8 +8,10 @@ import type { ComponentProps } from "react";
  * knop in de hero, en `inset` de bijna-zwarte knop op de accentbalk. Meer zijn
  * het er niet — een vierde variant hoort eerst ontworpen te worden.
  *
- * Geen radius, geen schaduw, geen transform bij hover: alleen de kleurovergang
- * van 120ms die het hele ontwerp gebruikt.
+ * Sinds v2 wipet de hovervulling van links in en maakt het label één korte
+ * kanaalverschuiving. Dat staat in styles/motion.css onder `.btn`; hier staan
+ * alleen de letter en de maat. Het label zit in een eigen `<span>`, omdat de
+ * verschuiving een text-shadow op het label is en niet op de vulling.
  */
 type Variant = "primary" | "ghost" | "inset";
 
@@ -22,29 +24,26 @@ type Variant = "primary" | "ghost" | "inset";
  * en niet van de volgorde in het class-attribuut — dat is precies zo'n regel die
  * het op één breekpunt wél doet en op het andere niet. De aanroeper zet de
  * display-waarde daarom zelf.
+ *
+ * Om dezelfde reden staat er in `.btn` in styles/motion.css ook geen display:
+ * dat bestand zit buiten de lagen van Tailwind en zou altijd winnen.
  */
-const base =
-  "items-center justify-center font-display font-bold tracking-wide12 uppercase transition-colors duration-[120ms]";
+const base = "btn items-center justify-center font-display font-bold tracking-wide12 uppercase";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-on-accent hover:bg-accent-hover",
-  ghost: "border border-line-strong text-primary hover:border-primary",
-  inset: "bg-inset text-primary hover:bg-black",
+  primary: "btn--primary",
+  ghost: "btn--ghost",
+  inset: "btn--inset",
 };
 
 type Props = ComponentProps<typeof Link> & {
   variant?: Variant;
 };
 
-export function Button({
-  variant = "primary",
-  className = "",
-  ...props
-}: Props) {
+export function Button({ variant = "primary", className = "", children, ...props }: Props) {
   return (
-    <Link
-      {...props}
-      className={`${base} ${variants[variant]} ${className}`}
-    />
+    <Link {...props} className={`${base} ${variants[variant]} ${className}`}>
+      <span className="btn__label">{children}</span>
+    </Link>
   );
 }

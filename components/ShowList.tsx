@@ -36,13 +36,20 @@ export async function ShowList({ locale, shows }: Props) {
   return (
     <section
       id="shows"
-      className="onthul flex flex-col gap-3 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
+      className="flex flex-col gap-3 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
     >
-      <div className="streep flex items-baseline gap-4 border-b-2 border-primary pb-2 [--streep-dikte:2px] [--streep-kleur:var(--color-primary)] sm:pb-3">
+      {/* De kop schuift van onder een regelmasker omhoog, de lijn eronder
+          tekent zichzelf en het aantal decodeert. Zie design/v2/MOTION.md §6.5. */}
+      <div
+        className="kop-lijn flex items-baseline gap-4 border-b-2 border-primary pb-2 sm:pb-3"
+        data-reveal="mask"
+      >
         <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
-          {copy.shows.heading}
+          <span className="mask-line">
+            <span>{copy.shows.heading}</span>
+          </span>
         </h2>
-        <span className="hidden font-mono text-12 tracking-wide18 text-faint sm:inline">
+        <span className="hidden font-mono text-12 tracking-wide18 text-faint sm:inline" data-decode>
           {formatCount(locale, copy.shows.count, shows.length)}
         </span>
       </div>
@@ -50,7 +57,7 @@ export async function ShowList({ locale, shows }: Props) {
       {shows.length === 0 ? (
         <p className="text-14 text-muted sm:text-16">{copy.shows.empty}</p>
       ) : (
-        <>
+        <div className="show-list flex flex-col">
           {shows.map((show, index) => (
             <div
               key={show.id}
@@ -67,12 +74,12 @@ export async function ShowList({ locale, shows }: Props) {
           {shows.length > MOBILE_LIMIT && (
             <Link
               href={localePath(locale, "/agenda")}
-              className="pt-1 font-mono text-11 tracking-wide16 text-accent-alt uppercase sm:hidden"
+              className="inline-flex min-h-11 items-center self-start pt-1 font-mono text-12 tracking-wide14 text-accent-alt uppercase sm:hidden"
             >
-              {copy.shows.viewAll} →
+              <span className="link-line">{copy.shows.viewAll} →</span>
             </Link>
           )}
-        </>
+        </div>
       )}
     </section>
   );

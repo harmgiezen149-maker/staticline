@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 
+import { MotionHead } from "@/components/motion/MotionHead";
+import { MotionLayer } from "@/components/motion/MotionLayer";
+import { Overlays } from "@/components/motion/Overlays";
 import { getCopy } from "@/content";
 import { fontVariables } from "@/lib/fonts";
+import { getSiteCopy } from "@/lib/site-content";
 import { siteUrl } from "@/lib/site";
 import "../globals.css";
 
@@ -41,10 +45,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function NlLayout({ children }: LayoutProps<"/">) {
+export default async function NlLayout({ children }: LayoutProps<"/">) {
+  const site = await getSiteCopy("nl");
+
   return (
-    <html lang="nl" className={fontVariables}>
-      <body className="bg-base text-primary">{children}</body>
+    // `no-js` staat in de HTML en het script in de kop haalt hem weg. Dat script
+    // wijzigt de klassen op <html> vóór React er is; zonder suppressHydrationWarning
+    // ziet React daar een verschil en meldt dat als fout. Het is een bewust
+    // verschil, en het geldt alleen voor dit ene element.
+    <html lang="nl" className={`no-js ${fontVariables}`} suppressHydrationWarning>
+      <head>
+        <MotionHead />
+      </head>
+      <body className="bg-base text-primary">
+        <a className="skip-link" href="#main">
+          {site.motion.skip}
+        </a>
+        {children}
+        <Overlays copy={site} />
+        <MotionLayer nav={site.nav} />
+      </body>
     </html>
   );
 }

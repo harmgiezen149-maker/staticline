@@ -25,6 +25,10 @@ const GROUPS: Record<string, GroupInfo> = {
   status: { label: "Status van een show", where: "Het label rechts van een datum" },
   photos: { label: "Fotoblok", where: "Op de homepage" },
   footer: { label: "Voettekst", where: "Onderaan elke pagina" },
+  motion: {
+    label: "Beweging",
+    where: "De loader bij het eerste bezoek, de fotoviewer en de labels bij de muis",
+  },
   agenda: { label: "Agenda", where: "De pagina /agenda" },
   band: { label: "Band", where: "De pagina /band" },
   music: { label: "Muziek", where: "De pagina /muziek" },

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
+@import "../styles/motion.css";
 
 /* Het ontwerp kent twee breekpunten, allebei als max-width: 1024 en 640.
    Hier staan ze als min-width zodat de opbouw mobile-first is — beter voor een
@@ -88,6 +89,11 @@
   --radius-full: 0px;
 }
 
+/* Zonder JavaScript: `no-js:flex` en dergelijke. Het mobiele menupaneel werkt
+   dan niet, dus staan de navigatielinks gewoon in de kop. De klasse staat in de
+   HTML en het script in components/motion/MotionHead.tsx haalt hem weg. */
+@custom-variant no-js (&:where(.no-js, .no-js *));
+
 @layer base {
   html {
     background: var(--bg-base);
@@ -119,119 +125,17 @@
     outline-offset: 2px;
   }
 
-  /* Het ontwerp kent geen scroll- of entree-animaties; alleen kleurovergangen van
-     120ms. Wie toch beweging uitzet, hoort ook die niet te krijgen. */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      transition-duration: 0.01ms !important;
-      animation-duration: 0.01ms !important;
-    }
-  }
+  /* Minder beweging staat niet hier als één regel die alles op nul zet. Sinds
+     v2 heeft elk effect een eigen vervanging — een wipe wordt een fade van
+     160ms, een entree staat er meteen — en een algemene nulregel zou die fades
+     ook wegvagen. Zie het einde van styles/motion.css. */
 }
 
-@utility grain-overlay {
-  /* De korrel uit het ontwerp: een tilende 256×256 PNG, niet een paginagrote
-     afbeelding. Wordt als los laagje over een sectie gelegd. */
-  position: absolute;
-  inset: 0;
-  background-image: var(--grain);
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
-
-/* ─── Blokken die tijdens het scrollen verschijnen ──────────────────────────
- *
- * Eén beweging, en niet meer dan dat. Zes pixels in 160ms: je merkt dat er iets
- * gebeurt zonder het te kunnen aanwijzen. Een halve seconde en vierentwintig
- * pixels is wat je krijgt als je niets bijstelt, en dat is precies waar de
- * eerste mockup op afgerekend werd — het ziet er gemaakt uit.
- *
- * Scroll-gestuurd via CSS, niet via een IntersectionObserver. Dat scheelt geen
- * kilobyte JavaScript en houdt elke sectie een servercomponent. Deze site wordt
- * op 4G geopend vanaf een QR-sticker op een parkeerplaats; daar betaalt de
- * bezoeker een waarnemer die eerst geladen en uitgevoerd moet worden, en
- * verschijnt de sectie pas ná dat script.
- *
- * Nergens staat `opacity: 0` in de basisstijl. Kent de browser dit niet, of wil
- * de bezoeker minder beweging, dan staat de pagina er zoals hij er zonder dit
- * alles uitziet — er is niets om terug te zetten. Dat is het ontwerp en niet
- * het vangnet.
- *
- * Let op: het blok met `prefers-reduced-motion: reduce` hierboven helpt hier
- * niet. Dat zet `animation-duration` op nul, en een scroll-gestuurde animatie
- * trekt zich van de duur niets aan — de voortgang komt van de scrollpositie.
- * Vandaar dat hieronder zelf op `no-preference` gevraagd wordt.
- */
-
-@keyframes sl-onthul {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes sl-streep {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .onthul {
-      animation: sl-onthul cubic-bezier(0.2, 0, 0, 1) both;
-      animation-timeline: view();
-      /* Het bereik bepaalt hoe dit voelt, niet een duur: bij een
-         voortgangstijdlijn wordt `animation-duration` genegeerd en komt de
-         voortgang van de scrollpositie. Een duur meegeven suggereert een
-         besturing die er niet is.
-         `entry 0% entry 30%` stond hier eerst en was fout: nagemeten in Chromium
-         liep die van 811px tot 750px vanaf de bovenkant van het scherm — het
-         hele effect speelde zich af in de onderste negentig pixels, waar niemand
-         kijkt, en tegen de tijd dat je het blok kon lezen was het klaar.
-         `cover 0% cover 25%` loopt van 815px tot 570px: ruim tweehonderd pixels,
-         midden in beeld. Wat bij het laden al in beeld staat, is het bereik
-         voorbij en staat er meteen — de hero hoeft geen uitzondering te zijn. */
-      animation-range: cover 0% cover 25%;
-    }
-
-    /* De lijn onder een sectiekop tekent zichzelf van links naar rechts.
-     *
-     * De echte rand blijft staan en wordt doorzichtig gemaakt; wat beweegt is
-     * een laagje eroverheen. Zo houdt de kop dezelfde hoogte als zonder dit
-     * alles, en kan er niets verspringen. Kleur en dikte komen van de aanroeper,
-     * want een paginakop heeft een andere rand dan een sectiekop.
-     */
-    .streep {
-      position: relative;
-      border-bottom-color: transparent;
-    }
-
-    .streep::after {
-      content: "";
-      position: absolute;
-      inset-inline: 0;
-      bottom: calc(-1 * var(--streep-dikte, 1px));
-      height: var(--streep-dikte, 1px);
-      background: var(--streep-kleur, currentColor);
-      transform-origin: left center;
-      animation: sl-streep cubic-bezier(0.2, 0, 0, 1) both;
-      animation-timeline: view();
-      /* Iets later klaar dan het blok zelf, zodat de lijn zich trekt terwijl de
-         kop al leesbaar is in plaats van ervoor. */
-      animation-range: cover 0% cover 32%;
-    }
-  }
-}
+/* De scroll-entrees uit v1 (`.onthul` en `.streep`) stonden hier. Sinds v2 zit
+   alle beweging in styles/motion.css, met een eigen opzet: entrees die één keer
+   spelen via een IntersectionObserver in plaats van een scroll-gestuurde
+   tijdlijn, omdat v2 tekst wil laten decoderen nadat een blok binnen is, en
+   dat kan een tijdlijn niet. De korrel heet daar `.korrel` en beweegt. */
 
 /**
  * De kaarttegels donker maken.

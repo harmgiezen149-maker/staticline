@@ -33,7 +33,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
   return (
     <>
       <SiteHeader locale={locale} path="/" />
-      <main>
+      <main id="main" tabIndex={-1} className="site-main">
         <Hero locale={locale} next={next} hasPlayed={hasPlayed} />
         <NextShow locale={locale} show={next} />
         <ShowList locale={locale} shows={upcoming} />

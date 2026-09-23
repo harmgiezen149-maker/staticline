@@ -41,31 +41,62 @@ export async function ShowRow({ locale, show }: Props) {
       </span>
 
       <span className="col-start-1 row-start-2 font-display text-18 font-semibold tracking-tight4 uppercase sm:col-start-2 sm:row-start-1 sm:text-22">
-        {show.venue}
+        {/* Twee lagen: de buitenste schuift bij hover opzij, over de binnenste
+            tekent bij een uitverkochte show de doorhaallijn. */}
+        <span className="show-row__venue">
+          <span className="show-row__venue-text">{show.venue}</span>
+        </span>
       </span>
 
       {show.city && (
-        <span className="hidden font-mono text-12 tracking-wide14 text-muted uppercase sm:col-start-2 sm:row-start-2 sm:block lg:col-start-3 lg:row-start-1">
+        <span
+          className="hidden font-mono text-12 tracking-wide14 text-muted uppercase sm:col-start-2 sm:row-start-2 sm:block lg:col-start-3 lg:row-start-1"
+          data-decode
+        >
           {show.city}
         </span>
       )}
 
       <span
-        className={`col-start-2 row-start-2 self-baseline text-right font-mono text-10 tracking-wide14 uppercase sm:col-start-3 sm:row-start-1 sm:self-center sm:text-12 lg:col-start-4 ${STATUS_COLOR[show.status]}`}
+        className={`show-row__status col-start-2 row-start-2 self-baseline text-right font-mono text-10 tracking-wide14 uppercase sm:col-start-3 sm:row-start-1 sm:self-center sm:text-12 lg:col-start-4 ${STATUS_COLOR[show.status]}`}
       >
-        {copy.status[show.status]}
+        <span
+          className="show-row__status-text"
+          data-decode
+          {...(clickable ? { "data-scramble-target": "" } : {})}
+        >
+          {copy.status[show.status]}
+        </span>
+        {/* Bij hover maakt de status plaats voor een pijl: dit is een link naar
+            kaartjes. Alleen op klikbare rijen, en voor een schermlezer niets. */}
+        {clickable && (
+          <span className="show-row__arrow" aria-hidden="true">
+            ↗
+          </span>
+        )}
       </span>
     </>
   );
 
   const layout =
-    "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0.5 border-b border-line pb-3 sm:grid-cols-[140px_minmax(0,1fr)_120px] sm:gap-4 sm:px-2 sm:py-4 lg:grid-cols-[160px_minmax(0,1fr)_200px_140px]";
+    "show-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0.5 border-b border-line py-3 sm:grid-cols-[140px_minmax(0,1fr)_120px] sm:gap-4 sm:px-2 sm:py-4 lg:grid-cols-[160px_minmax(0,1fr)_200px_140px]";
+
+  // Elke rij komt binnen met zijn lijn eerst en de inhoud erachteraan, 70 ms
+  // na de vorige. Zie design/v2/MOTION.md §6.5.
+  const motion = {
+    "data-reveal": "",
+    "data-stagger": "row",
+    "data-status": show.status,
+  };
 
   if (clickable) {
     return (
       <a
         href={show.ticketUrl}
-        className={`${layout} transition-colors duration-[120ms] sm:hover:bg-accent-quiet`}
+        className={layout}
+        {...motion}
+        data-cursor={copy.motion.tickets}
+        data-scramble-hover
       >
         {content}
       </a>
@@ -75,9 +106,11 @@ export async function ShowRow({ locale, show }: Props) {
   return (
     <div
       className={layout}
-      // Uitverkocht is geen link en hoort ook niet als bedienbaar aangekondigd te
-      // worden. Zo staat het in de handoff.
-      aria-disabled={show.status === "soldout" ? true : undefined}
+      {...motion}
+      // Een show zonder kaartjes is geen link en hoort ook niet als bedienbaar
+      // aangekondigd te worden. Zo staat het in de handoff, en in v2 reageert
+      // hij daarom ook nergens op: geen vulling, geen pijl, geen cursorlabel.
+      aria-disabled="true"
     >
       {content}
     </div>

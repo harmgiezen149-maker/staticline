@@ -48,57 +48,71 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
     label: copy.nav.booking,
   };
 
-  const linkClass =
-    "transition-colors duration-[120ms] hover:text-accent-hover";
+  // De actieve pagina houdt de onderlijn onder zijn naam. Het pad komt als prop
+  // binnen (zie boven), dus dit kost geen JavaScript.
+  const isCurrent = (href: string) => localePath(locale, path) === href;
+
+  const navLink = (link: { href: string; label: string }, extra = "") => (
+    <Link
+      key={link.href}
+      href={link.href}
+      className={extra}
+      aria-current={isCurrent(link.href) ? "page" : undefined}
+      data-scramble-hover
+    >
+      <span data-scramble-target>{link.label}</span>
+    </Link>
+  );
 
   return (
-    <header className="flex items-center gap-3 border-b border-line bg-inset px-4 py-3 sm:gap-6 sm:px-6">
-      <Link href={localePath(locale, "/")} className="shrink-0">
+    // Het mobiele menupaneel staat ín deze kop (zie MobileNav) en ligt als
+    // vaste laag over het hele scherm. Om de kop er toch bovenop te houden,
+    // zoals het ontwerp tekent, krijgen de onderdelen die dan zichtbaar horen te
+    // zijn een hogere z-index dan het paneel — en de onderlijn staat daarom
+    // nog een keer als laagje, want de echte rand zou onder het paneel liggen.
+    <header
+      className="site-header sticky top-0 z-60 flex min-h-[68px] items-center gap-3 border-b border-line bg-inset px-4 py-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-60 after:h-px after:bg-line sm:min-h-14 sm:gap-6 sm:px-6"
+      // Docking: alleen op de homepage verschijnt het wordmark in de kop pas
+      // als het grote wordmark uit beeld is. Elders staat hij er gewoon.
+      data-dock={path === "/" ? "" : undefined}
+    >
+      <Link href={localePath(locale, "/")} className="site-header__home relative z-60 shrink-0">
         <Image
           src={wordmarkFlat}
           alt={copy.hero.wordmarkAlt}
-          className="h-4 w-auto sm:h-[22px]"
+          className="site-header__mark h-4 w-auto sm:h-[22px]"
           priority
         />
       </Link>
 
+      {/* Op mobiel staat de navigatie in het menupaneel. Zonder JavaScript
+          werkt dat paneel niet, en dan staan de links hier, klein. */}
       <nav
-        aria-label={copy.nav.shows}
-        className="ml-auto hidden gap-5 font-display text-14 font-semibold tracking-wide12 uppercase sm:flex"
+        aria-label={copy.nav.menu}
+        className="site-nav hidden gap-3 font-display text-12 font-semibold tracking-wide12 uppercase no-js:flex sm:ml-auto sm:flex sm:gap-5 sm:text-14"
       >
-        <Link href={primary[0].href} className={linkClass}>
-          {primary[0].label}
-        </Link>
-        {desktopOnly.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`hidden lg:block ${linkClass}`}
-          >
-            {link.label}
-          </Link>
-        ))}
-        {primary.slice(1).map((link) => (
-          <Link key={link.href} href={link.href} className={linkClass}>
-            {link.label}
-          </Link>
-        ))}
+        {navLink(primary[0])}
+        {desktopOnly.map((link) => navLink(link, "hidden lg:block"))}
+        {primary.slice(1).map((link) => navLink(link))}
       </nav>
 
       <Link
         href={booking.href}
-        className="hidden bg-accent px-3.5 py-2 font-display text-14 font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[120ms] hover:bg-accent-hover sm:block"
+        className="site-header__cta btn btn--primary hidden px-3.5 py-2 font-display text-14 font-bold tracking-wide12 uppercase sm:block"
       >
-        {booking.label}
+        <span className="btn__label">{booking.label}</span>
       </Link>
 
       <LangSwitch locale={locale} path={path} />
 
       <MobileNav
         locale={locale}
+        path={path}
         links={[primary[0], ...desktopOnly, ...primary.slice(1)]}
         cta={booking}
-        label={copy.nav.menu}
+        labels={{ nav: copy.nav.menu, open: copy.nav.menuOpen, close: copy.nav.menuClose }}
+        mail={copy.footer.mail}
+        ctaLabel={copy.hero.ctaBook}
       />
     </header>
   );
@@ -114,22 +128,28 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
 function LangSwitch({ locale, path }: { locale: Locale; path: string }) {
   return (
     <p
-      className="ml-auto flex shrink-0 items-center gap-1 font-mono text-11 tracking-wide10 uppercase sm:ml-0"
+      className="relative z-60 ml-auto flex shrink-0 items-center gap-1 font-mono text-12 tracking-wide10 uppercase sm:ml-0 sm:text-11"
       // Zonder deze regel leest een schermlezer "NL slash en" als losse tekst.
       aria-label="NL / EN"
+      // Na een taalwissel zet de motion-laag de focus hier terug.
+      data-lang-switch
     >
       {locales.map((option, index) => (
         <span key={option} className="flex items-center gap-1">
           {index > 0 && <span className="text-faint">/</span>}
+          {/* Op mobiel een tikdoel van 44×44; op groter scherm gewoon het label. */}
           {option === locale ? (
-            <span aria-current="true" className="text-primary">
+            <span
+              aria-current="true"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center text-primary sm:min-h-0 sm:min-w-0"
+            >
               {option.toUpperCase()}
             </span>
           ) : (
             <Link
               href={localePath(option, path)}
               hrefLang={option}
-              className="text-faint transition-colors duration-[120ms] hover:text-primary"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center text-faint transition-colors duration-[160ms] hover:text-primary sm:min-h-0 sm:min-w-0"
             >
               {option}
             </Link>

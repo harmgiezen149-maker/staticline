@@ -30,9 +30,12 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 
   return (
+    // Het gordijn uit v2: de pagina schuift van de voet af. De voet plakt
+    // onderaan, onder <main>, dat een eigen achtergrond heeft. Alleen CSS; zie
+    // `.site-footer` in styles/motion.css.
     <footer
       id="booking"
-      className="flex flex-col items-start gap-4 border-t border-line bg-inset px-5 py-6 sm:flex-row sm:items-center sm:gap-8 sm:px-8"
+      className="site-footer flex flex-col items-start gap-4 border-t border-line bg-inset px-5 py-6 sm:flex-row sm:items-center sm:gap-8 sm:px-8 lg:px-12"
     >
       <Image
         src={wordmarkFlat}
@@ -63,12 +66,24 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
         </nav>
       )}
 
-      <a
-        href={`mailto:${copy.footer.mail}`}
-        className="font-mono text-12 tracking-wide14 text-accent-alt uppercase transition-colors duration-[120ms] hover:text-accent-hover sm:ml-auto"
-      >
-        {copy.footer.mail}
-      </a>
+      <div className="flex flex-col items-start gap-1 sm:ml-auto sm:flex-row sm:items-center sm:gap-6">
+        <a
+          href={`mailto:${copy.footer.mail}`}
+          className="inline-flex min-h-11 items-center font-mono text-12 tracking-wide14 text-accent-alt uppercase sm:min-h-0"
+          data-scramble-hover
+        >
+          <span className="link-line">{copy.footer.mail}</span>
+        </a>
+        {/* Nieuw in v2: de weg naar het besloten deel. Een gewone link en geen
+            <Link>: /beheer heeft een eigen root layout en wordt dus toch een
+            volledige lading. */}
+        <a
+          href="/beheer"
+          className="inline-flex min-h-11 items-center font-mono text-12 tracking-wide14 text-muted uppercase sm:min-h-0"
+        >
+          <span className="link-line">{copy.footer.portal}</span>
+        </a>
+      </div>
     </footer>
   );
 }

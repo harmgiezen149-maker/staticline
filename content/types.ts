@@ -21,8 +21,13 @@ export type Copy = {
     music: string;
     video: string;
     booking: string;
-    /** Toegankelijke naam van de hamburgerknop op mobiel. */
+    /** Naam van het menu als geheel, voor een schermlezer. */
     menu: string;
+    /** De hamburgerknop, dicht en open. Een schermlezer hoort te weten wat hij doet. */
+    menuOpen: string;
+    menuClose: string;
+    /** Het kanaallabel tijdens een paginaovergang naar de homepage. */
+    home: string;
     /** Toegankelijke naam van de taalwissel. */
     language: string;
   };
@@ -73,6 +78,28 @@ export type Copy = {
     note: string;
     mail: string;
     social: string;
+    /** De link naar het besloten deel. */
+    portal: string;
+  };
+
+  /**
+   * Teksten van de beweging uit v2: de loader, de lightbox en de labels die met
+   * de muis meelopen. Klein, maar wel in beide talen.
+   */
+  motion: {
+    /** De verborgen link bovenaan voor wie met het toetsenbord navigeert. */
+    skip: string;
+    loaderLabel: string;
+    loaderHint: string;
+    /** Het label dat meeloopt over een foto. */
+    view: string;
+    /** Het label dat meeloopt over een klikbare show. */
+    tickets: string;
+    /** Voor een schermlezer, op de knop over een foto; gevolgd door het bijschrift. */
+    enlarge: string;
+    /** De lightbox en zijn sluitknop. */
+    photo: string;
+    close: string;
   };
 
   /** De agendapagina. */

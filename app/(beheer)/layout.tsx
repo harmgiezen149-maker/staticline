@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 
 import { PwaSetup } from "@/components/beheer/PwaSetup";
+import { CalmLayer } from "@/components/motion/CalmLayer";
+import { MotionHead } from "@/components/motion/MotionHead";
 import { fontVariables } from "@/lib/fonts";
 import "../globals.css";
 
@@ -66,11 +68,26 @@ window.addEventListener("appinstalled", function () {
 
 export default function BeheerLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="nl" className={fontVariables}>
+    // Zie app/(nl)/layout.tsx over `no-js` en suppressHydrationWarning.
+    <html lang="nl" className={`no-js ${fontVariables}`} suppressHydrationWarning>
+      <head>
+        <MotionHead variant="calm" />
+      </head>
       <body className="bg-base text-primary">
         <script dangerouslySetInnerHTML={{ __html: VANG_INSTALLPROMPT }} />
         <PwaSetup />
         {children}
+        {/* De lichte basis van v2: een rustige overgang tussen schermen en een
+            voortgangslijn voor wat even duurt. Zie components/motion/CalmLayer.tsx. */}
+        <div className="pt" aria-hidden="true">
+          <div className="pt__band" />
+          <div className="pt__band" />
+          <div className="pt__band" />
+          <div className="pt__band" />
+          <div className="pt__band" />
+        </div>
+        <div className="progress-line" aria-hidden="true" />
+        <CalmLayer />
       </body>
     </html>
   );

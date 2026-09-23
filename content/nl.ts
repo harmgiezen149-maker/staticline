@@ -31,6 +31,9 @@ export const nl: Copy = {
     video: "Video",
     booking: "Boeken",
     menu: "Menu",
+    menuOpen: "Menu openen",
+    menuClose: "Menu sluiten",
+    home: "Home",
     language: "Taal",
   },
   hero: {
@@ -74,6 +77,18 @@ export const nl: Copy = {
     note: "Static Line · Ede · Boekingen en technische rider op aanvraag",
     mail: "boeking@staticline.nl",
     social: "Volg ons",
+    portal: "Bandportaal",
+  },
+
+  motion: {
+    skip: "Naar de inhoud",
+    loaderLabel: "Signaal zoeken",
+    loaderHint: "Klik of druk op een toets om over te slaan",
+    view: "Bekijk",
+    tickets: "Tickets ↗",
+    enlarge: "Foto vergroten",
+    photo: "Foto",
+    close: "Sluiten",
   },
 
   agenda: {

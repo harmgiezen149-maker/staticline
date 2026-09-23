@@ -41,16 +41,25 @@ export async function BandSection({ locale, bio, members }: Props) {
   return (
     <section
       id="band"
-      className="onthul flex flex-col gap-4 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
+      className="flex flex-col gap-4 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
     >
-      <div className="streep flex items-baseline gap-4 border-b-2 border-primary pb-2 [--streep-dikte:2px] [--streep-kleur:var(--color-primary)] sm:pb-3">
+      {/* Dezelfde kop als "Alle shows" ernaast, met dezelfde entree. */}
+      <div
+        className="kop-lijn flex items-baseline gap-4 border-b-2 border-primary pb-2 sm:pb-3"
+        data-reveal="mask"
+      >
         <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
-          {copy.band.title}
+          <span className="mask-line">
+            <span>{copy.band.title}</span>
+          </span>
         </h2>
       </div>
 
       {opening && (
-        <p className="max-w-[640px] text-14 leading-[22px] sm:text-16 sm:leading-[26px]">
+        <p
+          className="max-w-[640px] text-14 leading-[22px] sm:text-16 sm:leading-[26px]"
+          data-reveal="rise"
+        >
           {opening}
         </p>
       )}
@@ -71,7 +80,10 @@ export async function BandSection({ locale, bio, members }: Props) {
                   scherm. Zie components/pages/BandPage.tsx. */}
               <Link
                 href={`${localePath(locale, "/band")}#lid-${member.id}`}
-                className="group flex flex-col gap-3 border border-line bg-surface p-3 transition-colors duration-[120ms] hover:border-line-strong sm:p-4"
+                className="group flex flex-col gap-3 border border-line bg-surface p-3 transition-colors duration-[160ms] hover:border-line-strong sm:p-4"
+                // Kaarten komen na elkaar binnen, zoals de menu-items.
+                data-reveal="rise"
+                data-stagger="item"
               >
                 {member.photoUrl ? (
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-inset">
@@ -90,7 +102,7 @@ export async function BandSection({ locale, bio, members }: Props) {
                 )}
 
                 <div className="flex flex-col gap-1">
-                  <p className="font-display text-18 font-semibold tracking-tight4 uppercase transition-colors duration-[120ms] group-hover:text-accent sm:text-22">
+                  <p className="font-display text-18 font-semibold tracking-tight4 uppercase transition-colors duration-[160ms] group-hover:text-accent sm:text-22">
                     {member.name}
                   </p>
                   <p className="font-mono text-11 tracking-wide14 text-muted uppercase">
@@ -106,9 +118,9 @@ export async function BandSection({ locale, bio, members }: Props) {
 
       <Link
         href={localePath(locale, "/band")}
-        className="self-start font-mono text-12 tracking-wide18 text-muted uppercase underline transition-colors duration-[120ms] hover:text-primary"
+        className="inline-flex min-h-11 items-center self-start font-mono text-12 tracking-wide18 text-muted uppercase transition-colors duration-[160ms] hover:text-primary"
       >
-        {copy.band.more}
+        <span className="link-line">{copy.band.more}</span>
       </Link>
     </section>
   );

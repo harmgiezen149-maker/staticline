@@ -14,6 +14,9 @@ export const en: Copy = {
     video: "Video",
     booking: "Booking",
     menu: "Menu",
+    menuOpen: "Open menu",
+    menuClose: "Close menu",
+    home: "Home",
     language: "Language",
   },
   hero: {
@@ -57,6 +60,18 @@ export const en: Copy = {
     note: "Static Line · Ede · Booking and tech rider on request",
     mail: "boeking@staticline.nl",
     social: "Follow us",
+    portal: "Band portal",
+  },
+
+  motion: {
+    skip: "Skip to content",
+    loaderLabel: "Searching signal",
+    loaderHint: "Click or press any key to skip",
+    view: "View",
+    tickets: "Tickets ↗",
+    enlarge: "Enlarge photo",
+    photo: "Photo",
+    close: "Close",
   },
 
   agenda: {

@@ -52,7 +52,8 @@ export function Newsletter({
   return (
     <section
       aria-label={copy.title}
-      className="onthul flex flex-col gap-4 bg-surface px-5 py-8 sm:px-8 sm:py-10 lg:px-12"
+      className="flex flex-col gap-4 bg-surface px-5 py-8 sm:px-8 sm:py-10 lg:px-12"
+      data-reveal="rise"
     >
       <div className="flex flex-col gap-1">
         <h2 className="font-display text-22 font-semibold tracking-tight4 uppercase sm:text-30">
