@@ -1,0 +1,48 @@
+/* PROTOTYPE-ONLY: bediening en placeholder-pagina's (band, portaal). Niet nabouwen,
+   behalve waar README/MOTION.md er expliciet naar verwijst. */
+
+/* ---------- prototype-bediening ---------- */
+.no-js .proto-panel { display: none; }
+.proto-panel {
+  position: fixed; left: 12px; bottom: 12px; z-index: 85;
+  display: flex; gap: 4px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.proto-panel button {
+  min-height: 36px; padding: 0 10px;
+  background: var(--bg-inset); color: var(--text-muted);
+  border: 1px solid var(--border-strong); cursor: pointer;
+}
+.proto-panel button:hover { color: var(--text-primary); border-color: var(--text-primary); }
+.proto-panel [aria-pressed="true"] { color: var(--accent-alt); border-color: var(--accent-alt); }
+.proto-panel.is-min button:not([data-proto="hide"]) { display: none; }
+@media (max-width: 640px) { .proto-panel { left: 8px; bottom: 8px; } .proto-panel button { min-height: 32px; padding: 0 8px; font-size: 10px; } }
+
+/* ---------- shows als eigen pagina ---------- */
+.shows--page { padding-top: 96px; min-height: 70vh; }
+@media (max-width: 640px) { .shows--page { padding-top: 48px; } }
+
+/* ---------- band (placeholder) ---------- */
+.page { padding: 96px 48px 128px; min-height: 70vh; display: flex; flex-direction: column; gap: 24px; }
+.page__kicker { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent-alt); }
+.page__title { font-size: clamp(56px, 12vw, 160px); line-height: 0.9; }
+.page__lead { margin: 0; max-width: 560px; font-size: 18px; line-height: 28px; }
+.page__note { margin: 0; max-width: 560px; font-family: var(--font-mono); font-size: 12px; line-height: 18px; letter-spacing: 0.08em; color: var(--text-muted); }
+@media (max-width: 640px) { .page { padding: 48px 20px 80px; } }
+
+/* ---------- portaal (gedeelde lichte basis: tokens, focus, calm transition, voortgangslijn) ---------- */
+.portal { min-height: 80vh; display: grid; place-items: center; padding: 64px 20px; background: var(--bg-base); }
+.portal__card { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border-default); }
+.portal__title { font-size: 44px; }
+.portal__form { display: flex; flex-direction: column; gap: 16px; }
+.portal__field { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+.portal__field input {
+  min-height: 44px; padding: 0 12px;
+  background: var(--bg-inset); color: var(--text-primary);
+  border: 1px solid var(--border-strong); border-radius: 0;
+  font-family: var(--font-body); font-size: 16px; letter-spacing: 0; text-transform: none;
+  transition: border-color var(--dur-fast) ease;
+}
+.portal__field input:focus { border-color: var(--text-primary); }
+.portal__status { margin: 0; min-height: 18px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; color: var(--accent-alt); }
+.portal__back { align-self: flex-start; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); padding: 12px 0; }

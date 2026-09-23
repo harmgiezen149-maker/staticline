@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="nl" class="no-js" data-page="home">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Static Line — rock uit Nijmegen</title>
+<meta name="description" content="Static Line — rauwe rock uit Nijmegen. Eerste show 10 november 2026, Doornroosje.">
+<meta name="theme-color" content="#090B0D">
+<!--
+  PROTOTYPE v2 — "Ruis → Lijn". Open dit bestand direct in de browser (werkt ook via file://).
+  Routes zijn hier hash-routes (#/, #/en, #/shows, #/band, #/portaal) om page transitions te tonen.
+  In productie zijn het echte, server-gerenderde routes. Zie ../README.md en ../MOTION.md.
+-->
+<script>
+  /* Inline head-script (hoort in productie óók inline in <head>, vóór de CSS):
+     zet de motion-state vóór de eerste paint, zodat er nooit iets flitst. */
+  (function () {
+    var d = document.documentElement;
+    d.classList.remove("no-js"); d.classList.add("js");
+    var reduce = false;
+    try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    try { var f = sessionStorage.getItem("sl-proto-reduce"); if (f === "1") reduce = true; if (f === "0") reduce = false; } catch (e) {} /* alleen prototype */
+    if (reduce) { d.classList.add("reduce-motion"); return; }
+    d.classList.add("motion");
+    var seen = true;
+    try { seen = sessionStorage.getItem("sl-intro-seen") === "1"; } catch (e) {}
+    if (!seen && !/portaal/.test(location.hash)) d.classList.add("sl-intro"); /* nooit in het portaal */
+    /* failsafe: motion-laag niet gestart binnen 2,5 s → alles direct tonen */
+    setTimeout(function () { if (!d.classList.contains("motion-ready")) d.classList.remove("motion", "sl-intro"); }, 2500);
+  })();
+</script>
+<!-- Font-preloads (in productie gewoon als <link rel="preload" … crossorigin>). In het prototype alleen via http(s),
+     omdat browsers preloads met crossorigin via file:// blokkeren; de fonts laden daar gewoon via @font-face. -->
+<script>
+  if (/^https?:/.test(location.protocol)) ["oswald-latin-700-normal", "jetbrains-mono-latin-400-normal", "inter-latin-400-normal"].forEach(function (f) {
+    var l = document.createElement("link"); l.rel = "preload"; l.as = "font"; l.type = "font/woff2"; l.crossOrigin = "anonymous";
+    l.href = "../assets/fonts/" + f + ".woff2"; document.head.appendChild(l);
+  });
+</script>
+<link rel="preload" href="../assets/staticline-wordmark-1440.webp" as="image" fetchpriority="high" imagesrcset="../assets/staticline-wordmark-960.webp 960w, ../assets/staticline-wordmark-1440.webp 1440w" imagesizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1024px) 520px, 720px">
+<link rel="stylesheet" href="../reference/styles.css">
+<link rel="stylesheet" href="prototype.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Naar de inhoud</a>
+
+<!-- LOADER "Afstemmen" — alleen zichtbaar onder html.sl-intro (eerste bezoek per sessie) -->
+<div class="loader" aria-hidden="true">
+  <div class="loader__panel loader__panel--top"></div>
+  <div class="loader__panel loader__panel--bottom"></div>
+  <div class="loader__signal">
+    <canvas class="loader__noise"></canvas>
+    <div class="loader__scan"></div>
+    <div class="loader__track"></div>
+  </div>
+  <div class="loader__line"></div>
+  <p class="loader__readout"><span data-l10n="loaderLabel">Signaal zoeken</span><span class="loader__count">000</span></p>
+  <p class="loader__hint" data-l10n="loaderHint">Klik of druk op een toets om over te slaan</p>
+</div>
+
+<header class="site-header">
+  <a class="site-header__home" href="#/"><img class="site-header__mark" src="../assets/staticline-wordmark-flat-400.webp" width="400" height="232" alt="Static Line — home"></a>
+  <nav class="site-nav" aria-label="Hoofdmenu">
+    <a href="#/shows" data-nav="shows" data-scramble-hover><span data-scramble-target>Shows</span></a>
+    <a href="#photos" data-nav="photos" data-scramble-hover><span data-scramble-target>Foto's</span></a>
+    <a href="#/band" data-nav="band" data-scramble-hover><span data-scramble-target>Band</span></a>
+  </nav>
+  <a class="site-header__cta" href="#booking"><span class="btn__label">Boeken</span></a>
+  <p class="lang-switch"><a href="#/" data-lang="nl" lang="nl" aria-current="true">NL</a> / <a href="#/en" data-lang="en" lang="en">en</a></p>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu-panel" aria-label="Menu openen"><span></span></button>
+</header>
+
+<!-- MOBIEL MENUPANEEL (nieuw in v2) -->
+<div class="menu-panel" id="menu-panel" data-state="closed" hidden>
+  <div class="menu-panel__bands" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="menu-panel__scan" aria-hidden="true"></div>
+  <nav aria-label="Menu">
+    <ol class="menu-panel__list">
+      <li><a href="#/shows" data-menu="shows" data-menu-item><span class="menu-panel__index" data-decode data-decode-manual>01</span><span>Shows</span></a></li>
+      <li><a href="#photos" data-menu="photos" data-menu-item><span class="menu-panel__index" data-decode data-decode-manual>02</span><span>Foto's</span></a></li>
+      <li><a href="#/band" data-menu="band" data-menu-item><span class="menu-panel__index" data-decode data-decode-manual>03</span><span>Band</span></a></li>
+    </ol>
+  </nav>
+  <div class="menu-panel__foot">
+    <a class="btn btn--primary" href="#booking" data-menu="book" data-menu-item><span class="btn__label">Boek ons</span></a>
+    <p class="menu-panel__lang" data-menu-item><a href="#/" data-lang="nl" lang="nl" aria-current="true">NL</a><a href="#/en" data-lang="en" lang="en">EN</a></p>
+    <a class="menu-panel__mail" href="mailto:boeking@staticline.nl" data-menu-item>boeking@staticline.nl</a>
+  </div>
+</div>
+
+<main class="site-main" id="main" tabindex="-1">
+<section class="hero grain" id="top">
+  <div class="hero__bg" aria-hidden="true"></div>
+  <div class="hero__inner">
+    <p class="hero__kicker" data-decode data-decode-manual>Eerste show — 10 november 2026</p>
+    <h1 class="hero__title"><img class="hero__wordmark" src="../assets/staticline-wordmark-1440.webp" srcset="../assets/staticline-wordmark-960.webp 960w, ../assets/staticline-wordmark-1440.webp 1440w" sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1024px) 520px, 720px" width="1440" height="835" alt="Static Line" fetchpriority="high"></h1>
+    <p class="hero__sub" data-reveal="rise" data-reveal-manual data-hero-sub>Rauwe, opgefokte rock uit Nijmegen. Drie man, geen omweg. Losse snaren, kapotte versterkers en een set die niet stilstaat.</p>
+    <p class="hero__sub hero__sub--short" data-reveal="rise" data-reveal-manual data-hero-sub>Rauwe rock uit Nijmegen. Drie man, geen omweg.</p>
+    <div class="hero__actions">
+      <a class="btn btn--primary" href="#booking" data-reveal data-reveal-manual><span class="btn__label">Boek ons</span></a>
+      <a class="btn btn--ghost" href="#shows" data-reveal data-reveal-manual><span class="btn__label">Alle shows</span></a>
+    </div>
+  </div>
+  <div class="hero__veil" aria-hidden="true"></div>
+</section>
+<section class="next-show" aria-labelledby="next-venue" data-reveal="wipe" data-decode-delay="260">
+  <div class="next-show__date">
+    <p class="next-show__label" data-decode>Volgende show</p>
+    <p class="next-show__day"><span class="next-show__day-full" data-decode data-decode-digits>10.11</span><span class="next-show__day-short" data-decode data-decode-digits>10.11.26</span></p>
+    <p class="next-show__meta" data-decode>2026 · 20:30</p>
+  </div>
+  <div class="next-show__body">
+    <h2 class="next-show__venue" id="next-venue">Doornroosje, Nijmegen</h2>
+    <p class="next-show__note">Releaseshow met support. Deuren 20:00, wij om 21:15.</p>
+  </div>
+  <a class="btn btn--inset next-show__tickets" href="#tickets" data-cursor="Tickets ↗"><span class="btn__label">Tickets</span></a>
+</section>
+<section class="shows" id="shows" aria-labelledby="shows-title">
+  <div class="shows__head" data-reveal="mask">
+    <h2 class="display h2" id="shows-title"><span class="mask-line"><span>Alle shows</span></span></h2>
+    <p class="shows__count" data-decode>5 data</p>
+  </div>
+  <div class="show-list">
+  <a class="show-row" href="#tickets" data-status="release" data-reveal data-stagger="row" data-cursor="Tickets ↗" data-scramble-hover>
+    <span class="show-row__date">10 nov 2026</span>
+    <span class="show-row__venue"><span class="show-row__venue-text">Doornroosje</span></span>
+    <span class="show-row__city" data-decode>Nijmegen</span>
+    <span class="show-row__status" data-status="release"><span class="show-row__status-text" data-decode data-scramble-target>Releaseshow</span><span class="show-row__arrow" aria-hidden="true">↗</span></span>
+  </a>
+  <a class="show-row" href="#tickets" data-status="tickets" data-reveal data-stagger="row" data-cursor="Tickets ↗" data-scramble-hover>
+    <span class="show-row__date">21 nov 2026</span>
+    <span class="show-row__venue"><span class="show-row__venue-text">Luxor Live</span></span>
+    <span class="show-row__city" data-decode>Arnhem</span>
+    <span class="show-row__status" data-status="tickets"><span class="show-row__status-text" data-decode data-scramble-target>Tickets</span><span class="show-row__arrow" aria-hidden="true">↗</span></span>
+  </a>
+  <div class="show-row" data-status="soldout" aria-disabled="true" data-reveal data-stagger="row">
+    <span class="show-row__date">05 dec 2026</span>
+    <span class="show-row__venue"><span class="show-row__venue-text">dB's</span></span>
+    <span class="show-row__city" data-decode>Utrecht</span>
+    <span class="show-row__status" data-status="soldout"><span class="show-row__status-text" data-decode>Uitverkocht</span></span>
+  </div>
+  <a class="show-row" href="#tickets" data-status="tickets" data-reveal data-stagger="row" data-cursor="Tickets ↗" data-scramble-hover>
+    <span class="show-row__date">17 jan 2027</span>
+    <span class="show-row__venue"><span class="show-row__venue-text">Effenaar, Kleine Zaal</span></span>
+    <span class="show-row__city" data-decode>Eindhoven</span>
+    <span class="show-row__status" data-status="tickets"><span class="show-row__status-text" data-decode data-scramble-target>Tickets</span><span class="show-row__arrow" aria-hidden="true">↗</span></span>
+  </a>
+  <div class="show-row" data-status="announced" aria-disabled="true" data-reveal data-stagger="row">
+    <span class="show-row__date">07 feb 2027</span>
+    <span class="show-row__venue"><span class="show-row__venue-text">Trix</span></span>
+    <span class="show-row__city" data-decode>Antwerpen</span>
+    <span class="show-row__status" data-status="announced"><span class="show-row__status-text" data-decode>Aangekondigd</span></span>
+  </div>
+  </div>
+  <a class="shows__more link-line" href="#/shows">Volledige agenda →</a>
+</section>
+<section class="photos grain" id="photos" aria-labelledby="photos-title">
+  <div class="photos__inner">
+    <h2 class="display h2" id="photos-title" data-reveal="mask"><span class="mask-line"><span>Foto's</span></span></h2>
+    <div class="photo-grid">
+      <figure class="photo" data-reveal data-stagger="photo" data-scramble-hover>
+        <img src="../assets/placeholder-1.webp" alt="Live shot van Static Line (placeholder)" width="800" height="1100" loading="lazy" decoding="async">
+        <span class="photo__bands" aria-hidden="true"><i style="--band-i:0"></i><i style="--band-i:1"></i><i style="--band-i:2"></i><i style="--band-i:3"></i><i style="--band-i:4"></i></span>
+        <span class="photo__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <figcaption data-scramble-target>live shot — duotone rood</figcaption>
+        <button class="photo__button" type="button" data-lightbox data-cursor="Bekijk" aria-label="Foto vergroten: live shot — duotone rood"></button>
+      </figure>
+      <figure class="photo" data-reveal data-stagger="photo" data-scramble-hover>
+        <img src="../assets/placeholder-2.webp" alt="Bandportret (placeholder)" width="900" height="640" loading="lazy" decoding="async">
+        <span class="photo__bands" aria-hidden="true"><i style="--band-i:0"></i><i style="--band-i:1"></i><i style="--band-i:2"></i><i style="--band-i:3"></i><i style="--band-i:4"></i></span>
+        <span class="photo__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <figcaption data-scramble-target>bandportret</figcaption>
+        <button class="photo__button" type="button" data-lightbox data-cursor="Bekijk" aria-label="Foto vergroten: bandportret"></button>
+      </figure>
+      <figure class="photo" data-reveal data-stagger="photo" data-scramble-hover>
+        <img src="../assets/placeholder-3.webp" alt="Publiek bij een show (placeholder)" width="900" height="640" loading="lazy" decoding="async">
+        <span class="photo__bands" aria-hidden="true"><i style="--band-i:0"></i><i style="--band-i:1"></i><i style="--band-i:2"></i><i style="--band-i:3"></i><i style="--band-i:4"></i></span>
+        <span class="photo__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <figcaption data-scramble-target>crowd — duotone teal</figcaption>
+        <button class="photo__button" type="button" data-lightbox data-cursor="Bekijk" aria-label="Foto vergroten: crowd — duotone teal"></button>
+      </figure>
+      <figure class="photo" data-reveal data-stagger="photo" data-scramble-hover>
+        <img src="../assets/placeholder-4.webp" alt="Backstage (placeholder)" width="900" height="640" loading="lazy" decoding="async">
+        <span class="photo__bands" aria-hidden="true"><i style="--band-i:0"></i><i style="--band-i:1"></i><i style="--band-i:2"></i><i style="--band-i:3"></i><i style="--band-i:4"></i></span>
+        <span class="photo__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <figcaption data-scramble-target>backstage</figcaption>
+        <button class="photo__button" type="button" data-lightbox data-cursor="Bekijk" aria-label="Foto vergroten: backstage"></button>
+      </figure>
+      <figure class="photo" data-reveal data-stagger="photo" data-scramble-hover>
+        <img src="../assets/placeholder-5.webp" alt="Detail van een gitaar (placeholder)" width="900" height="640" loading="lazy" decoding="async">
+        <span class="photo__bands" aria-hidden="true"><i style="--band-i:0"></i><i style="--band-i:1"></i><i style="--band-i:2"></i><i style="--band-i:3"></i><i style="--band-i:4"></i></span>
+        <span class="photo__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <figcaption data-scramble-target>gitaar detail</figcaption>
+        <button class="photo__button" type="button" data-lightbox data-cursor="Bekijk" aria-label="Foto vergroten: gitaar detail"></button>
+      </figure>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-footer" id="booking">
+  <img class="site-footer__mark" src="../assets/staticline-wordmark-flat-400.webp" width="400" height="232" alt="Static Line">
+  <p class="site-footer__note" data-l10n="footer">Static Line · Nijmegen · Boekingen en technische rider op aanvraag</p>
+  <div class="site-footer__links">
+    <a class="site-footer__mail link-line" href="mailto:boeking@staticline.nl" data-scramble-hover>boeking@staticline.nl</a>
+    <a class="site-footer__portal link-line" href="#/portaal" data-l10n="portal">Bandportaal</a>
+  </div>
+</footer>
+
+<!-- PAGE TRANSITION "Kanaalwissel" -->
+<div class="pt" aria-hidden="true">
+  <div class="pt__band"></div><div class="pt__band"></div><div class="pt__band"></div><div class="pt__band"></div><div class="pt__band"></div>
+  <p class="pt__label"></p>
+</div>
+
+<dialog class="lightbox" aria-label="Foto">
+  <div class="lightbox__stage"><img class="lightbox__img" alt=""></div>
+  <p class="lightbox__caption" data-decode data-decode-manual></p>
+  <button class="lightbox__close" type="button">Sluiten</button>
+  <div class="lightbox__scan" aria-hidden="true"></div>
+</dialog>
+
+<!-- PROTOTYPE-BEDIENING (niet nabouwen) -->
+<div class="proto-panel" role="region" aria-label="Prototype-bediening">
+  <button type="button" data-proto="reduce" aria-pressed="false">Reduced motion: <span>uit</span></button>
+  <button type="button" data-proto="replay">Loader opnieuw</button>
+  <button type="button" data-proto="hide" aria-label="Paneel in- of uitklappen">–</button>
+</div>
+
+<script src="vendor/lenis.min.js" defer></script>
+<script src="motion.js" defer></script>
+<script src="demo.js" defer></script>
+</body>
+</html>

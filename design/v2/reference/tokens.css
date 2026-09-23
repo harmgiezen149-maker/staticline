@@ -1,0 +1,136 @@
+/* Static Line — design tokens (v2). Dark theme only, no light mode.
+   Source of truth: the Static Line design system (tokens.json) + motion extension v2.
+   Border radius is 0 everywhere. */
+
+:root {
+  /* Background */
+  --bg-base: #0D0F12;      /* page background */
+  --bg-surface: #1C2126;   /* raised sections */
+  --bg-raised: #262D34;    /* cards on surface */
+  --bg-inset: #090B0D;     /* header/footer, inset blocks, loader, transition bands */
+
+  /* Text */
+  --text-primary: #EDE5D4; /* bone white */
+  --text-muted: #9BA3AB;
+  --text-faint: #6B747C;   /* mono labels only, never body copy */
+  --text-on-accent: #F7F2E8;
+
+  /* Accent */
+  --accent: #B33A28;       /* oxide red */
+  --accent-hover: #C9482F;
+  --accent-quiet: #2A1614; /* row hover on dark */
+  --accent-alt: #2AA5B5;   /* teal, links + status */
+
+  /* Lines & states */
+  --border-default: #333B42;
+  --border-strong: #4A545C;
+  --focus-ring: #2AA5B5;
+  --danger: #D9503C;
+
+  /* Type */
+  --font-display: "Oswald", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Spacing scale (px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --radius: 0;
+  --grain: url("../assets/grain.png");
+
+  /* =====================================================================
+     MOTION — v2 "Ruis → Lijn"
+     Alles komt binnen als ruis en eindigt als een strakke lijn.
+     Zie MOTION.md voor principes, choreografie en specs per onderdeel.
+     JS leest deze variabelen (getComputedStyle) zodat CSS en JS één bron hebben.
+     ===================================================================== */
+
+  /* Durations */
+  --dur-instant: 80ms;     /* één storingsframe, statuswissel */
+  --dur-fast: 160ms;       /* hover-kleur, kanaalverschuiving, dimmen */
+  --dur-base: 320ms;       /* header, menu-items, korte lijnen, hover-wipes */
+  --dur-slow: 640ms;       /* sectie-entree, band-wipes, page-transition-helft */
+  --dur-dramatic: 1100ms;  /* loader-fasen, tracking-band */
+
+  /* Easings (benoemde cubic-beziers; bruikbaar in CSS én Web Animations API) */
+  --ease-signal: cubic-bezier(0.16, 1, 0.3, 1);   /* IN: hard aanzetten, lang uitlopen */
+  --ease-cut: cubic-bezier(0.7, 0, 0.84, 0);      /* UIT: versnellend wegknippen */
+  --ease-band: cubic-bezier(0.87, 0, 0.13, 1);    /* banden, wipes, page transitions */
+  --ease-line: cubic-bezier(0.65, 0, 0.35, 1);    /* lijnen tekenen (scaleX) */
+  --ease-drift: linear;                           /* parallax en alles wat gescrubd is */
+  --ease-glitch: steps(2, jump-none);             /* storingsframes: geen tussenwaarden */
+
+  /* Stagger */
+  --stagger-char: 22ms;    /* decoderende tekens: per teken vastklikken */
+  --stagger-item: 60ms;    /* menu-items, knoppen */
+  --stagger-row: 70ms;     /* showrijen */
+  --stagger-photo: 90ms;   /* foto's in rasterorde */
+  --stagger-band: 40ms;    /* banden in loader, menu en page transition */
+
+  /* Distances */
+  --shift-glitch: 2px;     /* kanaalverschuiving (AFW-1) */
+  --shift-sm: 12px;        /* tekst die opkomt */
+  --shift-md: 24px;        /* menu-items, knoppen */
+  --shift-lg: 48px;        /* grote koppen */
+  --parallax-bg: 18%;      /* hero-achtergrond, van hero-hoogte */
+  --parallax-mark: 10%;    /* hero-wordmark, van hero-hoogte */
+
+  /* Noise, scanlines, lines */
+  --noise-opacity: 0.5;          /* bestaande hero-grain */
+  --noise-step: 125ms;           /* levende korrel: 8 sprongen per seconde */
+  --scanline: url("../assets/scanlines.png"); /* AFW-2: 1px lijn per 3px */
+  --scanline-opacity: 0.08;      /* alleen tijdens loader en transitions */
+  --line-weight: 2px;
+  --bands: 5;                    /* banden in page transition en menu (mobiel: 4) */
+
+  /* Choreography caps */
+  --loader-min: 900ms;     /* teller loopt minstens zo lang (mobiel 700ms) */
+  --loader-max: 1200ms;    /* ...en nooit langer (mobiel 1000ms) */
+  --intro-max: 2500ms;     /* eerste paint → alle hero-elementen stil */
+}
+
+/* Reduced motion: afstanden naar 0, beweging wordt een korte fade.
+   De class wordt gezet door het inline head-script (media query) of door een eventuele
+   gebruikersschakelaar. Houd beide blokken gelijk. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-base: 160ms;
+    --dur-slow: 200ms;
+    --dur-dramatic: 200ms;
+    --stagger-char: 0ms;
+    --stagger-item: 0ms;
+    --stagger-row: 0ms;
+    --stagger-photo: 0ms;
+    --stagger-band: 0ms;
+    --shift-glitch: 0px;
+    --shift-sm: 0px;
+    --shift-md: 0px;
+    --shift-lg: 0px;
+    --parallax-bg: 0%;
+    --parallax-mark: 0%;
+  }
+}
+:root.reduce-motion {
+  --dur-base: 160ms;
+  --dur-slow: 200ms;
+  --dur-dramatic: 200ms;
+  --stagger-char: 0ms;
+  --stagger-item: 0ms;
+  --stagger-row: 0ms;
+  --stagger-photo: 0ms;
+  --stagger-band: 0ms;
+  --shift-glitch: 0px;
+  --shift-sm: 0px;
+  --shift-md: 0px;
+  --shift-lg: 0px;
+  --parallax-bg: 0%;
+  --parallax-mark: 0%;
+}
