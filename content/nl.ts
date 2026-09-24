@@ -112,6 +112,10 @@ export const nl: Copy = {
     membersEmpty: "De bezetting wordt nog ingevuld.",
     noRole: "Bandlid",
     more: "Meer over de band",
+    prev: "Vorige",
+    next: "Volgende",
+    pause: "Automatisch schuiven stoppen",
+    play: "Automatisch schuiven starten",
   },
 
   music: {

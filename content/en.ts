@@ -94,6 +94,10 @@ export const en: Copy = {
     membersEmpty: "The line-up is still being filled in.",
     noRole: "Band member",
     more: "More about the band",
+    prev: "Previous",
+    next: "Next",
+    pause: "Stop sliding",
+    play: "Start sliding",
   },
 
   music: {

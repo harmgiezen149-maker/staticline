@@ -264,7 +264,12 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
 
 - De bandsectie op de homepage (`components/BandSection.tsx`), tussen de agenda
   en de foto's — volgt de sectiepatronen van `ShowList` en de ledenkaarten van
-  `/band`, alleen compacter
+  `/band`, alleen compacter. De kaarten staan daar in één schuivende rij
+  (`components/BandCarousel.tsx`, op verzoek): scroll-snap van de browser, met
+  pijlen, een lijn die de positie toont en automatisch doorschuiven dat pauzeert
+  bij hover of focus, stopt zodra iemand zelf schuift, uit staat bij minder
+  beweging en altijd stil te zetten is. `/band` houdt zijn raster, omdat de
+  homepage daar per lid naartoe linkt met een anker
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

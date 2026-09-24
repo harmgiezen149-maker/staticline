@@ -1,6 +1,8 @@
 import Image from "next/image";
-import { PhotoTexture } from "@/components/PhotoTexture";
 import Link from "next/link";
+
+import { BandCarousel } from "@/components/BandCarousel";
+import { PhotoTexture } from "@/components/PhotoTexture";
 
 import type { BandAppMember } from "@/lib/band-app";
 import { localePath, type Locale } from "@/lib/i18n";
@@ -11,7 +13,9 @@ import { getSiteCopy } from "@/lib/site-content";
  *
  * GEËXTRAPOLEERD. De handoff tekent deze sectie niet; hij volgt de patronen van
  * ShowList ernaast — dezelfde sectiepadding, dezelfde kop met de lijn eronder —
- * en de ledenkaarten van /band, alleen compacter.
+ * en de ledenkaarten van /band, alleen compacter. De kaarten staan in één rij
+ * die schuift (components/BandCarousel.tsx), in plaats van een raster waarin
+ * een laatste kaart alleen op een nieuwe regel belandt.
  *
  * Bewust een samenvatting en geen kopie van /band. Alleen de eerste alinea van de
  * bio, met een link naar de rest. Wie hier binnenkomt via de QR-code op een
@@ -39,6 +43,15 @@ export async function BandSection({ locale, bio, members }: Props) {
   // stuk is in plaats van dat er nog iets moet komen.
   if (!opening && members.length === 0) return null;
 
+  const more = (
+    <Link
+      href={localePath(locale, "/band")}
+      className="inline-flex min-h-11 items-center self-start font-mono text-12 tracking-wide18 text-muted uppercase transition-colors duration-[160ms] hover:text-primary"
+    >
+      <span className="link-line">{copy.band.more}</span>
+    </Link>
+  );
+
   return (
     <section
       id="band"
@@ -65,10 +78,25 @@ export async function BandSection({ locale, bio, members }: Props) {
         </p>
       )}
 
-      {members.length > 0 && (
-        <ul className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {members.length > 0 ? (
+        <BandCarousel
+          labels={{
+            region: copy.band.title,
+            prev: copy.band.prev,
+            next: copy.band.next,
+            pause: copy.band.pause,
+            play: copy.band.play,
+          }}
+          aside={more}
+        >
           {members.map((member) => (
-            <li key={member.id} className="contents">
+            // Mobiel ruim anderhalve kaart in beeld, tablet drie, desktop vier.
+            // De volgende steekt steeds in de marge uit: zo is te zien dat er
+            // meer is, ook zonder de knoppen.
+            <li
+              key={member.id}
+              className="flex shrink-0 basis-[calc((100%-8px)/1.6)] snap-start sm:basis-[calc((100%-16px)/3)] lg:basis-[calc((100%-24px)/4)]"
+            >
               {/* De hele kaart is de link en niet alleen de foto. Op een telefoon
                   is een vlak van een paar vierkante centimeter het verschil
                   tussen raak en mis, en de naam eronder hoort bij dezelfde
@@ -81,10 +109,12 @@ export async function BandSection({ locale, bio, members }: Props) {
                   scherm. Zie components/pages/BandPage.tsx. */}
               <Link
                 href={`${localePath(locale, "/band")}#lid-${member.id}`}
-                className="group flex flex-col gap-3 border border-line bg-surface p-3 transition-colors duration-[160ms] hover:border-line-strong sm:p-4"
-                // Kaarten komen na elkaar binnen, zoals de menu-items.
+                className="group flex w-full flex-col gap-3 border border-line bg-surface p-3 transition-colors duration-[160ms] hover:border-line-strong sm:p-4"
+                // Kaarten komen na elkaar binnen, zoals de menu-items. Een kaart
+                // die pas later de rij in schuift, komt op dat moment binnen.
                 data-reveal="rise"
                 data-stagger="item"
+                draggable={false}
               >
                 {member.photoUrl ? (
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-inset">
@@ -92,8 +122,9 @@ export async function BandSection({ locale, bio, members }: Props) {
                       src={member.photoUrl}
                       alt={member.name}
                       fill
-                      sizes="(min-width: 1025px) 25vw, 50vw"
+                      sizes="(min-width: 1025px) 25vw, (min-width: 641px) 33vw, 62vw"
                       className="object-cover"
+                      draggable={false}
                     />
                     <PhotoTexture />
                   </div>
@@ -108,22 +139,18 @@ export async function BandSection({ locale, bio, members }: Props) {
                     {member.name}
                   </p>
                   <p className="font-mono text-11 tracking-wide14 text-muted uppercase">
-                    {[member.role, member.instrument].filter(Boolean).join(" · ") ||
-                      copy.band.noRole}
+                    {[member.role, member.instrument]
+                      .filter(Boolean)
+                      .join(" · ") || copy.band.noRole}
                   </p>
                 </div>
               </Link>
             </li>
           ))}
-        </ul>
+        </BandCarousel>
+      ) : (
+        more
       )}
-
-      <Link
-        href={localePath(locale, "/band")}
-        className="inline-flex min-h-11 items-center self-start font-mono text-12 tracking-wide18 text-muted uppercase transition-colors duration-[160ms] hover:text-primary"
-      >
-        <span className="link-line">{copy.band.more}</span>
-      </Link>
     </section>
   );
 }

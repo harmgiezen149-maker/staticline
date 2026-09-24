@@ -126,6 +126,11 @@ export type Copy = {
     noRole: string;
     /** Link van de bandsectie op de homepage naar de volledige pagina. */
     more: string;
+    /** De knoppen van de schuivende rij leden op de homepage, voor een schermlezer. */
+    prev: string;
+    next: string;
+    pause: string;
+    play: string;
   };
 
   /** De muziekpagina. */
