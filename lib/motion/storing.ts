@@ -7,8 +7,9 @@ import { motionOn } from "./env";
  * Eén klok voor de hele pagina en niet één per foto. Met vier foto's in beeld,
  * elk op een eigen klok van 10 à 15 seconden, stoort er om de paar seconden
  * wel ergens iets, en dan is het geen storing meer maar een kapotte pagina.
- * Nu is het om de 10 à 15 seconden één foto, telkens een andere willekeurige
- * uit wat er op dat moment in beeld is.
+ * Nu is het om de 5 à 7,5 seconden één foto (eerst was het 10 à 15, op verzoek
+ * verdubbeld), telkens een andere willekeurige uit wat er op dat moment in
+ * beeld is.
  *
  * Hoe het eruitziet staat in `.foto-storing` in styles/motion.css; de markup in
  * components/PhotoTexture.tsx. Hier alleen: wanneer, welke, en per keer een
@@ -18,8 +19,8 @@ import { motionOn } from "./env";
  * bandfoto in beeld is.
  */
 
-const PAUSE_MIN = 10_000;
-const PAUSE_MAX = 15_000;
+const PAUSE_MIN = 5_000;
+const PAUSE_MAX = 7_500;
 
 let timer = 0;
 let observer: IntersectionObserver | null = null;

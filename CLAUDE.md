@@ -262,7 +262,7 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   met minder beweging of zonder JavaScript staat het kleine wordmark er
   gewoon.
 - **De bandfoto's krijgen af en toe een signaalstoring**, op verzoek en niet uit
-  MOTION.md: om de 10 à 15 seconden verliest één bandfoto in beeld even zijn
+  MOTION.md: om de 5 à 7,5 seconden verliest één bandfoto in beeld even zijn
   signaal — banden sneeuw en een beeld dat opzij verspringt, 0,6–1 s. Eén klok
   voor de hele pagina, niet één per foto, anders stoort er steeds iets. Geen
   scanlines (die blijven AFW-2). Markup via `<PhotoTexture storing />`, timing in
