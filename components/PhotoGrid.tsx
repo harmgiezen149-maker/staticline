@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PhotoTexture } from "@/components/PhotoTexture";
 
 import type { Locale } from "@/lib/i18n";
 import { getSiteCopy } from "@/lib/site-content";
@@ -99,6 +100,7 @@ export async function PhotoGrid({ locale, photos = [], heading = true }: Props) 
                 sizes={index === 0 ? "(min-width: 1025px) 50vw, 100vw" : "(min-width: 1025px) 25vw, 50vw"}
                 className="photo__img -z-10 object-cover"
               />
+              <PhotoTexture />
 
               {/* Vijf banden, elk met een eigen vertraging, die bij binnenkomst
                   afwisselend naar links en rechts wegtrekken. */}

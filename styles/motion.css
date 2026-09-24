@@ -1299,3 +1299,17 @@ a.show-row:focus-visible .show-row__arrow {
     transition: none;
   }
 }
+
+/* ─── Korrel en tint over foto's ────────────────────────────────────────── *
+ * Zie components/PhotoTexture.tsx. Zachter dan in de hero: daar 0,5 korrel en
+ * een verloop tot 0,92 donker; hier 0,28 korrel en een egale tint van 0,16.
+ */
+.foto-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(13, 15, 18, 0.16);
+}
+.foto-korrel {
+  opacity: 0.28;
+}

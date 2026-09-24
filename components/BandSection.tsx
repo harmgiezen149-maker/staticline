@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PhotoTexture } from "@/components/PhotoTexture";
 import Link from "next/link";
 
 import type { BandAppMember } from "@/lib/band-app";
@@ -94,6 +95,7 @@ export async function BandSection({ locale, bio, members }: Props) {
                       sizes="(min-width: 1025px) 25vw, 50vw"
                       className="object-cover"
                     />
+                    <PhotoTexture />
                   </div>
                 ) : (
                   // Hetzelfde streeppatroon als de fotoplaceholders, zodat een

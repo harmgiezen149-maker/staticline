@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PhotoTexture } from "@/components/PhotoTexture";
 
 import { Empty, Page, Section } from "@/components/Page";
 import { fetchBandAppPublic } from "@/lib/band-app";
@@ -81,6 +82,7 @@ export async function BandPage({ locale }: { locale: Locale }) {
                       sizes="(min-width: 1025px) 25vw, (min-width: 641px) 50vw, 100vw"
                       className="object-cover"
                     />
+                    <PhotoTexture />
                   </div>
                 ) : (
                   // Zelfde streeppatroon als de fotoplaceholders op de homepage,
