@@ -73,8 +73,11 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
     // zoals het ontwerp tekent, krijgen de onderdelen die dan zichtbaar horen te
     // zijn een hogere z-index dan het paneel — en de onderlijn staat daarom
     // nog een keer als laagje, want de echte rand zou onder het paneel liggen.
+    // De lagen, van onder naar boven: paneel 55, onderlijn 56, het vliegende
+    // wordmark op de homepage 58 (dat over de lijn heen moet en er niet door
+    // doorsneden mag worden), knoppen en links 60.
     <header
-      className="site-header sticky top-0 z-60 flex min-h-[68px] items-center gap-3 border-b border-line bg-inset px-4 py-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-60 after:h-px after:bg-line sm:gap-6 sm:px-6"
+      className="site-header sticky top-0 z-60 flex min-h-[68px] items-center gap-3 border-b border-line bg-inset px-4 py-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-56 after:h-px after:bg-line sm:gap-6 sm:px-6"
       // Docking: alleen op de homepage verschijnt het wordmark in de kop pas
       // als het grote wordmark uit beeld is. Elders staat hij er gewoon.
       data-dock={home ? "" : undefined}

@@ -454,14 +454,15 @@
 /* De vlucht, op verzoek in plaats van het masker hierboven: het grote wordmark
    vliegt bij het scrollen in één beweging van de hero naar de kop. Zie fly() in
    lib/motion/scroll.ts. Het vliegende exemplaar staat in de kop, onder de
-   knoppen en links (z-index 60) maar boven de achtergrond van de kop, en is
-   alleen zichtbaar tijdens de vlucht. Op het eind neemt het vlakke wordmark het
+   knoppen en links (z-index 60) maar boven de onderlijn van de kop (56) — anders
+   loopt die lijn dwars door het wordmark heen — en is alleen zichtbaar tijdens
+   de vlucht. Op het eind neemt het vlakke wordmark het
    over via --dock (0 → 1), in dezelfde vorm op dezelfde plek. */
 .site-header__flier {
   position: absolute;
   left: 0;
   top: 0;
-  z-index: 1;
+  z-index: 58;
   pointer-events: none;
   transform-origin: 0 0;
   visibility: hidden;
@@ -470,6 +471,11 @@
 .motion .site-header.is-flying .site-header__flier {
   visibility: visible;
   opacity: calc(1 - var(--dock, 0));
+}
+/* Met het menu open hoort het paneel (55) vrij te zijn; het wordmark ligt daar
+   nu boven. */
+.site-header:has(.menu-panel:is([data-state="open"], [data-state="closing"])) .site-header__flier {
+  visibility: hidden;
 }
 .motion .hero.is-flying .hero__wordmark {
   visibility: hidden;
