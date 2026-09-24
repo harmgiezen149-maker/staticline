@@ -425,13 +425,11 @@
 
 /* ─── Kop ───────────────────────────────────────────────────────────────── */
 
+/* De kop blijft altijd bovenaan staan; hij duikt niet weg bij omlaag scrollen
+   (dat wil MOTION.md §5 wel, maar is op verzoek weggelaten). De overgang is er
+   alleen nog voor het binnenschuiven na de loader. */
 .site-header {
   transition: transform var(--dur-base) var(--ease-signal);
-}
-/* Naar beneden scrollen: weg (knippen). Omhoog: terug (signaal). */
-.site-header.is-hidden {
-  transform: translate3d(0, -100%, 0);
-  transition-timing-function: var(--ease-cut);
 }
 /* Tijdens de loader staat de kop boven beeld klaar en schuift hij binnen zodra
    het beeld opengaat. */
@@ -1201,8 +1199,7 @@ a.show-row:focus-visible .show-row__arrow {
   .site-footer {
     position: static !important;
   }
-  .site-header,
-  .site-header.is-hidden {
+  .site-header {
     transform: none !important;
   }
   .photo__img {

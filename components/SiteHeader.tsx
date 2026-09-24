@@ -71,7 +71,7 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
     // zijn een hogere z-index dan het paneel — en de onderlijn staat daarom
     // nog een keer als laagje, want de echte rand zou onder het paneel liggen.
     <header
-      className="site-header sticky top-0 z-60 flex min-h-[68px] items-center gap-3 border-b border-line bg-inset px-4 py-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-60 after:h-px after:bg-line sm:min-h-14 sm:gap-6 sm:px-6"
+      className="site-header sticky top-0 z-60 flex min-h-[68px] items-center gap-3 border-b border-line bg-inset px-4 py-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-60 after:h-px after:bg-line sm:gap-6 sm:px-6"
       // Docking: alleen op de homepage verschijnt het wordmark in de kop pas
       // als het grote wordmark uit beeld is. Elders staat hij er gewoon.
       data-dock={path === "/" ? "" : undefined}
@@ -80,7 +80,13 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
         <Image
           src={wordmarkFlat}
           alt={copy.hero.wordmarkAlt}
-          className="site-header__mark h-4 w-auto sm:h-[22px]"
+          // Op verzoek groter dan het ontwerp (16/22px): 36px op mobiel, 40 op
+          // tablet, 44 op desktop. De kop is daarom overal 68px hoog, wat hij
+          // op mobiel al was. Alleen de hoogte, zodat de verhouding blijft.
+          className="site-header__mark h-9 w-auto sm:h-10 lg:h-11"
+          // Hij is hooguit ±76px breed; zonder `sizes` haalt next/image de
+          // volle breedte van het bronbestand op.
+          sizes="80px"
           priority
         />
       </Link>

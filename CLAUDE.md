@@ -246,6 +246,11 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   Op een telefoon past dat niet — "SEARCHING" op 110px is breder dan het
   scherm — dus daar is de maat begrensd door het langste woord (±55px op
   390px). Zie `.loader__text`.
+- **De kop duikt niet weg bij omlaag scrollen**, anders dan MOTION.md §5: op
+  verzoek staat hij altijd bovenaan in beeld (gewoon `sticky`). Het wordmark
+  erin is groter dan getekend — 36/40/44px hoog in plaats van 16/22 — en de kop
+  is daarom overal 68px. Ankers komen eronder uit via `scroll-padding-top` in
+  `globals.css`. Het docken op de homepage is gebleven.
 - **Rode knoppen worden blauw bij hover** (`--accent-alt`), niet lichter rood, op
   verzoek. De tekst wordt dan donker (`--bg-inset`): lichte tekst op dit blauw
   haalt maar 2,6:1, donkere 6,7:1. Geldt voor `.btn--primary` in

@@ -99,6 +99,13 @@
     background: var(--bg-base);
   }
 
+  /* De publieke kop staat altijd bovenaan in beeld (sticky, 68px plus zijn
+     onderrand). Een anker als /band#lid-5 hoort daaronder uit te komen en
+     niet erachter. */
+  html:has(.site-header) {
+    scroll-padding-top: 69px;
+  }
+
   body {
     background: var(--bg-base);
     color: var(--text-primary);

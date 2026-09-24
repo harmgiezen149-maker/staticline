@@ -3,8 +3,12 @@ import { motionOn, ms, pct, tok } from "./env";
 import { reveal } from "./reveal";
 
 /**
- * Alles wat met de scrollpositie meebeweegt: de kop die wegduikt, de parallax
- * in de hero en het wordmark dat naar de kop "verhuist".
+ * Alles wat met de scrollpositie meebeweegt: de parallax in de hero en het
+ * wordmark dat naar de kop "verhuist".
+ *
+ * De kop duikt niet meer weg bij omlaag scrollen, zoals MOTION.md §5 wil: op
+ * verzoek staat hij altijd bovenaan in beeld. Hij is gewoon `sticky`, en de
+ * browser houdt hem daar zonder dat hier iets voor hoeft te gebeuren.
  *
  * Eén luisteraar, één update per beeld. Parallax schrijft alleen `transform` en
  * `opacity`, zodat de browser niets opnieuw hoeft in te delen.
@@ -16,7 +20,6 @@ import { reveal } from "./reveal";
  * een bandsite is de gewone scroll van de browser het betere gevoel.
  */
 
-let lastY = 0;
 let ticking = false;
 
 const header = () => document.querySelector<HTMLElement>(".site-header");
@@ -25,22 +28,6 @@ export function updateScroll() {
   const y = window.scrollY;
   const head = header();
   const hero = document.querySelector<HTMLElement>(".hero");
-  const menuOpen = document.querySelector<HTMLElement>(".menu-panel")?.dataset.state === "open";
-
-  // De kop: omlaag scrollen is weg, omhoog is terug. Bovenaan, met het menu
-  // open, of met de focus erin blijft hij altijd staan.
-  if (head && motionOn()) {
-    const down = y > lastY + 2;
-    const up = y < lastY - 2;
-    if (y < 120 || menuOpen || head.contains(document.activeElement)) {
-      head.classList.remove("is-hidden");
-    } else if (down) {
-      head.classList.add("is-hidden");
-    } else if (up) {
-      head.classList.remove("is-hidden");
-    }
-  }
-  lastY = y;
 
   if (!hero) return;
 
@@ -80,11 +67,6 @@ function onScroll() {
 export function initScroll() {
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onScroll, { passive: true });
-  // Focus in de kop haalt hem terug, ook als hij net was weggedoken.
-  document.addEventListener("focusin", (event) => {
-    const head = header();
-    if (head?.contains(event.target as Node)) head.classList.remove("is-hidden");
-  });
   updateScroll();
 }
 

@@ -48,10 +48,12 @@ export async function BandPage({ locale }: { locale: Locale }) {
               /**
                * Het anker waar de homepage naartoe wijst.
                *
-               * `scroll-mt-8` houdt er ruimte boven, anders plakt de kaart
-               * tegen de bovenrand van het scherm. Dat scrollen is het werk dat
-               * hier gedaan moet worden en het gebeurt altijd — nagemeten op
-               * tweeëndertig pixels vanaf de bovenrand.
+               * De kop staat altijd in beeld; de scroll-padding op <html>
+               * (globals.css) houdt de kaart eronder, en `scroll-mt-8` geeft
+               * er nog ruimte bovenop, anders plakt de kaart tegen de kop. Dat
+               * scrollen is het werk dat hier gedaan moet worden en het gebeurt
+               * altijd — de bovenrand van de kaart komt tweeëndertig pixels
+               * onder de kop uit.
                *
                * `target:border-accent` is een extraatje daarbovenop, en het doet
                * het maar in één van de twee gevallen: bij een directe laadbeurt
