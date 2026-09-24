@@ -188,6 +188,13 @@ export type Copy = {
   /** De pagina achter de afmeldlink onderaan elke nieuwsbrief. */
   unsubscribe: {
     title: string;
+    /** Wat iemand nu krijgt. */
+    statusShows: string;
+    statusNews: string;
+    newsOn: string;
+    newsOff: string;
+    newsOnDone: string;
+    newsOffDone: string;
     question: string;
     button: string;
     done: string;
@@ -214,7 +221,7 @@ export type Copy = {
     showTickets: string;
     showAgenda: string;
     showOutro: string;
-    /** Onderaan, met de afmeldlink erachter. */
+    /** Onderaan elke mail aan de lijst, met de link naar afmelden en instellingen. */
     showFooter: string;
     signature: string;
   };
@@ -224,6 +231,8 @@ export type Copy = {
     title: string;
     body: string;
     placeholder: string;
+    /** Het vinkje: naast de shows ook ander nieuws. */
+    news: string;
     submit: string;
     ok: string;
     error: string;

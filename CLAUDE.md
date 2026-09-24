@@ -415,6 +415,22 @@ de kop `List-Unsubscribe` voor afmelden met één klik. Zie `lib/announce.ts`.
 - Afmelden gaat alleen met een POST (de knop op `/nieuwsbrief/afmelden`, of het
   mailprogramma), nooit door een link te openen: mailscanners openen elke link.
 
+**Ander nieuws gaat via dezelfde route**, maar alleen naar wie dat wil.
+Nieuwsbrieven worden geschreven in `/beheer/nieuwsbrief/schrijven` (concept,
+voorbeeld naar jezelf, inplannen voor een ochtendronde, of meteen versturen) en
+staan in `newsletter_issues`. `lib/list-mail.ts` is de ene plek waar alles wat
+naar de lijst gaat langskomt — de showmail en de nieuwsbrief — met dezelfde
+selectie, afmeldlink, koppen en batchverzending. Zet daar geen tweede route
+naast.
+
+- Wie zich aanmeldde onder "een mail als er een show bij komt, niet vaker",
+  krijgt geen nieuws: `wants_news` staat standaard uit. Aanzetten kan met het
+  vinkje in de aanmeldstrook, of op de pagina achter de link onder elke mail.
+- Het vinkje gaat pas in na de klik op de bevestigingslink (`news_request`):
+  anders kan iedereen met jouw adres je nieuws aanzetten.
+- Een bevestigd adres houdt zijn sleutel, ook bij opnieuw aanmelden. Die sleutel
+  zit in de afmeldlink van elke mail die al verstuurd is.
+
 Foto's gaan naar Vercel Blob. De browser uploadt daar rechtstreeks heen en deze
 site geeft er alleen een kortlopende sleutel voor af — een serverloze functie op
 Vercel neemt hooguit 4,5 MB aan verzoek aan, en daar zit een persfoto zo

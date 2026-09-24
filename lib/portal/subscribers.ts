@@ -17,19 +17,38 @@ export type Subscriber = {
   locale: string;
   confirmed_at: string | null;
   created_at: string;
+  /** Wil naast de shows ook ander nieuws. */
+  wants_news: boolean;
 };
 
-export async function list(): Promise<Subscriber[]> {
+/**
+ * Lezen met `wants_news`, en zonder als die kolom er nog niet is.
+ *
+ * De kolom komt er pas bij het bijwerken van de database in /beheer/database.
+ * Tot die tijd hoort de lijst gewoon te blijven werken, met iedereen op "alleen
+ * shows" — want dat is precies wat ze toen kregen.
+ */
+async function read(onlyConfirmed: boolean): Promise<Subscriber[]> {
   const sql = getDb();
   if (!sql) return [];
-
+  const where = onlyConfirmed ? "WHERE confirmed_at IS NOT NULL" : "";
   try {
-    const rows = (await sql`
-      SELECT id, email, locale, confirmed_at, created_at
-      FROM newsletter_subscribers
-      ORDER BY created_at DESC
-    `) as Subscriber[];
-    return rows;
+    return (await sql.query(
+      `SELECT id, email, locale, confirmed_at, created_at, wants_news
+       FROM newsletter_subscribers ${where} ORDER BY created_at DESC`,
+    )) as Subscriber[];
+  } catch {
+    const rows = (await sql.query(
+      `SELECT id, email, locale, confirmed_at, created_at
+       FROM newsletter_subscribers ${where} ORDER BY created_at DESC`,
+    )) as Omit<Subscriber, "wants_news">[];
+    return rows.map((row) => ({ ...row, wants_news: false }));
+  }
+}
+
+export async function list(): Promise<Subscriber[]> {
+  try {
+    return await read(false);
   } catch (error) {
     console.error("[beheer] abonnees niet gelezen:", error);
     return [];
@@ -38,17 +57,8 @@ export async function list(): Promise<Subscriber[]> {
 
 /** Alleen de bevestigde adressen — dit is de lijst waar je aan mag mailen. */
 export async function confirmed(): Promise<Subscriber[]> {
-  const sql = getDb();
-  if (!sql) return [];
-
   try {
-    const rows = (await sql`
-      SELECT id, email, locale, confirmed_at, created_at
-      FROM newsletter_subscribers
-      WHERE confirmed_at IS NOT NULL
-      ORDER BY created_at DESC
-    `) as Subscriber[];
-    return rows;
+    return await read(true);
   } catch (error) {
     console.error("[beheer] bevestigde abonnees niet gelezen:", error);
     return [];

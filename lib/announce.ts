@@ -2,8 +2,8 @@ import "server-only";
 
 import { announcementMail, showName } from "./announce-mail";
 import { getDb } from "./db";
-import { localePath, type Locale } from "./i18n";
-import { sendBatch, type BatchMail } from "./mail";
+import { dueIssues, sendIssue } from "./issues";
+import { sendPreview, sendToList, type Compose } from "./list-mail";
 import { log } from "./portal/audit";
 import { siteUrl } from "./site";
 import { getSiteCopy } from "./site-content";
@@ -169,49 +169,21 @@ export async function findShow(id: number): Promise<Show | null> {
   return upcoming.find((show) => show.id === id) ?? null;
 }
 
-type Recipient = { email: string; locale: string; token: string };
-
-async function recipients(): Promise<Recipient[]> {
-  const sql = getDb();
-  if (!sql) return [];
-  return (await sql`
-    SELECT email, locale, token FROM newsletter_subscribers
-    WHERE confirmed_at IS NOT NULL
-  `) as Recipient[];
-}
-
-/** De mails voor een show, één per adres, met ieders eigen afmeldlink. */
-async function buildMails(show: Show, to: Recipient[]): Promise<BatchMail[]> {
+/** De mail voor een show, in één taal, met de link van één abonnee eronder. */
+async function composer(show: Show): Promise<Compose> {
   const site = siteUrl();
   const copies = {
     nl: (await getSiteCopy("nl")).mail,
     en: (await getSiteCopy("en")).mail,
   };
-
-  return to.map((person) => {
-    const locale: Locale = person.locale === "en" ? "en" : "nl";
-    const token = encodeURIComponent(person.token);
-    const page = `${site}${localePath(locale, "/nieuwsbrief/afmelden")}?token=${token}`;
-    const oneClick = `${site}/api/nieuwsbrief/afmelden?token=${token}`;
-    const mail = announcementMail({
+  return (locale, preferences) =>
+    announcementMail({
       show,
       copy: copies[locale],
       locale,
       site,
-      unsubscribeUrl: page,
+      unsubscribeUrl: preferences,
     });
-    return {
-      to: person.email,
-      ...mail,
-      // Afmelden met één klik vanuit het mailprogramma zelf (RFC 8058). Gmail
-      // en Yahoo vragen dit van wie aan een lijst mailt, en het scheelt klachten
-      // over spam: wie van een lijst af wil en geen knop ziet, drukt op "spam".
-      headers: {
-        "List-Unsubscribe": `<${oneClick}>`,
-        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-      },
-    };
-  });
 }
 
 export type SendResult =
@@ -248,10 +220,9 @@ export async function announce(show: Show, actor: string): Promise<SendResult> {
     return { ok: false, reason: row?.status === "sent" ? "done" : "busy" };
   }
 
-  const to = await recipients();
-  const sent =
-    to.length === 0 ? 0 : await sendBatch(await buildMails(show, to));
-  const failed = to.length > 0 && sent === 0;
+  // Shows gaan naar iedereen die bevestigd is, ook wie geen ander nieuws wil.
+  const { total, sent } = await sendToList("all", await composer(show));
+  const failed = total > 0 && sent === 0;
 
   await sql`
     UPDATE newsletter_announcements
@@ -264,7 +235,7 @@ export async function announce(show: Show, actor: string): Promise<SendResult> {
     actor,
     action: failed ? "newsletter.announce.failed" : "newsletter.announce",
     subject: String(show.id),
-    detail: `${label(show)} — ${sent} van ${to.length} adressen`,
+    detail: `${label(show)} — ${sent} van ${total} adressen`,
   });
 
   return failed
@@ -295,40 +266,46 @@ export async function skip(show: Show, actor: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-/**
- * Een voorbeeld naar één adres, en niet naar de lijst.
- *
- * Met een afmeldlink die nergens op werkt: dit adres hoeft niet op de lijst te
- * staan, en als hij er wél op staat, hoort een klik in een voorbeeld hem er niet
- * af te halen.
- */
+/** Een voorbeeld naar één adres, en niet naar de lijst. Zie lib/list-mail.ts. */
 export async function preview(show: Show, email: string): Promise<boolean> {
-  const site = siteUrl();
-  const copy = (await getSiteCopy("nl")).mail;
-  const mail = announcementMail({
-    show,
-    copy,
-    locale: "nl",
-    site,
-    unsubscribeUrl: `${site}/nieuwsbrief/afmelden?token=voorbeeld`,
-  });
-  const sent = await sendBatch([
-    { to: email, ...mail, subject: `[Voorbeeld] ${mail.subject}` },
-  ]);
-  return sent === 1;
+  return sendPreview(email, await composer(show));
 }
 
 export type RoundResult = {
+  /** Of er naar nieuwe shows gekeken is. */
   ran: boolean;
   reason?: "no-db" | "off" | "no-agenda";
   announced: { show: string; recipients: number }[];
   failed: string[];
+  /** Nieuwsbrieven die voor vandaag ingepland stonden. */
+  issues: { id: number; recipients: number }[];
+  issuesFailed: number[];
 };
 
-/** De automatische ronde. */
+/**
+ * De ochtendronde.
+ *
+ * Twee dingen, los van elkaar. Eerst de nieuwsbrieven die voor vandaag
+ * ingepland staan (lib/issues.ts): die gaan ook als automatisch aankondigen uit
+ * staat, want iemand heeft ze bewust op deze dag gezet. Daarna de nieuwe shows,
+ * alleen als automatisch aankondigen aan staat.
+ */
 export async function runRound(): Promise<RoundResult> {
-  const result: RoundResult = { ran: false, announced: [], failed: [] };
+  const result: RoundResult = {
+    ran: false,
+    announced: [],
+    failed: [],
+    issues: [],
+    issuesFailed: [],
+  };
   if (!getDb()) return { ...result, reason: "no-db" };
+
+  for (const id of await dueIssues()) {
+    const sent = await sendIssue(id, ROUND);
+    if (sent.ok) result.issues.push({ id, recipients: sent.recipients });
+    else result.issuesFailed.push(id);
+  }
+
   if (!(await autoEnabled())) return { ...result, reason: "off" };
 
   const { available } = await getShows();

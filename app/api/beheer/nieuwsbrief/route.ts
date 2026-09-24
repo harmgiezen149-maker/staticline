@@ -26,10 +26,11 @@ export async function GET(request: Request) {
   const rows = all ? await list() : await confirmed();
 
   const csv = toCsv([
-    ["email", "taal", "bevestigd_op", "aangemeld_op"],
+    ["email", "taal", "ook_nieuws", "bevestigd_op", "aangemeld_op"],
     ...rows.map((row) => [
       row.email,
       row.locale,
+      row.wants_news ? "ja" : "nee",
       row.confirmed_at ?? "",
       row.created_at,
     ]),

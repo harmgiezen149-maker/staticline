@@ -156,7 +156,14 @@ export const nl: Copy = {
   },
 
   unsubscribe: {
-    title: "Afmelden",
+    title: "Je nieuwsbrief",
+    statusShows: "Je krijgt nu een mail als er een show bij komt.",
+    statusNews:
+      "Je krijgt nu een mail als er een show bij komt, en af en toe ander nieuws van de band.",
+    newsOn: "Ook ander nieuws",
+    newsOff: "Alleen nog shows",
+    newsOnDone: "Staat aan. Naast de shows krijg je nu ook ander nieuws van ons.",
+    newsOffDone: "Staat uit. Je krijgt alleen nog een mail als er een show bij komt.",
     question: "Geen mail meer over nieuwe shows? Eén klik en je staat eraf.",
     button: "Afmelden",
     done: "Je staat eraf. Je krijgt geen mail meer van ons.",
@@ -186,7 +193,7 @@ export const nl: Copy = {
     showAgenda: "Alle shows:",
     showOutro: "Tot daar.",
     showFooter:
-      "Je krijgt deze mail omdat je je aanmeldde voor de nieuwsbrief van Static Line. Geen mail meer? Afmelden:",
+      "Je krijgt deze mail omdat je je aanmeldde voor de nieuwsbrief van Static Line. Afmelden, of ook ander nieuws ontvangen:",
     signature: "Static Line · Ede · staticline.nl",
   },
 
@@ -194,6 +201,7 @@ export const nl: Copy = {
     title: "Blijf op de hoogte",
     body: "Een mail als er een show bij komt. Niet vaker.",
     placeholder: "jouw@email.nl",
+    news: "Ook af en toe ander nieuws van de band",
     submit: "Aanmelden",
     ok: "Bijna klaar — klik op de link in de mail die we net gestuurd hebben.",
     error: "Dat ging mis. Probeer het zo nog eens.",

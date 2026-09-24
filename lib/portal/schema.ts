@@ -22,6 +22,7 @@ import { splitStatements } from "@/lib/sql";
 export const EXPECTED_TABLES = [
   "booking_submissions",
   "newsletter_announcements",
+  "newsletter_issues",
   "newsletter_subscribers",
   "portal_audit_log",
   "portal_login_tokens",

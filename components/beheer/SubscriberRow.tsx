@@ -19,6 +19,7 @@ export function SubscriberRow({
   email,
   locale,
   confirmedAt,
+  wantsNews,
   createdAt,
   canRemove,
 }: {
@@ -26,6 +27,7 @@ export function SubscriberRow({
   email: string;
   locale: string;
   confirmedAt: string | null;
+  wantsNews: boolean;
   createdAt: string;
   canRemove: boolean;
 }) {
@@ -39,9 +41,7 @@ export function SubscriberRow({
   // het gewoon.
   if (state?.ok) {
     return (
-      <li className="border-b border-line py-2 text-muted">
-        {state.message}
-      </li>
+      <li className="border-b border-line py-2 text-muted">{state.message}</li>
     );
   }
 
@@ -53,6 +53,8 @@ export function SubscriberRow({
           {locale}
           {" · "}
           {confirmedAt ? "bevestigd" : "nog niet bevestigd"}
+          {" · "}
+          {wantsNews ? "shows en nieuws" : "alleen shows"}
           {" · "}
           {new Date(createdAt).toLocaleDateString("nl-NL", {
             timeZone: "Europe/Amsterdam",

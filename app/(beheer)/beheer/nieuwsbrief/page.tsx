@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AnnounceShow } from "@/components/beheer/AnnounceShow";
@@ -13,6 +14,7 @@ import {
 } from "@/lib/announce";
 import { showName } from "@/lib/announce-mail";
 import { formatShowDateLong } from "@/lib/i18n";
+import { type IssueStatus, listIssues } from "@/lib/issues";
 import { SubscriberRow } from "@/components/beheer/SubscriberRow";
 import { getSession } from "@/lib/portal/session";
 import { list } from "@/lib/portal/subscribers";
@@ -28,6 +30,9 @@ export default async function NieuwsbriefPage() {
   const subscribers = await list();
   const confirmed = subscribers.filter((row) => row.confirmed_at).length;
   const pending = subscribers.length - confirmed;
+  const withNews = subscribers.filter(
+    (row) => row.confirmed_at && row.wants_news,
+  ).length;
   const isAdmin = session.role === "admin";
 
   // Alleen voor een beheerder: die mag versturen, en zonder die rechten hoeft
@@ -36,6 +41,7 @@ export default async function NieuwsbriefPage() {
   const [auto, waiting, history] = ready
     ? await Promise.all([autoEnabled(), pendingShows(), listAnnouncements()])
     : [false, [], [] as Announcement[]];
+  const issues = ready ? await listIssues() : [];
 
   return (
     <Shell session={session} title="Nieuwsbrief">
@@ -43,6 +49,8 @@ export default async function NieuwsbriefPage() {
         <section className="flex flex-col gap-3">
           <p className="font-mono text-12 uppercase">
             {confirmed} bevestigd
+            <span className="text-faint"> · </span>
+            {withNews} daarvan ook ander nieuws
             <span className="text-faint"> · </span>
             <span className={pending > 0 ? "text-primary" : "text-faint"}>
               {pending} nog niet
@@ -86,6 +94,67 @@ export default async function NieuwsbriefPage() {
         {isAdmin && (
           <section className="flex flex-col gap-3">
             <h2 className="font-mono text-11 text-faint uppercase">
+              Nieuwsbrieven
+            </h2>
+            <p className="text-muted">
+              Een mail over iets anders dan een nieuwe show. Die gaat alleen
+              naar de {withNews} {withNews === 1 ? "abonnee" : "abonnees"} die
+              ook ander nieuws willen — wie zich aanmeldde voor alleen de shows,
+              krijgt hem niet. Afmelden en instellingen zitten er vanzelf onder,
+              net als bij de showmails.
+            </p>
+            {ready ? (
+              <>
+                <Link
+                  href="/beheer/nieuwsbrief/schrijven"
+                  className="self-start bg-accent px-5 py-3 font-display text-14 font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[120ms] hover:bg-accent-alt hover:text-inset"
+                >
+                  Nieuwe nieuwsbrief schrijven
+                </Link>
+                {issues.length > 0 && (
+                  <ul className="flex flex-col">
+                    {issues.map((issue) => (
+                      <li key={issue.id} className="border-b border-line py-3">
+                        <Link
+                          href={`/beheer/nieuwsbrief/schrijven?id=${issue.id}`}
+                          className="flex flex-wrap items-baseline gap-x-3 hover:text-primary"
+                        >
+                          <span className="font-display text-16 font-semibold uppercase underline">
+                            {issue.subject_nl || "(nog zonder onderwerp)"}
+                          </span>
+                          <span className="font-mono text-11 text-faint uppercase">
+                            {ISSUE_STATUS[issue.status]}
+                            {issue.status === "scheduled" && issue.scheduled_for
+                              ? ` · ${issue.scheduled_for}`
+                              : ""}
+                            {issue.status === "sent"
+                              ? ` · ${issue.recipients} adressen · ${new Date(issue.sent_at ?? issue.updated_at).toLocaleDateString("nl-NL", { timeZone: "Europe/Amsterdam" })}`
+                              : ""}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <p className="text-muted">
+                Hiervoor is een nieuwe tabel nodig. Draai eerst{" "}
+                <a
+                  href="/beheer/database"
+                  className="underline hover:text-primary"
+                >
+                  de database-update
+                </a>
+                .
+              </p>
+            )}
+          </section>
+        )}
+
+        {isAdmin && (
+          <section className="flex flex-col gap-3">
+            <h2 className="font-mono text-11 text-faint uppercase">
               Nieuwe shows aankondigen
             </h2>
             {!ready ? (
@@ -102,12 +171,12 @@ export default async function NieuwsbriefPage() {
             ) : (
               <>
                 <p className="text-muted">
-                  Elke ochtend tussen 9 en 11 uur kijkt de site of er een nieuwe show in
-                  de agenda staat, en mailt die één keer naar de {confirmed}{" "}
-                  bevestigde adressen, ieder in zijn eigen taal. Een show die je
-                  vandaag invoert, gaat dus morgenochtend de deur uit — tot die
-                  tijd kun je hem hieronder overslaan, meteen versturen of eerst
-                  naar jezelf sturen.
+                  Elke ochtend tussen 9 en 11 uur kijkt de site of er een nieuwe
+                  show in de agenda staat, en mailt die één keer naar de{" "}
+                  {confirmed} bevestigde adressen, ieder in zijn eigen taal. Een
+                  show die je vandaag invoert, gaat dus morgenochtend de deur
+                  uit — tot die tijd kun je hem hieronder overslaan, meteen
+                  versturen of eerst naar jezelf sturen.
                 </p>
                 <form
                   action={toggleAuto}
@@ -192,6 +261,7 @@ export default async function NieuwsbriefPage() {
                   email={row.email}
                   locale={row.locale}
                   confirmedAt={row.confirmed_at}
+                  wantsNews={row.wants_news}
                   createdAt={row.created_at}
                   canRemove={isAdmin}
                 />
@@ -264,3 +334,11 @@ function HistoryRow({
     </li>
   );
 }
+
+const ISSUE_STATUS: Record<IssueStatus, string> = {
+  draft: "concept",
+  scheduled: "ingepland",
+  sending: "wordt verstuurd",
+  sent: "verstuurd",
+  failed: "versturen mislukt",
+};

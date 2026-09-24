@@ -48,7 +48,7 @@ test("onderaan staat altijd de afmeldlink", () => {
   const { lines } = mail(show);
   assert.match(
     lines.at(-1) ?? "",
-    /Afmelden: https:\/\/www\.staticline\.nl\/nieuwsbrief\/afmelden\?token=abc$/,
+    /Afmelden, of ook ander nieuws ontvangen: https:\/\/www\.staticline\.nl\/nieuwsbrief\/afmelden\?token=abc$/,
   );
 });
 

@@ -30,12 +30,24 @@ export async function confirmSubscriber(
   }
 
   try {
+    // Met de klik telt ook het vinkje voor ander nieuws, als dat gezet was: pas
+    // nu is zeker dat het adres van degene is die het vinkje zette. Staat die
+    // kolom er nog niet, dan zonder.
     const rows = await sql`
       UPDATE newsletter_subscribers
-         SET confirmed_at = COALESCE(confirmed_at, now())
+         SET confirmed_at = COALESCE(confirmed_at, now()),
+             wants_news = COALESCE(news_request, wants_news),
+             news_request = NULL
        WHERE token = ${clean}
       RETURNING email
-    `;
+    `.catch(
+      () => sql`
+        UPDATE newsletter_subscribers
+           SET confirmed_at = COALESCE(confirmed_at, now())
+         WHERE token = ${clean}
+        RETURNING email
+      `,
+    );
 
     return rows.length === 0 ? "unknown" : "ok";
   } catch (error) {
@@ -53,7 +65,9 @@ export async function confirmSubscriber(
  */
 export type UnsubscribeResult = "ok" | "unknown" | "no-token" | "error";
 
-export async function unsubscribe(token: string | undefined): Promise<UnsubscribeResult> {
+export async function unsubscribe(
+  token: string | undefined,
+): Promise<UnsubscribeResult> {
   const clean = (token ?? "").trim();
   if (!clean) return "no-token";
 
@@ -70,6 +84,52 @@ export async function unsubscribe(token: string | undefined): Promise<Unsubscrib
     return rows.length === 0 ? "unknown" : "ok";
   } catch (error) {
     console.error("[nieuwsbrief] afmelden mislukt:", error);
+    return "error";
+  }
+}
+
+/**
+ * Wie er achter een sleutel zit, voor de instellingenpagina.
+ *
+ * Alleen of hij bevestigd is en of hij ook nieuws wil, en nooit het adres: de
+ * pagina hoeft niet te zeggen wie je bent, en een doorgestuurde mail hoort geen
+ * adres van iemand anders te laten zien.
+ */
+export async function subscriberByToken(
+  token: string | undefined,
+): Promise<{ wantsNews: boolean } | null> {
+  const clean = (token ?? "").trim();
+  const sql = getDb();
+  if (!clean || !sql) return null;
+  try {
+    const rows = (await sql`
+      SELECT wants_news FROM newsletter_subscribers WHERE token = ${clean}
+    `) as { wants_news: boolean }[];
+    return rows[0] ? { wantsNews: rows[0].wants_news } : null;
+  } catch (error) {
+    console.error("[nieuwsbrief] abonnee niet gelezen:", error);
+    return null;
+  }
+}
+
+/** Ander nieuws aan- of uitzetten, met de sleutel uit de link. */
+export async function setNews(
+  token: string | undefined,
+  on: boolean,
+): Promise<UnsubscribeResult> {
+  const clean = (token ?? "").trim();
+  if (!clean) return "no-token";
+  const sql = getDb();
+  if (!sql) return "error";
+  try {
+    const rows = await sql`
+      UPDATE newsletter_subscribers SET wants_news = ${on}
+       WHERE token = ${clean}
+      RETURNING id
+    `;
+    return rows.length === 0 ? "unknown" : "ok";
+  } catch (error) {
+    console.error("[nieuwsbrief] instelling niet opgeslagen:", error);
     return "error";
   }
 }

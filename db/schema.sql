@@ -230,3 +230,41 @@ CREATE TABLE IF NOT EXISTS newsletter_announcements (
   created_at timestamptz NOT NULL DEFAULT now(),
   sent_at    timestamptz
 );
+
+-- Wie naast de showmails ook ander nieuws wil.
+--
+-- De aanmeldstrook beloofde eerst "een mail als er een show bij komt, niet
+-- vaker". Wie zich zo aanmeldde, krijgt dus alleen shows, en dat blijft zo tot
+-- hij het zelf aanzet: met het vinkje bij een nieuwe aanmelding, of op de pagina
+-- achter de link onderaan elke mail. Daarom staat de standaard op false.
+ALTER TABLE newsletter_subscribers
+  ADD COLUMN IF NOT EXISTS wants_news boolean NOT NULL DEFAULT false;
+
+-- Het vinkje bij het aanmelden, tot de bevestigingslink aangeklikt is.
+--
+-- Pas die klik bewijst dat het adres van degene is die het vinkje zette.
+-- Zonder deze tussenstap zou iedereen met jouw adres je nieuws kunnen aanzetten.
+-- Leeg betekent: niets gevraagd.
+ALTER TABLE newsletter_subscribers
+  ADD COLUMN IF NOT EXISTS news_request boolean;
+
+-- Nieuwsbrieven over iets anders dan een nieuwe show, geschreven in
+-- /beheer/nieuwsbrief. Ze gaan alleen naar wie `wants_news` aan heeft staan.
+CREATE TABLE IF NOT EXISTS newsletter_issues (
+  id            bigserial   PRIMARY KEY,
+  subject_nl    text        NOT NULL DEFAULT '',
+  body_nl       text        NOT NULL DEFAULT '',
+  -- Leeg betekent: Engelstalige abonnees krijgen de Nederlandse tekst.
+  subject_en    text        NOT NULL DEFAULT '',
+  body_en       text        NOT NULL DEFAULT '',
+  -- 'draft', 'scheduled' (gaat mee met de ochtendronde op `scheduled_for`),
+  -- 'sending', 'sent' of 'failed'
+  status        text        NOT NULL DEFAULT 'draft',
+  scheduled_for date,
+  recipients    int         NOT NULL DEFAULT 0,
+  created_by    text        NOT NULL DEFAULT '',
+  updated_at    timestamptz NOT NULL DEFAULT now(),
+  sent_by       text        NOT NULL DEFAULT '',
+  sent_at       timestamptz,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);

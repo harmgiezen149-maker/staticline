@@ -136,7 +136,14 @@ export const en: Copy = {
   },
 
   unsubscribe: {
-    title: "Unsubscribe",
+    title: "Your newsletter",
+    statusShows: "Right now you get a mail when a new show is added.",
+    statusNews:
+      "Right now you get a mail when a new show is added, and now and then other news from the band.",
+    newsOn: "Other news too",
+    newsOff: "Shows only",
+    newsOnDone: "Switched on. Along with the shows you'll now get other news from us too.",
+    newsOffDone: "Switched off. You'll only get a mail when a new show is added.",
     question: "No more mail about new shows? One click and you're off the list.",
     button: "Unsubscribe",
     done: "You're off the list. No more mail from us.",
@@ -166,7 +173,7 @@ export const en: Copy = {
     showAgenda: "All shows:",
     showOutro: "See you there.",
     showFooter:
-      "You're getting this because you signed up for the Static Line newsletter. Had enough? Unsubscribe:",
+      "You're getting this because you signed up for the Static Line newsletter. Unsubscribe, or get other news too:",
     signature: "Static Line · Ede · staticline.nl",
   },
 
@@ -174,6 +181,7 @@ export const en: Copy = {
     title: "Stay posted",
     body: "One email when a show is added. No more than that.",
     placeholder: "you@email.com",
+    news: "Now and then other news from the band too",
     submit: "Sign up",
     ok: "Almost there — click the link in the email we just sent.",
     error: "That did not work. Try again in a moment.",
