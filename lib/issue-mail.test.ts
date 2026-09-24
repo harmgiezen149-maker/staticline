@@ -19,6 +19,7 @@ test("de tekst gaat erin zoals hij geschreven is, met ondertekening en voet eron
     locale: "nl",
     copy: nl.mail,
     preferences: "https://x/afmelden?token=t",
+    site: "https://www.staticline.nl",
   });
   assert.equal(subject, "Nieuwe foto's online");
   assert.deepEqual(lines.slice(0, 4), [
@@ -41,6 +42,7 @@ test("zonder Engelse versie krijgt een Engelstalige abonnee de Nederlandse tekst
     locale: "en",
     copy: en.mail,
     preferences: "p",
+    site: "https://www.staticline.nl",
   });
   assert.equal(subject, "Nieuwe foto's online");
   assert.match(lines.at(-1) ?? "", /^You're getting this/);

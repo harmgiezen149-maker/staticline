@@ -9,6 +9,7 @@
  */
 import type { Copy } from "../content/types.ts";
 import type { Locale } from "./i18n.ts";
+import { listMailHtml } from "./list-mail-html.ts";
 
 export type IssueText = {
   subject_nl: string;
@@ -39,13 +40,16 @@ export function issueMail({
   locale,
   copy,
   preferences,
+  site,
 }: {
   issue: IssueText;
   locale: Locale;
+  /** Het adres van de site, voor het wordmark bovenaan de opgemaakte versie. */
+  site: string;
   /** De mailteksten in de taal van de abonnee, voor ondertekening en voet. */
   copy: Copy["mail"];
   preferences: string;
-}): { subject: string; lines: string[] } {
+}): { subject: string; lines: string[]; html: string } {
   const { subject, body } = issueText(issue, locale);
   const lines = body
     .replace(/\r\n?/g, "\n")
@@ -56,6 +60,26 @@ export function issueMail({
   while (lines.length && !lines[0].trim()) lines.shift();
   while (lines.length && !lines.at(-1)!.trim()) lines.pop();
 
+  const html = listMailHtml({
+    lang: locale,
+    site,
+    title: subject,
+    // De eerste echte zin, zonder aanhef: "Hoi," is geen voorproefje.
+    preheader:
+      lines.find(
+        (line) =>
+          line.trim() && !/^(hoi|hi|hey|hallo|hello)\b/i.test(line.trim()),
+      ) ?? subject,
+    blocks: [
+      { kind: "kicker", text: copy.issueKicker },
+      { kind: "headline", text: subject },
+      { kind: "text", text: lines.join("\n") },
+    ],
+    signature: copy.signature,
+    reason: copy.listReason,
+    preferences: { href: preferences, label: copy.preferencesLink },
+  });
+
   return {
     subject,
     lines: [
@@ -65,6 +89,7 @@ export function issueMail({
       "",
       `${copy.showFooter} ${preferences}`,
     ],
+    html,
   };
 }
 

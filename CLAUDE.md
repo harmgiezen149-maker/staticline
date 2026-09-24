@@ -430,6 +430,12 @@ naast.
   anders kan iedereen met jouw adres je nieuws aanzetten.
 - Een bevestigd adres houdt zijn sleutel, ook bij opnieuw aanmelden. Die sleutel
   zit in de afmeldlink van elke mail die al verstuurd is.
+- Mail aan de lijst is opgemaakt in de stijl van de site (`lib/list-mail-html.ts`):
+  donker, wordmark bovenaan, bij een show de rode balk met de ticketknop erin,
+  radius 0 en geen schaduwen. Tabellen en inline stijlen, omdat Outlook en Gmail
+  niets anders betrouwbaar tonen, en altijd met de platte tekst ernaast. De
+  bevestigingsmails na een boeking of aanmelding blijven bewust sober
+  (`lib/mail-html.ts`).
 
 Foto's gaan naar Vercel Blob. De browser uploadt daar rechtstreeks heen en deze
 site geeft er alleen een kortlopende sleutel voor af — een serverloze functie op

@@ -223,6 +223,14 @@ export type Copy = {
     showOutro: string;
     /** Onderaan elke mail aan de lijst, met de link naar afmelden en instellingen. */
     showFooter: string;
+    /** De opgemaakte versie: het label boven de mail, de knop en de links. */
+    showKicker: string;
+    issueKicker: string;
+    ticketsButton: string;
+    agendaLink: string;
+    /** Onderaan de opgemaakte mail, met `preferencesLink` als link erachter. */
+    listReason: string;
+    preferencesLink: string;
     signature: string;
   };
 

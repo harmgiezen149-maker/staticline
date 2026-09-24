@@ -15,10 +15,22 @@
  * een mail aan een lijst adressen in Nederland niet toegestaan.
  */
 import type { Copy } from "../content/types.ts";
-import { formatShowDateLong, localePath, type Locale } from "./i18n.ts";
+import {
+  formatDayMonth,
+  formatShowDateLong,
+  formatYear,
+  localePath,
+  type Locale,
+} from "./i18n.ts";
+import { listMailHtml } from "./list-mail-html.ts";
 import type { Show } from "./shows.ts";
 
-export type AnnouncementMail = { subject: string; lines: string[] };
+/** Een mail aan de lijst: platte regels en de opgemaakte versie. */
+export type AnnouncementMail = {
+  subject: string;
+  lines: string[];
+  html: string;
+};
 
 /** De naam in het onderwerp: de naam van de avond, of anders zaal en plaats. */
 export function showName(show: Show): string {
@@ -64,8 +76,37 @@ export function announcementMail({
     `${copy.showFooter} ${unsubscribeUrl}`,
   ];
 
-  return {
-    subject: copy.showSubject.replace("{show}", showName(show)),
-    lines,
-  };
+  const subject = copy.showSubject.replace("{show}", showName(show));
+  const agenda = `${site}${localePath(locale, "/agenda")}`;
+
+  // De opgemaakte versie: het label, de rode showbalk met de ticketknop erin,
+  // en de link naar de agenda. Dezelfde gegevens als de platte regels hierboven.
+  const html = listMailHtml({
+    lang: locale,
+    site,
+    title: subject,
+    preheader: [show.title, where, when].filter(Boolean).join(" · "),
+    blocks: [
+      { kind: "kicker", text: copy.showKicker },
+      { kind: "text", text: copy.showIntro },
+      {
+        kind: "show",
+        day: formatDayMonth(show.date),
+        meta: [formatYear(show.date), show.time].filter(Boolean).join(" · "),
+        name: show.title ?? where,
+        venue: show.title ? where : formatShowDateLong(show.date, locale),
+        note: show.note || undefined,
+        tickets: show.ticketUrl
+          ? { href: show.ticketUrl, label: copy.ticketsButton }
+          : undefined,
+      },
+      { kind: "text", text: copy.showOutro },
+      { kind: "link", href: agenda, label: copy.agendaLink },
+    ],
+    signature: copy.signature,
+    reason: copy.listReason,
+    preferences: { href: unsubscribeUrl, label: copy.preferencesLink },
+  });
+
+  return { subject, lines, html };
 }

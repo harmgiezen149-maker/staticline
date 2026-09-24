@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { issueMail, missing, type IssueText } from "./issue-mail";
 import { sendPreview, sendToList, type Compose } from "./list-mail";
 import { log } from "./portal/audit";
+import { siteUrl } from "./site";
 import { getSiteCopy } from "./site-content";
 
 /**
@@ -177,8 +178,9 @@ async function composer(issue: IssueText): Promise<Compose> {
     nl: (await getSiteCopy("nl")).mail,
     en: (await getSiteCopy("en")).mail,
   };
+  const site = siteUrl();
   return (locale, preferences) =>
-    issueMail({ issue, locale, copy: copies[locale], preferences });
+    issueMail({ issue, locale, copy: copies[locale], preferences, site });
 }
 
 export async function previewIssue(

@@ -65,7 +65,7 @@ export function preferencesUrl(token: string, locale: Locale): string {
 export type Compose = (
   locale: Locale,
   preferences: string,
-) => { subject: string; lines: string[] };
+) => { subject: string; lines: string[]; html?: string };
 
 /**
  * Eén mail naar de lijst.

@@ -174,6 +174,12 @@ export const en: Copy = {
     showOutro: "See you there.",
     showFooter:
       "You're getting this because you signed up for the Static Line newsletter. Unsubscribe, or get other news too:",
+    showKicker: "New show",
+    issueKicker: "News",
+    ticketsButton: "Tickets",
+    agendaLink: "All shows",
+    listReason: "You're getting this because you signed up for the Static Line newsletter.",
+    preferencesLink: "Unsubscribe or change settings",
     signature: "Static Line · Ede · staticline.nl",
   },
 

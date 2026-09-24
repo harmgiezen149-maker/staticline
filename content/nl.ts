@@ -194,6 +194,12 @@ export const nl: Copy = {
     showOutro: "Tot daar.",
     showFooter:
       "Je krijgt deze mail omdat je je aanmeldde voor de nieuwsbrief van Static Line. Afmelden, of ook ander nieuws ontvangen:",
+    showKicker: "Nieuwe show",
+    issueKicker: "Nieuws",
+    ticketsButton: "Tickets",
+    agendaLink: "Alle shows",
+    listReason: "Je krijgt deze mail omdat je je aanmeldde voor de nieuwsbrief van Static Line.",
+    preferencesLink: "Afmelden of instellingen aanpassen",
     signature: "Static Line · Ede · staticline.nl",
   },
 

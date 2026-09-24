@@ -83,6 +83,12 @@ export async function sendMail({ to, subject, lines }: Mail): Promise<boolean> {
 }
 
 export type BatchMail = Mail & {
+  /**
+   * Een eigen opgemaakte versie (lib/list-mail-html.ts). Zonder wordt het de
+   * sobere HTML uit de regels. De platte regels gaan altijd mee: een mail met
+   * alleen HTML scoort slechter bij spamfilters.
+   */
+  html?: string;
   /** Extra mailkoppen, zoals List-Unsubscribe. */
   headers?: Record<string, string>;
 };
@@ -103,7 +109,9 @@ const BATCH_SIZE = 100;
 export async function sendBatch(mails: BatchMail[]): Promise<number> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
-    console.warn(`[mail] geen RESEND_API_KEY ingesteld — ${mails.length} mails niet verstuurd`);
+    console.warn(
+      `[mail] geen RESEND_API_KEY ingesteld — ${mails.length} mails niet verstuurd`,
+    );
     return 0;
   }
 
@@ -126,7 +134,7 @@ export async function sendBatch(mails: BatchMail[]): Promise<number> {
             reply_to: REPLY_TO,
             subject: mail.subject,
             text: mail.lines.join("\n"),
-            html: toHtml(mail.lines),
+            html: mail.html ?? toHtml(mail.lines),
             ...(mail.headers ? { headers: mail.headers } : {}),
           })),
         ),
@@ -134,7 +142,9 @@ export async function sendBatch(mails: BatchMail[]): Promise<number> {
 
       if (!res.ok) {
         const detail = await res.text().catch(() => "");
-        console.error(`[mail] Resend-batch gaf ${res.status}: ${detail.slice(0, 300)}`);
+        console.error(
+          `[mail] Resend-batch gaf ${res.status}: ${detail.slice(0, 300)}`,
+        );
         continue;
       }
       sent += chunk.length;
