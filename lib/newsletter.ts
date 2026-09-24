@@ -43,3 +43,33 @@ export async function confirmSubscriber(
     return "error";
   }
 }
+
+/**
+ * Afmelden met de sleutel uit de afmeldlink onderaan een nieuwsbrief.
+ *
+ * Echt verwijderen, net als afmelden vanuit het beheer (lib/portal/subscribers.ts):
+ * wie eraf wil, hoort weg te zijn. Het is dezelfde sleutel als die uit de
+ * bevestigingsmail; wie die heeft, is degene die zich aanmeldde.
+ */
+export type UnsubscribeResult = "ok" | "unknown" | "no-token" | "error";
+
+export async function unsubscribe(token: string | undefined): Promise<UnsubscribeResult> {
+  const clean = (token ?? "").trim();
+  if (!clean) return "no-token";
+
+  const sql = getDb();
+  if (!sql) {
+    console.error("[nieuwsbrief] geen DATABASE_URL — afmelden niet mogelijk");
+    return "error";
+  }
+
+  try {
+    const rows = await sql`
+      DELETE FROM newsletter_subscribers WHERE token = ${clean} RETURNING id
+    `;
+    return rows.length === 0 ? "unknown" : "ok";
+  } catch (error) {
+    console.error("[nieuwsbrief] afmelden mislukt:", error);
+    return "error";
+  }
+}

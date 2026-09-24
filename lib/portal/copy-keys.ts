@@ -38,7 +38,11 @@ const GROUPS: Record<string, GroupInfo> = {
   newsletter: { label: "Nieuwsbrief", where: "De strook waar je je aanmeldt" },
   confirm: { label: "Aanmelding bevestigen", where: "De pagina uit de bevestigingsmail" },
   embed: { label: "Video en Spotify", where: "De knop over een embed die nog moet laden" },
-  mail: { label: "Mails", where: "De bevestigingsmails aan bezoekers" },
+  unsubscribe: { label: "Afmelden", where: "De pagina achter de afmeldlink in de nieuwsbrief" },
+  mail: {
+    label: "Mails",
+    where: "De bevestigingsmails aan bezoekers, en de mail over een nieuwe show",
+  },
 };
 
 export type CopyField = {

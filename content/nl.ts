@@ -155,6 +155,16 @@ export const nl: Copy = {
     home: "Naar de site",
   },
 
+  unsubscribe: {
+    title: "Afmelden",
+    question: "Geen mail meer over nieuwe shows? Eén klik en je staat eraf.",
+    button: "Afmelden",
+    done: "Je staat eraf. Je krijgt geen mail meer van ons.",
+    unknown: "Deze link werkt niet meer. Misschien sta je er al af.",
+    error: "Er ging iets mis aan onze kant. Probeer het zo nog eens.",
+    home: "Naar de site",
+  },
+
   mail: {
     bookingSubject: "We hebben je bericht binnen — Static Line",
     bookingGreeting: "Hoi {name},",
@@ -169,6 +179,14 @@ export const nl: Copy = {
       "Klik op deze link om je aanmelding voor de nieuwsbrief te bevestigen:",
     newsletterIgnore:
       "Heb je je niet aangemeld? Dan hoef je niets te doen. Zonder deze klik sturen we je niets.",
+    showSubject: "Nieuwe show: {show} — Static Line",
+    showGreeting: "Hoi,",
+    showIntro: "Er staat een nieuwe datum in de agenda. Hier spelen we:",
+    showTickets: "Tickets:",
+    showAgenda: "Alle shows:",
+    showOutro: "Tot daar.",
+    showFooter:
+      "Je krijgt deze mail omdat je je aanmeldde voor de nieuwsbrief van Static Line. Geen mail meer? Afmelden:",
     signature: "Static Line · Ede · staticline.nl",
   },
 

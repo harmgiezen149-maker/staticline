@@ -185,6 +185,16 @@ export type Copy = {
    * als HTML van, en een lege string is een witregel. Alles met {haakjes} wordt
    * ingevuld door de aanroeper.
    */
+  /** De pagina achter de afmeldlink onderaan elke nieuwsbrief. */
+  unsubscribe: {
+    title: string;
+    question: string;
+    button: string;
+    done: string;
+    unknown: string;
+    error: string;
+    home: string;
+  };
   mail: {
     /** Bevestiging aan wie een boeking of vraag instuurde. */
     bookingSubject: string;
@@ -197,6 +207,15 @@ export type Copy = {
     newsletterGreeting: string;
     newsletterBody: string;
     newsletterIgnore: string;
+    /** De aankondiging van een nieuwe show. `{show}` wordt de naam van de show. */
+    showSubject: string;
+    showGreeting: string;
+    showIntro: string;
+    showTickets: string;
+    showAgenda: string;
+    showOutro: string;
+    /** Onderaan, met de afmeldlink erachter. */
+    showFooter: string;
     signature: string;
   };
 

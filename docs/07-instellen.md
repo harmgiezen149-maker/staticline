@@ -248,6 +248,30 @@ reputatie, niet aan instellingen — dat trekt vanzelf bij zodra er wat volume i
 
 ---
 
+## 4b. Nieuwsbrief bij een nieuwe show — `CRON_SECRET`
+
+Elke ochtend om 08:00 UTC (10:00 in de zomer, 09:00 in de winter) roept Vercel
+`/api/cron/nieuwsbrief` aan. Staat er een show in de agenda die nog niet gemaild
+is, dan gaat hij naar alle bevestigde abonnees. Het tijdstip staat bij `crons` in
+`vercel.json`.
+
+| Variabele | Waarde |
+| --- | --- |
+| `CRON_SECRET` | een lange willekeurige tekenreeks; Vercel stuurt hem zelf mee bij de ochtendronde |
+
+Zonder deze sleutel weigert het adres de ronde. Hij staat er al (sinds september
+2026). Vervang je hem, dan hoeft er verder niets mee: Vercel leest hem bij elke
+ronde opnieuw.
+
+Daarna, eenmalig: **/beheer/database → Bijwerken**, voor de tabel
+`newsletter_announcements`. Tot die tabel er is, staat er in
+`/beheer/nieuwsbrief` een aanwijzing en draait de ronde niets.
+
+Controleren: in `/beheer/nieuwsbrief` staat onder **Nieuwe shows aankondigen**
+wat er bij de volgende ronde meegaat. **Voorbeeld naar mij** stuurt de mail
+alleen naar jouw eigen adres. De ronde zelf zie je terug in Vercel onder
+**Settings → Cron Jobs**, en in het logboek van het beheer.
+
 ## 5. Besloten deel — `PORTAL_SECRET`, `PORTAL_ADMINS`, `PORTAL_MEMBERS`
 
 Het beheerscherm op `/beheer`. Zonder deze drie waarden komt daar niemand

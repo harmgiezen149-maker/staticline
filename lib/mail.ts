@@ -81,3 +81,66 @@ export async function sendMail({ to, subject, lines }: Mail): Promise<boolean> {
     return false;
   }
 }
+
+export type BatchMail = Mail & {
+  /** Extra mailkoppen, zoals List-Unsubscribe. */
+  headers?: Record<string, string>;
+};
+
+/** Zoveel mails neemt Resend in één batchaanroep. */
+const BATCH_SIZE = 100;
+
+/**
+ * Veel mails tegelijk, voor de nieuwsbrief.
+ *
+ * Via de batch-API van Resend: honderd per aanroep, en tussen twee aanroepen een
+ * korte pauze, omdat Resend standaard twee aanroepen per seconde toestaat. Elke
+ * mail is persoonlijk — hij heeft een eigen afmeldlink — dus één mail met alle
+ * adressen in BCC kan niet.
+ *
+ * Geeft terug hoeveel er zijn aangenomen. Net als sendMail gooit dit nooit.
+ */
+export async function sendBatch(mails: BatchMail[]): Promise<number> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    console.warn(`[mail] geen RESEND_API_KEY ingesteld — ${mails.length} mails niet verstuurd`);
+    return 0;
+  }
+
+  let sent = 0;
+  for (let start = 0; start < mails.length; start += BATCH_SIZE) {
+    const chunk = mails.slice(start, start + BATCH_SIZE);
+    if (start > 0) await new Promise((resolve) => setTimeout(resolve, 600));
+
+    try {
+      const res = await fetch(`${API}/batch`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          chunk.map((mail) => ({
+            from: FROM,
+            to: [mail.to],
+            reply_to: REPLY_TO,
+            subject: mail.subject,
+            text: mail.lines.join("\n"),
+            html: toHtml(mail.lines),
+            ...(mail.headers ? { headers: mail.headers } : {}),
+          })),
+        ),
+      });
+
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        console.error(`[mail] Resend-batch gaf ${res.status}: ${detail.slice(0, 300)}`);
+        continue;
+      }
+      sent += chunk.length;
+    } catch (error) {
+      console.error("[mail] Resend is niet bereikbaar:", error);
+    }
+  }
+  return sent;
+}

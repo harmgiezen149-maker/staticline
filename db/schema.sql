@@ -198,3 +198,35 @@ CREATE INDEX IF NOT EXISTS site_media_kind_idx
 -- hebben. Die houden hun eigen stand, hier bij te werken.
 ALTER TABLE booking_submissions
   ADD COLUMN IF NOT EXISTS band_app_id bigint;
+
+-- ---------------------------------------------------------------------------
+-- Nieuwsbrief: nieuwe shows aankondigen
+-- ---------------------------------------------------------------------------
+
+-- Welke shows al aangekondigd zijn, per show één rij.
+--
+-- Elke ochtend kijkt de site of er een show in de agenda staat die hier nog niet
+-- in staat, en mailt die naar de bevestigde abonnees (lib/announce.ts). Deze
+-- tabel is wat ervoor zorgt dat dat één keer gebeurt en niet elke ochtend: de rij
+-- wordt vóór het versturen aangemaakt, met `ON CONFLICT DO NOTHING`, zodat twee
+-- rondes die tegelijk lopen niet allebei gaan mailen.
+--
+-- Het id is dat van het agenda-item in de Band App.
+--
+-- De eerste keer dat de ronde draait, gaan alle shows die dan al in de agenda
+-- staan erin als 'baseline': die stonden al op de site, en wie zich aanmeldde,
+-- heeft ze al gezien.
+CREATE TABLE IF NOT EXISTS newsletter_announcements (
+  show_id    bigint      PRIMARY KEY,
+  -- 'baseline' (stond er al), 'sending', 'sent', 'skipped' (bewust niet
+  -- gemaild) of 'failed' (versturen mislukt, opnieuw te proberen)
+  status     text        NOT NULL,
+  -- Hoe de show heette toen hij hier binnenkwam, voor het beheerscherm.
+  label      text        NOT NULL DEFAULT '',
+  -- Aan hoeveel adressen hij verstuurd is.
+  recipients int         NOT NULL DEFAULT 0,
+  -- 'ronde' voor de automatische ronde, anders het adres van wie op de knop drukte.
+  actor      text        NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  sent_at    timestamptz
+);

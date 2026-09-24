@@ -350,6 +350,7 @@ sleutel ontbreekt.
 | `SITE_API_TOKEN` | schrijven naar de Band App vanuit `/beheer/bandapp`; dezelfde waarde moet bij béíde Vercel-projecten staan |
 | `ANTHROPIC_API_KEY` | de teksten uit de Band App naar het Engels vertalen in `/beheer/vertalingen`, en de herschrijfmodule op `/beheer/tov`; zonder deze kan het vertalen nog met de hand |
 | `TOV_MODEL` | optioneel; welk model de herschrijfmodule gebruikt, standaard `claude-opus-5` |
+| `CRON_SECRET` | de sleutel waarmee Vercel de ochtendronde van de nieuwsbrief aanroept; zonder deze draait de ronde niet |
 
 De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
 gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel
@@ -394,6 +395,25 @@ een eigen versie in de database, dan wint die. `/beheer/tov` is open voor elk
 bandlid en niet alleen de beheerder, en `/api/tov` doet hetzelfde voor de pagina
 in de Band App — één implementatie, zodat de blocklist en de checklist niet uit
 de pas kunnen lopen met de tone of voice.
+
+**Een nieuwe show gaat vanzelf naar de nieuwsbrief.** Elke ochtend om 08:00 UTC
+roept Vercel `/api/cron/nieuwsbrief` aan (`crons` in `vercel.json`, met
+`CRON_SECRET`). Die vergelijkt de komende shows uit de Band App met de tabel
+`newsletter_announcements` en mailt elke show die daar nog niet in staat één keer
+naar de bevestigde abonnees, ieder in zijn eigen taal, met een eigen afmeldlink en
+de kop `List-Unsubscribe` voor afmelden met één klik. Zie `lib/announce.ts`.
+
+- Een ronde op een vast moment en niet bij het opslaan: shows komen binnen via de
+  Band App én via `/beheer/bandapp`, en wie 's avonds een typfout maakt, heeft
+  tot de ochtend om hem in `/beheer/nieuwsbrief` over te slaan of te verbeteren.
+  Daar staat ook wat er meegaat, met knoppen voor een voorbeeld naar jezelf, nu
+  versturen en overslaan, en de schakelaar om het automatisch versturen uit te
+  zetten.
+- De eerste ronde verstuurt niets: wat er dan al staat, gaat de tabel in als
+  `baseline`. Een show gaat nooit twee keer weg — de rij wordt vóór het
+  versturen geclaimd.
+- Afmelden gaat alleen met een POST (de knop op `/nieuwsbrief/afmelden`, of het
+  mailprogramma), nooit door een link te openen: mailscanners openen elke link.
 
 Foto's gaan naar Vercel Blob. De browser uploadt daar rechtstreeks heen en deze
 site geeft er alleen een kortlopende sleutel voor af — een serverloze functie op

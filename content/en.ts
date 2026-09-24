@@ -135,6 +135,16 @@ export const en: Copy = {
     home: "Go to the site",
   },
 
+  unsubscribe: {
+    title: "Unsubscribe",
+    question: "No more mail about new shows? One click and you're off the list.",
+    button: "Unsubscribe",
+    done: "You're off the list. No more mail from us.",
+    unknown: "This link no longer works. You may already be off the list.",
+    error: "Something went wrong on our end. Try again in a moment.",
+    home: "Back to the site",
+  },
+
   mail: {
     bookingSubject: "We got your message — Static Line",
     bookingGreeting: "Hi {name},",
@@ -149,6 +159,14 @@ export const en: Copy = {
       "Click this link to confirm your newsletter sign-up:",
     newsletterIgnore:
       "Did not sign up? Then do nothing. Without this click we will not send you anything.",
+    showSubject: "New show: {show} — Static Line",
+    showGreeting: "Hi,",
+    showIntro: "There's a new date in the calendar. This is where we're playing:",
+    showTickets: "Tickets:",
+    showAgenda: "All shows:",
+    showOutro: "See you there.",
+    showFooter:
+      "You're getting this because you signed up for the Static Line newsletter. Had enough? Unsubscribe:",
     signature: "Static Line · Ede · staticline.nl",
   },
 
