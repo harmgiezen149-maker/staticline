@@ -1,7 +1,6 @@
 import {
   formatDayMonth,
   formatDayMonthYear,
-  formatTime,
   formatYear,
   type Locale,
 } from "@/lib/i18n";
@@ -19,6 +18,11 @@ type Props = {
  * Dit is de reden dat de site bestaat: de volgende show en de manier om de band
  * te bereiken zijn nooit meer dan één scherm weg. Daarom staat hij direct onder
  * de hero en in de enige volvlakke accentkleur op de pagina.
+ *
+ * Erin staat wat er in het beheer bij de show hoort: datum en aanvangstijd, de
+ * naam van de avond als die er is, zaal en plaats, en de regel onder de
+ * zaalnaam. Het ontwerp liet die regel en de tijd op mobiel weg; op verzoek
+ * staan ze er nu ook daar, omdat de balk anders minder zegt dan het beheer.
  */
 export async function NextShow({ locale, show }: Props) {
   const copy = await getSiteCopy(locale);
@@ -34,7 +38,10 @@ export async function NextShow({ locale, show }: Props) {
         data-reveal="wipe"
         data-decode-delay="260"
       >
-        <p className="font-mono text-11 tracking-wide22 uppercase opacity-85" data-decode>
+        <p
+          className="font-mono text-11 tracking-wide22 uppercase opacity-85"
+          data-decode
+        >
           {copy.nextShow.label}
         </p>
         <p className="font-display text-20 font-bold tracking-tight3 uppercase sm:text-30">
@@ -45,6 +52,8 @@ export async function NextShow({ locale, show }: Props) {
   }
 
   const venueLine = [show.venue, show.city].filter(Boolean).join(", ");
+  // Met een eigen naam van de avond is dat de kop, met zaal en plaats eronder.
+  const heading = show.title ?? venueLine;
 
   return (
     <section
@@ -57,7 +66,10 @@ export async function NextShow({ locale, show }: Props) {
       data-decode-delay="260"
     >
       <div className="flex flex-col justify-center sm:border-r sm:border-[rgba(13,15,18,0.35)] sm:px-8 sm:py-6">
-        <p className="self-start font-mono text-11 tracking-wide22 uppercase opacity-85" data-decode>
+        <p
+          className="self-start font-mono text-11 tracking-wide22 uppercase opacity-85"
+          data-decode
+        >
           {copy.nextShow.label}
         </p>
         {/* Op mobiel staat het jaar in het datumblok zelf, omdat de metaregel
@@ -73,20 +85,34 @@ export async function NextShow({ locale, show }: Props) {
             {formatDayMonth(show.date)}
           </span>
         </p>
-        <p className="hidden self-start font-mono text-12 tracking-wide18 sm:block" data-decode>
-          {formatYear(show.date)} · {formatTime(show.date)}
+        {/* Op mobiel alleen de tijd: het jaar staat daar al in de datum. */}
+        {show.time && (
+          <p
+            className="self-start font-mono text-12 tracking-wide18 sm:hidden"
+            data-decode
+          >
+            {show.time}
+          </p>
+        )}
+        <p
+          className="hidden self-start font-mono text-12 tracking-wide18 sm:block"
+          data-decode
+        >
+          {[formatYear(show.date), show.time].filter(Boolean).join(" · ")}
         </p>
       </div>
 
       <div className="flex flex-col justify-center gap-1 sm:px-8 sm:py-6">
         <h2 className="font-display text-20 font-bold tracking-tight3 uppercase sm:text-30">
-          {venueLine}
+          {heading}
         </h2>
-        {/* De noot verdwijnt op mobiel — zo staat het in het ontwerp. */}
-        {show.note && (
-          <p className="hidden text-14 leading-[22px] opacity-92 sm:block">
-            {show.note}
+        {show.title && venueLine && (
+          <p className="font-mono text-12 tracking-wide14 uppercase opacity-92">
+            {venueLine}
           </p>
+        )}
+        {show.note && (
+          <p className="text-14 leading-[22px] opacity-92">{show.note}</p>
         )}
       </div>
 

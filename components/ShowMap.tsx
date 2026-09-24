@@ -88,7 +88,14 @@ export function ShowMap({ shows }: { shows: Show[] }) {
       const markers = points.map((show) =>
         L.marker([show.lat, show.lng], {
           icon,
-          title: [show.venue, show.city].filter(Boolean).join(", "),
+          // De naam die bij het aanwijzen van de speld verschijnt: de naam van
+          // de avond als die er is, en dan zaal en plaats.
+          title: [
+            show.title,
+            [show.venue, show.city].filter(Boolean).join(", "),
+          ]
+            .filter(Boolean)
+            .join(" — "),
         }).addTo(map!),
       );
 

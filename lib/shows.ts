@@ -1,6 +1,7 @@
 import "server-only";
 
 import { fetchBandAppPublic, type BandAppGig } from "./band-app";
+import { showTime, showTitle } from "./show-fields";
 
 /**
  * Het showmodel zoals het ontwerp het nodig heeft.
@@ -20,6 +21,10 @@ export type Show = {
   id: number;
   /** ISO-tijdstempel. Kloktijd van de band, als UTC bewaard — zie lib/i18n.ts. */
   date: string;
+  /** De aanvangstijd, "20:00", of null als er geen tijd is ingevuld. */
+  time: string | null;
+  /** De naam van de avond ("LoBandNight"), of null als de titel alleen de zaal is. */
+  title: string | null;
   venue: string;
   city: string;
   status: ShowStatus;
@@ -89,12 +94,17 @@ function toShow(gig: MaybeExtended): Show | null {
   if (!gig.date) return null;
 
   const derived = splitVenue(gig.title);
+  const explicitVenue = !!gig.venue?.trim();
+  const venue = gig.venue?.trim() || derived.venue;
+  const city = gig.city?.trim() || derived.city;
 
   return {
     id: gig.id,
     date: gig.date,
-    venue: gig.venue?.trim() || derived.venue,
-    city: gig.city?.trim() || derived.city,
+    time: showTime(gig.time),
+    title: showTitle(gig.title, venue, city, explicitVenue),
+    venue,
+    city,
     status: readStatus(gig.status),
     ticketUrl: gig.ticketUrl || null,
     lat: gig.lat ?? null,
