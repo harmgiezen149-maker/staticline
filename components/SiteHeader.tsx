@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { localePath, locales, type Locale } from "@/lib/i18n";
-import { getSiteCopy } from "@/lib/site-content";
+import { getSiteCopy, getWordmark } from "@/lib/site-content";
 import { MobileNav } from "./MobileNav";
 
 import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
@@ -20,6 +20,9 @@ type Props = {
 
 export async function SiteHeader({ locale, path = "/" }: Props) {
   const copy = await getSiteCopy(locale);
+  const home = path === "/";
+  // Alleen op de homepage: het wordmark uit de hero, voor de vlucht naar de kop.
+  const wordmark = home ? await getWordmark() : null;
 
   /**
    * Het ontwerp tekent drie navigatie-items: Shows, Foto's en Band. Toen dat
@@ -74,8 +77,27 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
       className="site-header sticky top-0 z-60 flex min-h-[68px] items-center gap-3 border-b border-line bg-inset px-4 py-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-60 after:h-px after:bg-line sm:gap-6 sm:px-6"
       // Docking: alleen op de homepage verschijnt het wordmark in de kop pas
       // als het grote wordmark uit beeld is. Elders staat hij er gewoon.
-      data-dock={path === "/" ? "" : undefined}
+      data-dock={home ? "" : undefined}
     >
+      {/* Het wordmark dat bij het scrollen van de hero hierheen vliegt. Een
+          tweede exemplaar van het grote wordmark, met dezelfde bron en dezelfde
+          `sizes` — de browser haalt het dus niet opnieuw op. Zonder vlucht
+          (zonder JavaScript, met minder beweging) staat het nooit in beeld.
+          Zie fly() in lib/motion/scroll.ts. */}
+      {wordmark && (
+        <span className="site-header__flier" aria-hidden="true">
+          <Image
+            src={wordmark.src}
+            alt=""
+            width={wordmark.width}
+            height={wordmark.height}
+            loading="eager"
+            sizes="(min-width: 1025px) 720px, (min-width: 641px) 520px, 100vw"
+            className="h-auto w-full drop-shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+          />
+        </span>
+      )}
+
       <Link href={localePath(locale, "/")} className="site-header__home relative z-60 shrink-0">
         <Image
           src={wordmarkFlat}

@@ -41,6 +41,9 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
         src={wordmarkFlat}
         alt={copy.hero.wordmarkAlt}
         className="h-7 w-auto opacity-90"
+        // 28px hoog, dus ±48px breed. Zonder `sizes` haalt next/image het
+        // bronbestand op volle breedte op.
+        sizes="64px"
       />
 
       <p className="font-mono text-12 leading-[18px] tracking-wide8 text-muted">

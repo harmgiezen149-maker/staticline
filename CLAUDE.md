@@ -113,7 +113,8 @@ Die komen uit besluiten die al genomen zijn. Niet opnieuw openen in code.
     voortgangslijn) staan als markup in de layout en worden alleen verborgen.
 - **Het wordmark is definitief.** Nooit hertekenen, herkleuren, uitrekken of
   opnieuw natrekken. Gebruik de aangeleverde bestanden zoals ze zijn. Bewegen
-  doet hij alleen als geheel (verschuiven en vervagen), onthuld wordt hij alleen
+  doet hij alleen als geheel (verschuiven, vervagen, en voor de vlucht naar de
+  kop gelijkmatig kleiner worden — nooit uitrekken), onthuld wordt hij alleen
   met een masker. In de hero staat hij in de `<h1>` en is hij het LCP-element:
   nooit op `opacity: 0` zetten, ook niet voor een entree.
 - **Ruimte komt uit de schaal** (4/8/12/16/24/32/48/64/96). Dat is precies de
@@ -250,7 +251,16 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   verzoek staat hij altijd bovenaan in beeld (gewoon `sticky`). Het wordmark
   erin is groter dan getekend — 36/40/44px hoog in plaats van 16/22 — en de kop
   is daarom overal 68px. Ankers komen eronder uit via `scroll-padding-top` in
-  `globals.css`. Het docken op de homepage is gebleven.
+  `globals.css`.
+- **Het wordmark vliegt op de homepage van de hero naar de kop**, in één
+  beweging met het scrollen, in plaats van het docken met een masker uit
+  MOTION.md. Op verzoek. Een tweede exemplaar in de kop vliegt (het origineel
+  staat in `<main>`, onder de kop), met dezelfde bron zodat de browser niets
+  extra ophaalt; het origineel wordt pas na de eerste scrollbeweging
+  onzichtbaar en blijft dus het LCP-element. Op het eind neemt het vlakke
+  wordmark het over. Het rekenwerk staat in `lib/motion/flight.ts`, met tests;
+  met minder beweging of zonder JavaScript staat het kleine wordmark er
+  gewoon.
 - **Rode knoppen worden blauw bij hover** (`--accent-alt`), niet lichter rood, op
   verzoek. De tekst wordt dan donker (`--bg-inset`): lichte tekst op dit blauw
   haalt maar 2,6:1, donkere 6,7:1. Geldt voor `.btn--primary` in
