@@ -11,7 +11,7 @@ import {
 import { reduced } from "@/lib/motion/env";
 
 /**
- * De ledenkaarten op de homepage als één schuivende rij.
+ * De ledenkaarten als één schuivende rij, op de homepage en op /band.
  *
  * GEËXTRAPOLEERD. Het ontwerp tekent deze sectie niet, en een carrousel dus ook
  * niet. Hij is gemaakt van wat er al is: de ghost-knop, de lijn van de koppen en
@@ -30,7 +30,10 @@ import { reduced } from "@/lib/motion/env";
  *   zelf kijkt, wil niet dat de rij onder zijn vinger wegloopt;
  * - loopt alleen als de rij in beeld is en het tabblad zichtbaar;
  * - staat uit bij minder beweging, en is altijd te pauzeren met de knop
- *   (WCAG 2.2.2: wat uit zichzelf beweegt, moet stil te zetten zijn).
+ *   (WCAG 2.2.2: wat uit zichzelf beweegt, moet stil te zetten zijn);
+ * - begint niet als je via een anker bij één kaart binnenkomt (de homepage
+ *   linkt naar /band#lid-5): dan staat die kaart links in de rij en blijft hij
+ *   daar, in plaats van na vijf seconden weg te schuiven.
  *
  * Zonder JavaScript is het een gewone horizontaal scrollende rij met een
  * zichtbare scrollbalk. Passen alle kaarten naast elkaar, dan verdwijnen de
@@ -51,7 +54,7 @@ type Labels = {
 type Props = {
   children: ReactNode;
   labels: Labels;
-  /** Links naast de knoppen, onder de rij: de link naar /band. */
+  /** Links naast de knoppen, onder de rij: op de homepage de link naar /band. */
   aside?: ReactNode;
 };
 
@@ -129,7 +132,14 @@ export function BandCarousel({ children, labels, aside }: Props) {
         hold.current.inView = entry.isIntersecting;
         if (entry.isIntersecting && !started) {
           started = true;
-          if (!reduced()) setPlaying(true);
+          const target = targetCard(track);
+          if (target) {
+            // De browser zet de kaart verticaal in beeld; opzij schuiven doet
+            // hij niet altijd, dus dat hier, en dan blijft de rij staan.
+            const pad =
+              parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
+            track.scrollTo({ left: target.offsetLeft - pad, behavior: "auto" });
+          } else if (!reduced()) setPlaying(true);
         }
       },
       { threshold: 0.5 },
@@ -257,6 +267,19 @@ export function BandCarousel({ children, labels, aside }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** De kaart in deze rij waar het anker in de adresbalk naar wijst, als die er is. */
+function targetCard(track: HTMLElement): HTMLElement | null {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (!id) return null;
+  const el = document.getElementById(id);
+  if (!el || !track.contains(el)) return null;
+  // De kaart zelf, ook als het anker op iets erbinnen staat.
+  return (
+    ([...track.children] as HTMLElement[]).find((card) => card.contains(el)) ??
+    null
   );
 }
 

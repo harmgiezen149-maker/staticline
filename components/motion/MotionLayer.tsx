@@ -9,7 +9,12 @@ import { motionOn, root } from "@/lib/motion/env";
 import { initLightbox } from "@/lib/motion/lightbox";
 import { runLoader } from "@/lib/motion/loader";
 import { initCursorLabel, initHoverScramble } from "@/lib/motion/pointer";
-import { enableReveals, forgetWaiting, observeReveals } from "@/lib/motion/reveal";
+import {
+  arriveAtHash,
+  enableReveals,
+  forgetWaiting,
+  observeReveals,
+} from "@/lib/motion/reveal";
 import { channelLabel, classifyLink, stripLocale } from "@/lib/motion/routes";
 import { heroIntro, initScroll, updateScroll } from "@/lib/motion/scroll";
 import { initStoring } from "@/lib/motion/storing";
@@ -72,6 +77,7 @@ export function MotionLayer({ nav }: Props) {
     initCursorLabel();
     initHoverScramble();
     initLightbox();
+    arriveAtHash();
     observeReveals(document);
     initStoring(document);
 
@@ -160,6 +166,7 @@ export function MotionLayer({ nav }: Props) {
     }
 
     forgetWaiting();
+    arriveAtHash();
     observeReveals(document);
     enableReveals();
     updateScroll();

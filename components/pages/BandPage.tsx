@@ -1,4 +1,6 @@
 import Image from "next/image";
+
+import { BandCarousel } from "@/components/BandCarousel";
 import { PhotoTexture } from "@/components/PhotoTexture";
 
 import { Empty, Page, Section } from "@/components/Page";
@@ -29,7 +31,10 @@ export async function BandPage({ locale }: { locale: Locale }) {
           // De bio is vrije tekst uit de app; lege regels worden alinea's.
           <div className="flex max-w-[640px] flex-col gap-4">
             {bio.split(/\n{2,}/).map((paragraph, index) => (
-              <p key={index} className="text-16 leading-[26px] whitespace-pre-line">
+              <p
+                key={index}
+                className="text-16 leading-[26px] whitespace-pre-line"
+              >
                 {paragraph}
               </p>
             ))}
@@ -43,7 +48,20 @@ export async function BandPage({ locale }: { locale: Locale }) {
         {members.length === 0 ? (
           <Empty>{copy.band.membersEmpty}</Empty>
         ) : (
-          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          // Dezelfde schuivende rij als op de homepage, op verzoek, in plaats
+          // van een raster waarin een laatste kaart alleen op een nieuwe regel
+          // belandt. De kaarten hier zijn breder dan daar, omdat er per lid
+          // ook een tekst onder staat: op mobiel bijna het hele scherm, op
+          // tablet twee, op desktop vier.
+          <BandCarousel
+            labels={{
+              region: copy.band.members,
+              prev: copy.band.prev,
+              next: copy.band.next,
+              pause: copy.band.pause,
+              play: copy.band.play,
+            }}
+          >
             {members.map((member) => (
               /**
                * Het anker waar de homepage naartoe wijst.
@@ -54,6 +72,9 @@ export async function BandPage({ locale }: { locale: Locale }) {
                * scrollen is het werk dat hier gedaan moet worden en het gebeurt
                * altijd — de bovenrand van de kaart komt tweeëndertig pixels
                * onder de kop uit.
+               *
+               * Opzij schuift de rij zelf naar de kaart, en dan schuift hij niet
+               * automatisch verder: zie BandCarousel.
                *
                * `target:border-accent` is een extraatje daarbovenop, en het doet
                * het maar in één van de twee gevallen: bij een directe laadbeurt
@@ -73,7 +94,7 @@ export async function BandPage({ locale }: { locale: Locale }) {
               <li
                 key={member.id}
                 id={`lid-${member.id}`}
-                className="flex scroll-mt-8 flex-col gap-3 border border-line bg-surface p-4 transition-colors duration-[120ms] target:border-accent"
+                className="flex shrink-0 basis-[calc((100%-8px)/1.15)] scroll-mt-8 snap-start flex-col gap-3 border border-line bg-surface p-4 transition-colors duration-[120ms] target:border-accent sm:basis-[calc((100%-8px)/2)] lg:basis-[calc((100%-24px)/4)]"
               >
                 {member.photoUrl ? (
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-inset">
@@ -81,7 +102,7 @@ export async function BandPage({ locale }: { locale: Locale }) {
                       src={member.photoUrl}
                       alt={member.name}
                       fill
-                      sizes="(min-width: 1025px) 25vw, (min-width: 641px) 50vw, 100vw"
+                      sizes="(min-width: 1025px) 25vw, (min-width: 641px) 50vw, 90vw"
                       className="object-cover"
                     />
                     <PhotoTexture storing />
@@ -109,7 +130,7 @@ export async function BandPage({ locale }: { locale: Locale }) {
                 </div>
               </li>
             ))}
-          </ul>
+          </BandCarousel>
         )}
       </Section>
     </Page>

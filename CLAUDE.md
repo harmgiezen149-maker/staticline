@@ -290,8 +290,12 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   (`components/BandCarousel.tsx`, op verzoek): scroll-snap van de browser, met
   pijlen, een lijn die de positie toont en automatisch doorschuiven dat pauzeert
   bij hover of focus, stopt zodra iemand zelf schuift, uit staat bij minder
-  beweging en altijd stil te zetten is. `/band` houdt zijn raster, omdat de
-  homepage daar per lid naartoe linkt met een anker
+  beweging en altijd stil te zetten is. `/band` heeft dezelfde rij, met bredere
+  kaarten omdat daar per lid een tekst onder staat. De homepage linkt daar per
+  lid naartoe met een anker (`/band#lid-5`): dan staat die kaart links in de
+  rij, 32px onder de kop, en schuift de rij niet vanzelf verder. Dat
+  uitlijnen doet `arriveAtHash` in `lib/motion/reveal.ts`, omdat de browser
+  het mis rekende terwijl de sectie nog binnenkwam
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
