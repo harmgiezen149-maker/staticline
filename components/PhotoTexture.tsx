@@ -3,7 +3,8 @@
  *
  * De hero legt over zijn achtergrond een donker verloop en de levende korrel
  * (opacity 0,5). Hier dezelfde korrel op ruim de helft daarvan, en een egale
- * donkere tint in plaats van een verloop: het enige verloop op de site is de
+ * warmbruine tint in plaats van een verloop — op een zwart-witfoto een heel
+ * lichte sepia: het enige verloop op de site is de
  * leesbaarheidsoverlay in de hero, en dat blijft zo. De foto's lezen er zo als
  * één familie met de hero, zonder dat ze grauw worden.
  *
