@@ -12,6 +12,7 @@ import { initCursorLabel, initHoverScramble } from "@/lib/motion/pointer";
 import { enableReveals, forgetWaiting, observeReveals } from "@/lib/motion/reveal";
 import { channelLabel, classifyLink, stripLocale } from "@/lib/motion/routes";
 import { heroIntro, initScroll, updateScroll } from "@/lib/motion/scroll";
+import { initStoring } from "@/lib/motion/storing";
 import {
   enter,
   langSwap,
@@ -72,6 +73,7 @@ export function MotionLayer({ nav }: Props) {
     initHoverScramble();
     initLightbox();
     observeReveals(document);
+    initStoring(document);
 
     const swap = takeLangSwap(location.pathname);
     if (swap) {
@@ -161,6 +163,7 @@ export function MotionLayer({ nav }: Props) {
     observeReveals(document);
     enableReveals();
     updateScroll();
+    initStoring(document);
 
     const viaTransition = navigating.current;
     navigating.current = false;

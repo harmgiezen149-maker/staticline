@@ -126,7 +126,7 @@ export async function BandSection({ locale, bio, members }: Props) {
                       className="object-cover"
                       draggable={false}
                     />
-                    <PhotoTexture />
+                    <PhotoTexture storing />
                   </div>
                 ) : (
                   // Hetzelfde streeppatroon als de fotoplaceholders, zodat een

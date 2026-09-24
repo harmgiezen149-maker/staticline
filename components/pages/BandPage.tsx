@@ -84,7 +84,7 @@ export async function BandPage({ locale }: { locale: Locale }) {
                       sizes="(min-width: 1025px) 25vw, (min-width: 641px) 50vw, 100vw"
                       className="object-cover"
                     />
-                    <PhotoTexture />
+                    <PhotoTexture storing />
                   </div>
                 ) : (
                   // Zelfde streeppatroon als de fotoplaceholders op de homepage,

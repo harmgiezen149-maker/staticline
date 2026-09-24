@@ -261,6 +261,13 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   wordmark het over. Het rekenwerk staat in `lib/motion/flight.ts`, met tests;
   met minder beweging of zonder JavaScript staat het kleine wordmark er
   gewoon.
+- **De bandfoto's krijgen af en toe een signaalstoring**, op verzoek en niet uit
+  MOTION.md: om de 10 à 15 seconden verliest één bandfoto in beeld even zijn
+  signaal — banden sneeuw en een beeld dat opzij verspringt, 0,6–1 s. Eén klok
+  voor de hele pagina, niet één per foto, anders stoort er steeds iets. Geen
+  scanlines (die blijven AFW-2). Markup via `<PhotoTexture storing />`, timing in
+  `lib/motion/storing.ts`, uiterlijk bij `.foto-storing` in `styles/motion.css`;
+  met minder beweging of zonder JavaScript gebeurt er niets.
 - **Rode knoppen worden blauw bij hover** (`--accent-alt`), niet lichter rood, op
   verzoek. De tekst wordt dan donker (`--bg-inset`): lichte tekst op dit blauw
   haalt maar 2,6:1, donkere 6,7:1. Geldt voor `.btn--primary` in

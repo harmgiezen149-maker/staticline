@@ -1231,6 +1231,10 @@ a.show-row:focus-visible .show-row__arrow {
 
 @media (prefers-reduced-motion: reduce) {
   .korrel::after,
+  .foto-storing,
+  .foto-storing::before,
+  .foto-storing i,
+  .is-storing > img,
   .btn .btn__label {
     animation: none !important;
   }
@@ -1353,4 +1357,90 @@ a.show-row:focus-visible .show-row__arrow {
 }
 .foto-korrel {
   opacity: 0.28;
+}
+
+/* ─── Signaalstoring op de bandfoto's ───────────────────────────────────── *
+ * Op verzoek, niet uit MOTION.md: om de 10 à 15 seconden verliest één van de
+ * bandfoto's in beeld even zijn signaal, zoals een oud beeldscherm. Een paar
+ * horizontale banden sneeuw (de bestaande korrel, grof en vol), een waas van
+ * sneeuw over het hele beeld, en de foto die in sprongen opzij schiet en even
+ * te fel of te donker wordt. Daarna staat alles weer stil.
+ *
+ * Ruis → lijn, maar dan andersom en kort: de rusttoestand blijft het strakke
+ * beeld. Geen scanlines: die zijn (AFW-2) alleen voor de loader, overgangen,
+ * het menu en de lightbox.
+ *
+ * lib/motion/storing.ts kiest de foto, zet `.is-on` op de laag en `.is-storing`
+ * op de ouder, en geeft per keer een andere duur (--storing-duur) en andere
+ * banden (--top, --hoogte, --later per <i>). Zonder die klassen is de laag er
+ * niet: `visibility: hidden`, niet doorzichtig.
+ */
+.foto-storing {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+.foto-storing::before,
+.foto-storing i {
+  position: absolute;
+  background-image: var(--grain);
+  /* Grof, zoals sneeuw op een beeldbuis: elke korrel twee pixels. */
+  background-size: 512px 512px;
+  image-rendering: pixelated;
+}
+.foto-storing::before {
+  content: "";
+  inset: 0;
+  opacity: 0;
+}
+.foto-storing i {
+  left: -8%;
+  right: -8%;
+  top: var(--top, 40%);
+  height: var(--hoogte, 10%);
+  opacity: 0;
+  filter: contrast(1.8);
+}
+.motion .foto-storing.is-on {
+  visibility: visible;
+}
+.motion .foto-storing.is-on::before {
+  animation: sl-storing-waas var(--storing-duur, 800ms) steps(1, end) 1 both;
+}
+.motion .foto-storing.is-on i {
+  animation: sl-storing-band var(--storing-duur, 800ms) steps(1, end) var(--later, 0ms) 1 both;
+}
+.motion .is-storing > img {
+  animation: sl-storing-beeld var(--storing-duur, 800ms) steps(1, end) 1;
+}
+@keyframes sl-storing-waas {
+  0% { opacity: 0; background-position: 0 0; }
+  10% { opacity: 0.35; background-position: 91px 37px; }
+  25% { opacity: 0.12; background-position: -40px 120px; }
+  40% { opacity: 0.4; background-position: 150px -60px; }
+  60% { opacity: 0.1; background-position: -110px -20px; }
+  75% { opacity: 0.25; background-position: 30px 70px; }
+  100% { opacity: 0; }
+}
+@keyframes sl-storing-band {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); background-position: 0 0; }
+  8% { opacity: 0.9; transform: translate3d(-4%, 0, 0); background-position: 37px 81px; }
+  20% { opacity: 0.4; transform: translate3d(3%, 0, 0); background-position: -120px 12px; }
+  32% { opacity: 1; transform: translate3d(-2%, -20%, 0); background-position: 64px -90px; }
+  48% { opacity: 0.2; transform: translate3d(5%, 0, 0); background-position: -30px 140px; }
+  62% { opacity: 0.85; transform: translate3d(-3%, 30%, 0); background-position: 110px -15px; }
+  80% { opacity: 0.35; transform: translate3d(1%, 0, 0); background-position: -75px 55px; }
+  100% { opacity: 0; transform: translate3d(0, 0, 0); }
+}
+@keyframes sl-storing-beeld {
+  0% { transform: translate3d(0, 0, 0); filter: none; }
+  10% { transform: translate3d(6px, 0, 0); filter: brightness(1.35) contrast(0.85); }
+  22% { transform: translate3d(-4px, 0, 0); filter: none; }
+  35% { transform: translate3d(10px, 0, 0); filter: brightness(0.7); }
+  48% { transform: translate3d(0, 0, 0); filter: none; }
+  64% { transform: translate3d(-7px, 0, 0); filter: brightness(1.2) contrast(0.9); }
+  80% { transform: translate3d(2px, 0, 0); filter: none; }
+  100% { transform: translate3d(0, 0, 0); filter: none; }
 }
