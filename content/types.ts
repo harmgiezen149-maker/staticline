@@ -74,6 +74,18 @@ export type Copy = {
     /** Beschrijvingen van de vijf nog te leveren beelden, uit de design-handoff. */
     placeholders: [string, string, string, string, string];
   };
+  /** Het blok met de laatste Instagram-posts op de homepage, onder de shows. */
+  instagram: {
+    heading: string;
+    /** De link naar het profiel, onder de tegels. */
+    follow: string;
+    /** Alt-tekst voor een post zonder bijschrift. */
+    alt: string;
+    /** Het labeltje op een tegel die een video is. */
+    video: string;
+    /** Voor schermlezers: de links openen Instagram in een nieuw venster. */
+    newWindow: string;
+  };
   footer: {
     note: string;
     mail: string;

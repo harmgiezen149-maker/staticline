@@ -506,6 +506,57 @@ neerzet blijft staan.
 
 ---
 
+## 9. Instagram op de homepage — `INSTAGRAM_ACCESS_TOKEN`
+
+Onder de shows staat een blok met de laatste zes posts van het Instagram-account
+van de band. Zonder deze sleutel staat daar alleen de link naar het profiel (uit
+`/beheer/inhoud`, veld Instagram); staat ook die er niet, dan blijft het blok weg.
+
+Instagram geeft posts alleen af via zijn eigen API, met een sleutel die je één
+keer zelf aanmaakt. Dat is een handvol stappen bij Meta. De menu's daar worden
+geregeld hernoemd, dus de namen hieronder kunnen net anders heten.
+
+### 9.1 Het account
+
+Het account moet een **professioneel account** zijn (zakelijk of creator; voor
+een band is creator prima). In de Instagram-app: Instellingen → Accounttype en
+tools → Overstappen naar professioneel account. Dat is gratis en verandert niets
+aan je posts.
+
+### 9.2 Een app bij Meta
+
+1. Ga naar `developers.facebook.com`, log in en kies **Mijn apps → App maken**.
+2. Kies als toepassing iets als **Berichten en inhoud beheren op Instagram**
+   (de Instagram API). Een naam als "Static Line website" is genoeg.
+3. Open in de app **Instagram → API-configuratie met Instagram-login**.
+4. Voeg bij **Toegangstokens genereren** het Instagram-account van de band toe en
+   log daarmee in. Daarna verschijnt een lange sleutel die met `IG` begint. Kopieer
+   die.
+
+De app hoeft niet door de beoordeling van Meta: hij leest alleen het account dat
+er zelf aan gekoppeld is.
+
+### 9.3 In Vercel
+
+Zet de sleutel als `INSTAGRAM_ACCESS_TOKEN` bij het `staticline`-project en
+deploy opnieuw. Binnen een uur staan de posts op de homepage (zo vaak haalt de
+site ze op).
+
+### 9.4 Verlopen — hoeft niet
+
+Zo'n sleutel is zestig dagen geldig. Elke maandagochtend ruilt de site hem in voor
+een nieuwe (`/api/cron/instagram`, met dezelfde `CRON_SECRET` als de
+nieuwsbrief) en bewaart die in de eigen database. Je hoeft dus niets te doen,
+zolang `DATABASE_URL` en `CRON_SECRET` er staan.
+
+Verdwijnen de posts toch — bijvoorbeeld omdat het wachtwoord van het
+Instagram-account is veranderd, wat de sleutel ongeldig maakt — maak dan in
+stap 9.2 een nieuwe aan en vervang de waarde in Vercel. De site ziet zelf dat er
+een andere sleutel staat en gebruikt vanaf dan die. In de logs van Vercel staat
+bij een fout een regel die met `[instagram]` begint.
+
+---
+
 ## Niet nodig
 
 `BAND_APP_URL` heeft een standaardwaarde in de code

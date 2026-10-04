@@ -296,6 +296,10 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   rij, 32px onder de kop, en schuift de rij niet vanzelf verder. Dat
   uitlijnen doet `arriveAtHash` in `lib/motion/reveal.ts`, omdat de browser
   het mis rekende terwijl de sectie nog binnenkwam
+- Het Instagram-blok op de homepage (`components/InstagramFeed.tsx`), direct onder
+  de shows — de kop van `ShowList` en de tegels van `PhotoGrid`. De posts komen
+  via de Instagram API met een gewone `<img>`, niet via `next/image`: de lijst
+  met toegestane hosts in `next.config.ts` blijft dicht. Zie lib/instagram.ts
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
@@ -351,6 +355,7 @@ sleutel ontbreekt.
 | `ANTHROPIC_API_KEY` | de teksten uit de Band App naar het Engels vertalen in `/beheer/vertalingen`, en de herschrijfmodule op `/beheer/tov`; zonder deze kan het vertalen nog met de hand |
 | `TOV_MODEL` | optioneel; welk model de herschrijfmodule gebruikt, standaard `claude-opus-5` |
 | `CRON_SECRET` | de sleutel waarmee Vercel de ochtendronde van de nieuwsbrief aanroept; zonder deze draait de ronde niet |
+| `INSTAGRAM_ACCESS_TOKEN` | de laatste posts onder de shows op de homepage; zonder deze staat daar alleen de link naar het profiel. De site vernieuwt de sleutel elke week zelf (`/api/cron/instagram`) en bewaart hem in `site_content` |
 
 De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
 gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel

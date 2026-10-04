@@ -56,6 +56,13 @@ export const en: Copy = {
       "guitar detail",
     ],
   },
+  instagram: {
+    heading: "Instagram",
+    follow: "Follow us on Instagram",
+    alt: "Static Line post on Instagram",
+    video: "Video",
+    newWindow: "opens in a new window",
+  },
   footer: {
     note: "Static Line · Ede · Booking and tech rider on request",
     mail: "boeking@staticline.nl",
