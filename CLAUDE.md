@@ -300,6 +300,15 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   de shows — de kop van `ShowList` en de tegels van `PhotoGrid`. De posts komen
   via de Instagram API met een gewone `<img>`, niet via `next/image`: de lijst
   met toegestane hosts in `next.config.ts` blijft dicht. Zie lib/instagram.ts
+- Het scherm op `/scherm` (`components/screen/ScreenLoop.tsx`, beheer in
+  `/beheer/scherm`): de loader "Afstemmen" als doorlopende lus voor een beamer,
+  een tv bij de merch of een stream. Eigen teksten, het wordmark tussendoor en
+  foto's met een dekking per beeld; ruis en scanlines alleen tijdens de wissel.
+  Een vierde root layout, `app/(scherm)`, zonder kop, menu of motion-laag;
+  openbaar maar niet gelinkt en `noindex`. De instelling is één JSON-waarde in
+  `site_content` (sleutel `scherm`, zie `lib/screen.ts`), en een draaiend
+  scherm haalt hem elke minuut opnieuw op via `/api/scherm`.
+  `?formaat=9:16` in het adres wint van de instelling
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

@@ -1,0 +1,461 @@
+"use client";
+
+import { upload } from "@vercel/blob/client";
+import Image from "next/image";
+import { useMemo, useRef, useState, useTransition } from "react";
+
+import { saveScreen } from "@/app/(beheer)/beheer/scherm/actions";
+import {
+  DEFAULT_OPACITY,
+  LIMITS,
+  type ScreenConfig,
+  type ScreenFormat,
+  type ScreenPhoto,
+  type ScreenSlide,
+} from "@/lib/screen";
+
+/**
+ * Het beheer van /scherm: de beelden, het tempo, het formaat, het logo en de
+ * foto's. Alles wordt in één keer opgeslagen met de knop onderaan; tot die tijd
+ * staat er "Niet opgeslagen". Het voorbeeld laat de opgeslagen versie zien.
+ *
+ * Foto's gaan net als in /beheer/inhoud rechtstreeks van de browser naar de
+ * Blob-opslag (zie app/api/beheer/upload/route.ts). Een foto die hier wordt
+ * geüpload, staat alleen bij het scherm en niet in de fotosectie van de site.
+ */
+
+type Props = {
+  initial: ScreenConfig;
+  /** De foto's die al op de site staan, om ook achter een tekst te zetten. */
+  sitePhotos: ScreenPhoto[];
+};
+
+const FORMAT_LABEL: Record<ScreenFormat, string> = {
+  auto: "Automatisch — vult elk scherm",
+  "16:9": "Liggend 16:9 — beamer, tv, stream",
+  "9:16": "Staand 9:16 — staande tv, Reels",
+  "1:1": "Vierkant 1:1",
+};
+
+const input =
+  "border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong";
+const small =
+  "font-mono text-11 text-muted uppercase underline transition-colors duration-[120ms] hover:text-primary disabled:opacity-40 disabled:no-underline";
+const ghost =
+  "inline-flex items-center justify-center border border-line-strong px-4 py-2 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] hover:border-primary disabled:opacity-60";
+
+let seq = 0;
+const newId = () => `s${Date.now().toString(36)}${(seq++).toString(36)}`;
+
+export function ScreenEditor({ initial, sitePhotos }: Props) {
+  const [config, setConfig] = useState(initial);
+  const [saved, setSaved] = useState(JSON.stringify(initial));
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, startTransition] = useTransition();
+  const [preview, setPreview] = useState<ScreenFormat>("16:9");
+  const [previewKey, setPreviewKey] = useState(0);
+
+  const dirty = JSON.stringify(config) !== saved;
+  const set = (patch: Partial<ScreenConfig>) => setConfig((c) => ({ ...c, ...patch }));
+  const setSlide = (id: string, patch: Partial<ScreenSlide>) =>
+    setConfig((c) => ({ ...c, slides: c.slides.map((s) => (s.id === id ? { ...s, ...patch } : s)) }));
+
+  // Alle foto's om uit te kiezen: eerst die van het scherm, dan die van de site.
+  const choices = useMemo(() => {
+    const seen = new Set<string>();
+    return [...config.photos.map((p) => ({ ...p, from: "Scherm" })), ...sitePhotos.map((p) => ({ ...p, from: "Site" }))].filter(
+      (p) => !seen.has(p.url) && seen.add(p.url),
+    );
+  }, [config.photos, sitePhotos]);
+
+  function move(index: number, by: number) {
+    setConfig((c) => {
+      const slides = [...c.slides];
+      const to = index + by;
+      if (to < 0 || to >= slides.length) return c;
+      [slides[index], slides[to]] = [slides[to], slides[index]];
+      return { ...c, slides };
+    });
+  }
+
+  function addSlide() {
+    setConfig((c) => ({
+      ...c,
+      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY }],
+    }));
+  }
+
+  function save() {
+    // Een beeld zonder tekst en zonder foto valt bij het opslaan weg; liever
+    // dat zeggen dan het stilletjes laten verdwijnen.
+    const empty = config.slides.filter((s) => !s.title.trim() && !s.photo).length;
+    if (empty && !window.confirm(`${empty === 1 ? "Eén beeld heeft" : `${empty} beelden hebben`} geen tekst en geen foto en ${empty === 1 ? "valt" : "vallen"} weg. Toch opslaan?`)) return;
+    setMessage(null);
+    startTransition(async () => {
+      const result = await saveScreen(JSON.stringify(config));
+      if (!result) return;
+      setMessage({ ok: result.ok, text: result.message });
+      if (result.ok && result.config) {
+        setConfig(result.config);
+        setSaved(JSON.stringify(result.config));
+        setPreviewKey((k) => k + 1);
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-10">
+      <section className="flex flex-col gap-3">
+        <p className="text-muted">
+          De startanimatie van de site als doorlopende lus, voor een beamer op het podium, een scherm bij de merch of
+          als achtergrond van een stream. Open het adres op de laptop of tv, druk op <span className="font-mono">F</span>{" "}
+          voor volledig scherm en laat het draaien. Het adres staat niet in het menu en niet in Google.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <a href="/scherm" target="_blank" rel="noopener" className={ghost}>
+            Open het scherm ↗
+          </a>
+          <span className="font-mono text-12 text-muted">
+            staticline.nl/scherm · <a className="underline" href="/scherm?formaat=16:9" target="_blank" rel="noopener">?formaat=16:9</a>{" "}
+            · <a className="underline" href="/scherm?formaat=9:16" target="_blank" rel="noopener">9:16</a> ·{" "}
+            <a className="underline" href="/scherm?formaat=1:1" target="_blank" rel="noopener">1:1</a>
+          </span>
+        </div>
+      </section>
+
+      {/* ── Voorbeeld ── */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="font-mono text-11 text-faint uppercase">Voorbeeld — de opgeslagen versie</h2>
+          <div className="flex gap-2" role="group" aria-label="Formaat van het voorbeeld">
+            {(["16:9", "9:16", "1:1"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={preview === f}
+                onClick={() => setPreview(f)}
+                className={`border px-3 py-1 font-mono text-12 uppercase transition-colors duration-[120ms] ${preview === f ? "border-primary text-primary" : "border-line text-muted hover:text-primary"}`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-center border border-line bg-inset">
+          <iframe
+            key={`${preview}-${previewKey}`}
+            src={`/scherm?voorbeeld=1&formaat=${preview}`}
+            title="Voorbeeld van het scherm"
+            className="block w-full"
+            style={{
+              aspectRatio: preview.replace(":", " / "),
+              maxWidth: preview === "9:16" ? 320 : preview === "1:1" ? 480 : undefined,
+            }}
+          />
+        </div>
+      </section>
+
+      {/* ── Instellingen ── */}
+      <section className="flex flex-col gap-6">
+        <h2 className="font-mono text-11 text-faint uppercase">Instellingen</h2>
+
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Seconden per beeld</span>
+          <span className="flex items-center gap-4">
+            <input
+              type="range"
+              min={LIMITS.seconds[0]}
+              max={LIMITS.seconds[1]}
+              value={config.seconds}
+              onChange={(e) => set({ seconds: Number(e.target.value) })}
+              className="w-full accent-[var(--accent-alt)]"
+            />
+            <span className="w-12 shrink-0 text-right font-mono text-14">{config.seconds}s</span>
+          </span>
+          <span className="text-muted">Daarbovenop komt de wissel zelf: ruim drie seconden ruis en lijn.</span>
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Formaat</span>
+          <select value={config.format} onChange={(e) => set({ format: e.target.value as ScreenFormat })} className={input}>
+            {(Object.keys(FORMAT_LABEL) as ScreenFormat[]).map((f) => (
+              <option key={f} value={f}>
+                {FORMAT_LABEL[f]}
+              </option>
+            ))}
+          </select>
+          <span className="text-muted">
+            Een vaste verhouding krijgt zwarte randen op een scherm dat anders is. Per scherm afwijken kan met het adres,
+            bijvoorbeeld <span className="font-mono">/scherm?formaat=9:16</span> voor de staande tv bij de merch.
+          </span>
+        </label>
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 font-mono text-11 text-faint uppercase">Logo tussendoor</legend>
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={config.logo.on}
+              onChange={(e) => set({ logo: { ...config.logo, on: e.target.checked } })}
+              className="h-5 w-5 accent-[var(--accent-alt)]"
+            />
+            <span>Het wordmark komt als eigen beeld voorbij</span>
+          </label>
+          <label className={`flex items-center gap-3 ${config.logo.on ? "" : "opacity-40"}`}>
+            <span>na elke</span>
+            <input
+              type="number"
+              min={LIMITS.every[0]}
+              max={LIMITS.every[1]}
+              value={config.logo.every}
+              disabled={!config.logo.on}
+              onChange={(e) => set({ logo: { ...config.logo, every: Math.max(1, Number(e.target.value) || 1) } })}
+              className={`${input} w-20 py-2`}
+            />
+            <span>{config.logo.every === 1 ? "beeld" : "beelden"}</span>
+          </label>
+        </fieldset>
+      </section>
+
+      {/* ── Beelden ── */}
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-mono text-11 text-faint uppercase">Beelden</h2>
+          <p className="text-muted">
+            Elk beeld is een tekst, een foto, of allebei: de tekst groot onderin, de foto erachter. Met de schuif zet je
+            de foto zachter; rond de 15–25% blijft de tekst er goed leesbaar overheen.
+          </p>
+        </div>
+
+        {config.slides.length === 0 && (
+          <p className="border border-dashed border-line px-4 py-6 text-center text-muted">
+            Nog geen beelden. {config.logo.on ? "Zolang staat alleen het logo op het scherm." : "Zolang staat het logo op het scherm."}
+          </p>
+        )}
+
+        <ol className="flex flex-col gap-4">
+          {config.slides.map((slide, i) => {
+            const photo = choices.find((p) => p.url === slide.photo);
+            return (
+              <li key={slide.id} className="flex flex-col gap-4 border border-line p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-mono text-12 text-muted">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="flex items-center gap-4">
+                    <button type="button" className={small} onClick={() => move(i, -1)} disabled={i === 0}>
+                      ↑ Omhoog
+                    </button>
+                    <button type="button" className={small} onClick={() => move(i, 1)} disabled={i === config.slides.length - 1}>
+                      ↓ Omlaag
+                    </button>
+                    <button
+                      type="button"
+                      className={`${small} hover:text-danger`}
+                      onClick={() => set({ slides: config.slides.filter((s) => s.id !== slide.id) })}
+                    >
+                      Verwijderen
+                    </button>
+                  </span>
+                </div>
+
+                <label className="flex flex-col gap-1">
+                  <span className="font-mono text-11 text-faint uppercase">
+                    Kleine regel erboven <span className="normal-case">— mag leeg</span>
+                  </span>
+                  <input
+                    value={slide.label}
+                    maxLength={LIMITS.label}
+                    placeholder="Live"
+                    onChange={(e) => setSlide(slide.id, { label: e.target.value })}
+                    className={input}
+                  />
+                </label>
+
+                <label className="flex flex-col gap-1">
+                  <span className="font-mono text-11 text-faint uppercase">
+                    Tekst <span className="normal-case">— leeg = alleen de foto</span>
+                  </span>
+                  <textarea
+                    value={slide.title}
+                    maxLength={LIMITS.title}
+                    rows={2}
+                    placeholder="Static Line — live in Ede"
+                    onChange={(e) => setSlide(slide.id, { title: e.target.value })}
+                    className={input}
+                  />
+                </label>
+
+                <div className="flex flex-wrap items-end gap-4">
+                  <label className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="font-mono text-11 text-faint uppercase">Foto erachter</span>
+                    <select
+                      value={slide.photo}
+                      onChange={(e) => setSlide(slide.id, { photo: e.target.value })}
+                      className={input}
+                    >
+                      <option value="">Geen foto</option>
+                      {choices.map((p) => (
+                        <option key={p.url} value={p.url}>
+                          {p.from}: {p.alt || p.url.split("/").pop()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {photo && (
+                    <span className="relative h-16 w-28 shrink-0 overflow-hidden bg-inset">
+                      <Image src={photo.url} alt="" fill sizes="112px" className="object-cover" style={{ opacity: slide.opacity / 100 }} />
+                    </span>
+                  )}
+                </div>
+
+                <label className={`flex flex-col gap-1 ${slide.photo ? "" : "opacity-40"}`}>
+                  <span className="font-mono text-11 text-faint uppercase">Zichtbaarheid van de foto</span>
+                  <span className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={slide.opacity}
+                      disabled={!slide.photo}
+                      onChange={(e) => setSlide(slide.id, { opacity: Number(e.target.value) })}
+                      className="w-full accent-[var(--accent-alt)]"
+                    />
+                    <span className="w-12 shrink-0 text-right font-mono text-14">{slide.opacity}%</span>
+                  </span>
+                </label>
+              </li>
+            );
+          })}
+        </ol>
+
+        {config.slides.length < LIMITS.slides && (
+          <button
+            type="button"
+            onClick={addSlide}
+            className="border border-dashed border-line-strong px-4 py-3 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] hover:border-primary"
+          >
+            ＋ Beeld toevoegen
+          </button>
+        )}
+      </section>
+
+      <PhotoUpload
+        photos={config.photos}
+        onAdd={(p) => set({ photos: [...config.photos, p] })}
+        onRemove={(url) =>
+          set({
+            photos: config.photos.filter((p) => p.url !== url),
+            slides: config.slides.map((s) => (s.photo === url ? { ...s, photo: "" } : s)),
+          })
+        }
+      />
+
+      {/* ── Opslaan ── */}
+      <div className="sticky bottom-0 flex flex-wrap items-center gap-4 border-t border-line bg-base py-4">
+        <button
+          type="button"
+          onClick={save}
+          disabled={pending || !dirty}
+          className="inline-flex items-center justify-center bg-accent px-6 py-3 font-display font-bold tracking-wide12 text-on-accent uppercase transition-colors duration-[160ms] enabled:hover:bg-accent-alt enabled:hover:text-inset disabled:opacity-60"
+        >
+          {pending ? "Bezig…" : "Opslaan"}
+        </button>
+        {dirty && <span className="font-mono text-12 text-warning uppercase">Niet opgeslagen</span>}
+        {/* Een fout blijft staan, ook al is er nog niets opgeslagen; een
+            succesmelding alleen tot de volgende wijziging. */}
+        {message && (!message.ok || !dirty) && (
+          <span className={message.ok ? "text-muted" : "text-danger"}>{message.text}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Foto's alleen voor het scherm: uploaden en weer weghalen. */
+function PhotoUpload({
+  photos,
+  onAdd,
+  onRemove,
+}: {
+  photos: ScreenPhoto[];
+  onAdd: (photo: ScreenPhoto) => void;
+  onRemove: (url: string) => void;
+}) {
+  const form = useRef<HTMLFormElement>(null);
+  const [state, setState] = useState<{ kind: "idle" | "busy" | "error"; message?: string }>({ kind: "idle" });
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const file = data.get("bestand");
+    const alt = String(data.get("alt") ?? "").trim();
+    if (!(file instanceof File) || file.size === 0) {
+      setState({ kind: "error", message: "Kies eerst een bestand." });
+      return;
+    }
+    setState({ kind: "busy" });
+    try {
+      const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/beheer/upload" });
+      onAdd({ url: blob.url, alt: alt || file.name.replace(/\.[^.]+$/, "") });
+      form.current?.reset();
+      setState({ kind: "idle" });
+    } catch (error) {
+      setState({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Het uploaden lukte niet. Probeer het nog eens.",
+      });
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="font-mono text-11 text-faint uppercase">Foto&apos;s voor het scherm</h2>
+        <p className="text-muted">
+          Alleen voor het scherm; ze komen niet in de fotosectie van de site. De foto&apos;s die al op de site staan,
+          kun je hierboven ook kiezen. JPEG, PNG, WebP of AVIF, tot 10 MB. Na het uploaden nog op Opslaan drukken.
+        </p>
+      </div>
+
+      {photos.length > 0 && (
+        <ul className="flex flex-col">
+          {photos.map((p) => (
+            <li key={p.url} className="flex items-center justify-between gap-4 border-b border-line py-2">
+              <span className="flex min-w-0 items-center gap-4">
+                <Image src={p.url} alt="" width={64} height={64} className="h-16 w-16 shrink-0 object-cover" />
+                <span className="truncate">{p.alt}</span>
+              </span>
+              <button type="button" className={`${small} hover:text-danger`} onClick={() => onRemove(p.url)}>
+                Verwijderen
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form ref={form} onSubmit={submit} className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Bestand</span>
+          <input
+            type="file"
+            name="bestand"
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            className="border border-line bg-inset px-4 py-3 text-primary file:mr-4 file:border-0 file:bg-inset file:font-mono file:text-12 file:text-muted file:uppercase"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">
+            Naam <span className="normal-case">— om hem in de lijst terug te vinden</span>
+          </span>
+          <input type="text" name="alt" placeholder="Loburg, publiek van achteren" className={input} />
+        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <button type="submit" disabled={state.kind === "busy"} className={ghost}>
+            {state.kind === "busy" ? "Bezig met uploaden…" : "Foto uploaden"}
+          </button>
+          {state.kind === "error" && <span className="text-danger">{state.message}</span>}
+        </div>
+      </form>
+    </section>
+  );
+}

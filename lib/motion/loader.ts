@@ -25,8 +25,11 @@ export const INTRO_SEEN = "sl-intro-seen";
  * vier procent verschil in helderheid, dus nergens een flits in de zin van
  * WCAG 2.3.1. Op een derde van de resolutie (een kwart op mobiel) en 22 beelden
  * per seconde; het canvas stopt zodra de loader dichtklapt.
+ *
+ * Ook gebruikt door het scherm (components/screen/ScreenLoop.tsx), dat
+ * dezelfde ruis bij elke wissel laat zien.
  */
-function startNoise(canvas: HTMLCanvasElement) {
+export function startNoise(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx) return () => {};
 
