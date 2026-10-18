@@ -478,7 +478,25 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
 
       <PhotoUpload
         photos={config.photos}
-        onAdd={(p) => set({ photos: [...config.photos, p] })}
+        // Functioneel bijwerken en niet vanuit `config`: bij meerdere foto's
+        // tegelijk komt dit een paar keer achter elkaar binnen, en dan zou elke
+        // keer de vorige foto weer overschreven worden.
+        onAdd={(added, asSlides) =>
+          setConfig((c) => {
+            const known = new Set(c.photos.map((p) => p.url));
+            const fresh = added.filter((p) => !known.has(p.url));
+            return {
+              ...c,
+              photos: [...c.photos, ...fresh].slice(0, LIMITS.photos),
+              slides: asSlides
+                ? [
+                    ...c.slides,
+                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0 })),
+                  ].slice(0, LIMITS.slides)
+                : c.slides,
+            };
+          })
+        }
         onRemove={(url) =>
           set({
             photos: config.photos.filter((p) => p.url !== url),
@@ -509,40 +527,94 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
 }
 
 /** Foto's alleen voor het scherm: uploaden en weer weghalen. */
+/** Wat de uploadroute aanneemt; zie app/api/beheer/upload/route.ts. */
+const UPLOAD_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+const UPLOAD_MAX = 10 * 1024 * 1024;
+/** Zoveel tegelijk: sneller dan één voor één, zonder de verbinding dicht te trekken. */
+const UPLOAD_PARALLEL = 3;
+
+/**
+ * Foto's alleen voor het scherm: uploaden, meerdere tegelijk, en weer weghalen.
+ *
+ * Elke foto gaat apart naar de Blob-opslag. Mislukt er één (te groot, verkeerd
+ * soort bestand, verbinding weg), dan gaan de andere gewoon door en zegt het
+ * scherm daarna welke niet gelukt zijn.
+ */
 function PhotoUpload({
   photos,
   onAdd,
   onRemove,
 }: {
   photos: ScreenPhoto[];
-  onAdd: (photo: ScreenPhoto) => void;
+  onAdd: (photos: ScreenPhoto[], asSlides: boolean) => void;
   onRemove: (url: string) => void;
 }) {
   const form = useRef<HTMLFormElement>(null);
-  const [state, setState] = useState<{ kind: "idle" | "busy" | "error"; message?: string }>({ kind: "idle" });
+  const [state, setState] = useState<{ kind: "idle" | "busy" | "done" | "error"; message?: string }>({ kind: "idle" });
+  const [asSlides, setAsSlides] = useState(false);
+  const room = LIMITS.photos - photos.length;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const file = data.get("bestand");
-    const alt = String(data.get("alt") ?? "").trim();
-    if (!(file instanceof File) || file.size === 0) {
-      setState({ kind: "error", message: "Kies eerst een bestand." });
+    const files = data.getAll("bestand").filter((f): f is File => f instanceof File && f.size > 0);
+    const name = String(data.get("alt") ?? "").trim();
+    if (files.length === 0) {
+      setState({ kind: "error", message: "Kies eerst een of meer bestanden." });
       return;
     }
-    setState({ kind: "busy" });
-    try {
-      const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/beheer/upload" });
-      onAdd({ url: blob.url, alt: alt || file.name.replace(/\.[^.]+$/, "") });
-      form.current?.reset();
-      setState({ kind: "idle" });
-    } catch (error) {
-      setState({
-        kind: "error",
-        message: error instanceof Error ? error.message : "Het uploaden lukte niet. Probeer het nog eens.",
-      });
+    if (files.length > room) {
+      setState({ kind: "error", message: `Er passen nog ${room} foto's bij het scherm; je koos er ${files.length}.` });
+      return;
     }
+
+    const failed: string[] = [];
+    const done: ScreenPhoto[] = [];
+    let finished = 0;
+    const progress = () => setState({ kind: "busy", message: `Bezig met uploaden… ${finished} van ${files.length}` });
+    progress();
+
+    // De naam: wat er is ingevuld, met een volgnummer als het er meer zijn; anders
+    // de bestandsnaam zonder extensie.
+    const nameFor = (file: File, i: number) =>
+      name ? (files.length > 1 ? `${name} ${i + 1}` : name) : file.name.replace(/\.[^.]+$/, "");
+
+    const one = async (file: File, i: number) => {
+      if (!UPLOAD_TYPES.includes(file.type)) failed.push(`${file.name} (geen JPEG, PNG, WebP of AVIF)`);
+      else if (file.size > UPLOAD_MAX) failed.push(`${file.name} (groter dan 10 MB)`);
+      else {
+        try {
+          const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/beheer/upload" });
+          done[i] = { url: blob.url, alt: nameFor(file, i) };
+        } catch {
+          failed.push(file.name);
+        }
+      }
+      finished += 1;
+      progress();
+    };
+
+    // Een paar tegelijk, in de volgorde waarin ze gekozen zijn.
+    const queue = files.map((file, i) => () => one(file, i));
+    await Promise.all(
+      Array.from({ length: Math.min(UPLOAD_PARALLEL, queue.length) }, async () => {
+        while (queue.length) await queue.shift()!();
+      }),
+    );
+
+    const added = done.filter(Boolean);
+    if (added.length) onAdd(added, asSlides);
+    form.current?.reset();
+
+    const ok = `${added.length} ${added.length === 1 ? "foto" : "foto's"} toegevoegd${asSlides && added.length ? ", elk als eigen beeld" : ""}. Druk nog op Opslaan.`;
+    setState(
+      failed.length
+        ? { kind: "error", message: `${added.length ? ok + " " : ""}Niet gelukt: ${failed.join(", ")}.` }
+        : { kind: "done", message: ok },
+    );
   }
+
+  const busy = state.kind === "busy";
 
   return (
     <section className="flex flex-col gap-4">
@@ -550,7 +622,8 @@ function PhotoUpload({
         <h2 className="font-mono text-11 text-faint uppercase">Foto&apos;s voor het scherm</h2>
         <p className="text-muted">
           Alleen voor het scherm; ze komen niet in de fotosectie van de site. De foto&apos;s die al op de site staan,
-          kun je hierboven ook kiezen. JPEG, PNG, WebP of AVIF, tot 10 MB. Na het uploaden nog op Opslaan drukken.
+          kun je hierboven ook kiezen. Je kunt meerdere foto&apos;s tegelijk kiezen. JPEG, PNG, WebP of AVIF, tot 10 MB
+          per foto. Na het uploaden nog op Opslaan drukken.
         </p>
       </div>
 
@@ -572,25 +645,41 @@ function PhotoUpload({
 
       <form ref={form} onSubmit={submit} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-11 text-faint uppercase">Bestand</span>
+          <span className="font-mono text-11 text-faint uppercase">Bestanden</span>
           <input
             type="file"
             name="bestand"
-            accept="image/jpeg,image/png,image/webp,image/avif"
+            multiple
+            accept={UPLOAD_TYPES.join(",")}
+            disabled={busy}
             className="border border-line bg-inset px-4 py-3 text-primary file:mr-4 file:border-0 file:bg-inset file:font-mono file:text-12 file:text-muted file:uppercase"
           />
         </label>
         <label className="flex flex-col gap-1">
           <span className="font-mono text-11 text-faint uppercase">
-            Naam <span className="normal-case">— om hem in de lijst terug te vinden</span>
+            Naam <span className="normal-case">— mag leeg; bij meerdere foto&apos;s komt er een nummer achter</span>
           </span>
-          <input type="text" name="alt" placeholder="Loburg, publiek van achteren" className={input} />
+          <input type="text" name="alt" placeholder="Loburg, publiek van achteren" disabled={busy} className={input} />
+        </label>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={asSlides}
+            onChange={(e) => setAsSlides(e.target.checked)}
+            disabled={busy}
+            className="h-5 w-5 shrink-0 accent-[var(--accent-alt)]"
+          />
+          <span>Maak van elke foto meteen een eigen beeld, zonder tekst</span>
         </label>
         <div className="flex flex-wrap items-center gap-4">
-          <button type="submit" disabled={state.kind === "busy"} className={ghost}>
-            {state.kind === "busy" ? "Bezig met uploaden…" : "Foto uploaden"}
+          <button type="submit" disabled={busy || room <= 0} className={ghost}>
+            {busy ? "Bezig…" : "Foto's uploaden"}
           </button>
-          {state.kind === "error" && <span className="text-danger">{state.message}</span>}
+          {state.message && (
+            <span role="status" className={state.kind === "error" ? "text-danger" : "text-muted"}>
+              {state.message}
+            </span>
+          )}
         </div>
       </form>
     </section>
