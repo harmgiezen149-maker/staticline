@@ -35,6 +35,11 @@ export type ScreenSlide = {
   opacity: number;
   /** Ruis over het beeld, 0–100. 0 = geen; hoger = minder transparant. */
   noise: number;
+  /**
+   * Hoe vaak dit beeld voorbijkomt ten opzichte van de rest, 1–5. Op 2 komt
+   * het twee keer zo vaak als een beeld op 1. Alleen bij willekeurige volgorde.
+   */
+  weight: number;
 };
 
 export type ScreenPhoto = { url: string; alt: string };
@@ -73,6 +78,8 @@ export type ScreenConfig = {
   /** Foto's die alleen voor het scherm zijn geüpload. */
   photos: ScreenPhoto[];
   slides: ScreenSlide[];
+  /** Willekeurige volgorde (met `weight` per beeld), of de vaste volgorde van de lijst. */
+  shuffle: boolean;
 };
 
 export const LIMITS = {
@@ -85,6 +92,7 @@ export const LIMITS = {
   photos: 60,
   title: 200,
   label: 60,
+  weight: [1, 5],
 } as const;
 
 export const DEFAULT_OPACITY = 20;
@@ -110,9 +118,10 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   logo: { on: true, every: 3, noise: 0 },
   photos: [],
   slides: [
-    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0 },
-    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0 },
+    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1 },
+    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1 },
   ],
+  shuffle: true,
 };
 
 /**
@@ -182,6 +191,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
       photo,
       opacity: clampInt(r.opacity, [0, 100], DEFAULT_OPACITY),
       noise: clampInt(r.noise, [0, 100], 0),
+      weight: clampInt(r.weight, LIMITS.weight, 1),
     });
     if (slides.length >= LIMITS.slides) break;
   }
@@ -205,6 +215,9 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     },
     photos,
     slides,
+    // Een instelling van vóór deze keuze krijgt de willekeurige volgorde: dat
+    // was precies de vraag waarmee hij erbij kwam.
+    shuffle: typeof raw.shuffle === "boolean" ? raw.shuffle : true,
   };
 }
 
@@ -252,6 +265,88 @@ export function sequence(config: ScreenConfig): ScreenItem[] {
   });
   if (on && config.slides.length > 0 && config.slides.length < every) items.push({ kind: "logo" });
   return items.length ? items : [{ kind: "logo" }];
+}
+
+/**
+ * Eén rondje beelden in willekeurige volgorde: elk beeld zo vaak als zijn
+ * `weight`, geschud, en waar het kan nooit twee keer hetzelfde beeld achter
+ * elkaar — ook niet over de grens met het vorige rondje (`after`). Kan het
+ * niet anders (één beeld op 5×, de rest op 1×), dan staat het er toch dubbel.
+ */
+export function shuffledRound(slides: ScreenSlide[], random: () => number, after: string | null = null): ScreenSlide[] {
+  // Per plek kiezen in plaats van schudden en daarna repareren: bij een beeld
+  // dat de helft van het rondje vult, moet dat precies om en om staan, en dat
+  // vindt een reparatie achteraf niet altijd. Hier wordt gekozen naar wat er
+  // nog over is (een beeld op 3× heeft drie keer zoveel kans), behalve als
+  // het vaakst overgebleven beeld anders niet meer uit elkaar te houden is:
+  // dan gaat dat voor.
+  const left = new Map(slides.map((slide) => [slide.id, { slide, n: Math.max(1, slide.weight) }]));
+  const total = [...left.values()].reduce((sum, e) => sum + e.n, 0);
+  const round: ScreenSlide[] = [];
+  let prev = after;
+
+  for (let k = 0; k < total; k++) {
+    const remaining = total - k;
+    const open = [...left.values()].filter((e) => e.n > 0 && e.slide.id !== prev);
+    if (open.length === 0) {
+      // Alleen het vorige beeld is nog over; dan kan het niet anders.
+      const only = [...left.values()].find((e) => e.n > 0)!;
+      only.n -= 1;
+      round.push(only.slide);
+      prev = only.slide.id;
+      continue;
+    }
+    const most = open.reduce((a, b) => (b.n > a.n ? b : a));
+    let pick = most;
+    if (most.n * 2 < remaining) {
+      let r = random() * open.reduce((sum, e) => sum + e.n, 0);
+      pick = open.find((e) => (r -= e.n) < 0) ?? open[open.length - 1];
+    }
+    pick.n -= 1;
+    round.push(pick.slide);
+    prev = pick.slide.id;
+  }
+  return round;
+}
+
+/**
+ * De beelden voor een draaiend scherm, één voor één. Bij een willekeurige
+ * volgorde een nieuw geschud rondje zodra het vorige op is, zodat de
+ * verhoudingen over tijd kloppen en elk beeld regelmatig terugkomt; het logo
+ * na elke `every` beelden. Bij de vaste volgorde gewoon `sequence` in een lus.
+ */
+export function createPlaylist(
+  config: ScreenConfig,
+  random: () => number = Math.random,
+  /** Het beeld dat nu al in beeld staat: dat komt dan niet meteen nog een keer. */
+  after: string | null = null,
+) {
+  if (!config.shuffle || config.slides.length === 0) {
+    const fixed = sequence(config);
+    let i = 0;
+    return { next: (): ScreenItem => fixed[i++ % fixed.length] };
+  }
+
+  const { on, every } = config.logo;
+  let deck: ScreenSlide[] = [];
+  let last: string | null = after;
+  let shown = 0;
+  let logoDue = false;
+
+  return {
+    next(): ScreenItem {
+      if (logoDue) {
+        logoDue = false;
+        return { kind: "logo" };
+      }
+      if (deck.length === 0) deck = shuffledRound(config.slides, random, last);
+      const slide = deck.shift()!;
+      last = slide.id;
+      shown += 1;
+      if (on && shown % every === 0) logoDue = true;
+      return { kind: "slide", slide };
+    },
+  };
 }
 
 /**

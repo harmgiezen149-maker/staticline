@@ -312,7 +312,9 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   een kader met een zelf ingestelde breedte, hoogte en verschuiving in procenten
   van het scherm, met hulplijnen om het passend te maken: voor een lcd achter
   het glas van een oude beeldbuistelevisie. De ruisduur bij een wissel is
-  willekeurig tussen een minimum en een maximum
+  willekeurig tussen een minimum en een maximum. De beelden komen standaard in
+  willekeurige volgorde, in rondes waarin elk beeld zo vaak zit als zijn
+  "hoe vaak" (1–5×) en nooit twee keer achter elkaar (`createPlaylist`)
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

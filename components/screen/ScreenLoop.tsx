@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { decode } from "@/lib/motion/decode";
 import { ms, reduced, tok, wait } from "@/lib/motion/env";
@@ -11,6 +11,7 @@ import {
   type ScreenFormat,
   type ScreenItem,
   noiseBrightness,
+  createPlaylist,
   noiseDuration,
   ratioOf,
   sequence,
@@ -104,9 +105,17 @@ function photoReady(stage: HTMLElement | null, limit: number) {
 export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const [config, setConfig] = useState(initial);
   const [look, setLook] = useState(() => lookOf(initial));
-  const items = useMemo(() => sequence(config), [config]);
-  const [shown, setShown] = useState(0);
-  const [readout, setReadout] = useState(labelOf(items[0]));
+  // Wat er nu staat en wat er hierna komt. De lus kiest ze uit de
+  // afspeellijst (willekeurig met "hoe vaak", of de vaste volgorde); `n` telt
+  // door, zodat elk beeld een eigen `key` krijgt, ook als hetzelfde beeld
+  // later terugkomt. Op de server en bij de eerste paint het eerste beeld
+  // uit de lijst, zodat de HTML vaststaat.
+  const [view, setView] = useState<{ n: number; item: ScreenItem; next: ScreenItem | null }>(() => ({
+    n: 0,
+    item: sequence(initial)[0],
+    next: null,
+  }));
+  const [readout, setReadout] = useState(labelOf(view.item));
   const [idle, setIdle] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -216,7 +225,11 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
 
     const run = async () => {
       let cfg = start.current;
-      let i = 0;
+      let current: ScreenItem = sequence(cfg)[0];
+      const idOf = (item: ScreenItem) => (item.kind === "slide" ? item.slide.id : null);
+      let list = createPlaylist(cfg, Math.random, idOf(current));
+      let upcoming = list.next();
+      let n = 0;
       if (motion) noise();
       while (alive) {
         // Een nieuwe instelling gaat in bij de wissel, niet midden in een beeld.
@@ -224,11 +237,11 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
           cfg = pending.current;
           pending.current = null;
           setConfig(cfg);
+          list = createPlaylist(cfg, Math.random, idOf(current));
+          upcoming = list.next();
         }
-        const list = sequence(cfg);
-        i %= list.length;
-        setShown(i);
-        setReadout(labelOf(list[i]));
+        setView({ n, item: current, next: upcoming });
+        setReadout(labelOf(current));
         await painted();
         if (!alive) return;
 
@@ -241,7 +254,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (!alive) return;
 
         if (motion) await cover();
-        i += 1;
+        n += 1;
+        current = upcoming;
+        upcoming = list.next();
       }
     };
     void run();
@@ -348,7 +363,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     el.style.overflowWrap = "";
   }, []);
 
-  useLayoutEffect(fit, [fit, shown, items]);
+  useLayoutEffect(fit, [fit, view]);
   useEffect(() => {
     if (!frame.current) return;
     const observer = new ResizeObserver(fit);
@@ -377,7 +392,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const guides = custom.guides;
   const pctText = (n: number) => `${String(n).replace(".", ",")}%`;
 
-  const item = items[shown % items.length];
+  const { item } = view;
   // Ruis over het staande beeld: per beeld, of bij het wordmark.
   const overlay = !item ? 0 : item.kind === "logo" ? config.logo.noise : item.slide.noise;
   const overlayOn = overlay > 0;
@@ -390,7 +405,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     if (!overlayOn || reduced() || !overlayCanvas.current) return;
     return startNoise(overlayCanvas.current);
   }, [overlayOn]);
-  const next = items[(shown + 1) % items.length];
+  const next = view.next;
   const nextPhoto = next?.kind === "slide" ? next.slide.photo : "";
 
   return (
@@ -398,7 +413,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       <div ref={frame} className="scr__frame" style={frameStyle}>
         {/* Het beeld. Een nieuwe `key` per beeld: dan begint React met een
             schone tekst, en loopt een decode niet over twee beelden heen. */}
-        <div ref={stage} className="scr__stage" key={`${shown}-${item?.kind === "slide" ? item.slide.id : "logo"}`}>
+        <div ref={stage} className="scr__stage" key={`${view.n}-${item?.kind === "slide" ? item.slide.id : "logo"}`}>
           {item?.kind === "logo" ? (
             <div className="scr__logo">
               <Image src={wordmark.src} width={wordmark.width} height={wordmark.height} alt="Static Line" priority sizes="70vw" />

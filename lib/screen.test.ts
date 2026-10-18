@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, noiseBrightness, noiseDuration, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, createPlaylist, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
 
@@ -122,4 +122,65 @@ test("eigen maat: binnen de grenzen, en hulplijnen alleen als ze aan staan", () 
   assert.deepEqual(normalizeScreen({}).custom, { width: 100, height: 100, x: 0, y: 0, guides: false });
   assert.equal(pickFormat("eigen", normalizeScreen({})), "eigen");
   assert.equal(ratioOf("eigen"), null);
+});
+
+/** Een vaste reeks "willekeurige" getallen, zodat de test elke keer hetzelfde doet. */
+function seeded(seed = 7) {
+  let x = seed;
+  return () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+}
+
+test("hoe vaak: tussen 1 en 5, standaard 1", () => {
+  const c = normalizeScreen({ slides: [{ title: "A", weight: 3 }, { title: "B", weight: 9 }, { title: "C" }] });
+  assert.deepEqual(c.slides.map((s) => s.weight), [3, 5, 1]);
+  assert.equal(c.shuffle, true);
+  assert.equal(normalizeScreen({ shuffle: false }).shuffle, false);
+});
+
+test("willekeurig: de verhoudingen kloppen en niets komt twee keer achter elkaar", () => {
+  const c = normalizeScreen({
+    logo: { on: false },
+    slides: [{ id: "band", title: "Band", weight: 3 }, { id: "a", title: "A" }, { id: "b", title: "B" }, { id: "c", title: "C" }],
+  });
+  const list = createPlaylist(c, seeded());
+  const seen: string[] = [];
+  for (let i = 0; i < 600; i++) {
+    const item = list.next();
+    assert.equal(item.kind, "slide");
+    if (item.kind === "slide") seen.push(item.slide.id);
+  }
+  const count = (id: string) => seen.filter((s) => s === id).length;
+  // 6 per rondje, waarvan 3 de bandinfo: precies de helft.
+  assert.equal(count("band"), 300);
+  assert.equal(count("a"), 100);
+  for (let i = 1; i < seen.length; i++) assert.notEqual(seen[i], seen[i - 1], `dubbel op plek ${i}`);
+});
+
+test("willekeurig: het logo na elke n beelden", () => {
+  const c = normalizeScreen({ logo: { on: true, every: 2 }, slides: [{ title: "A" }, { title: "B" }, { title: "C" }] });
+  const list = createPlaylist(c, seeded(3));
+  const kinds = Array.from({ length: 9 }, () => list.next().kind);
+  assert.deepEqual(kinds, ["slide", "slide", "logo", "slide", "slide", "logo", "slide", "slide", "logo"]);
+});
+
+test("vaste volgorde: gewoon de lijst in een lus", () => {
+  const c = normalizeScreen({ shuffle: false, logo: { on: false }, slides: [{ title: "A", weight: 5 }, { title: "B" }] });
+  const list = createPlaylist(c);
+  assert.deepEqual(
+    Array.from({ length: 5 }, () => {
+      const i = list.next();
+      return i.kind === "slide" ? i.slide.title : "L";
+    }),
+    ["A", "B", "A", "B", "A"],
+  );
+});
+
+test("een rondje begint niet met het beeld waar het vorige mee eindigde", () => {
+  const slides = normalizeScreen({ slides: [{ id: "a", title: "A" }, { id: "b", title: "B" }] }).slides;
+  for (let s = 1; s < 30; s++) assert.notEqual(shuffledRound(slides, seeded(s), "a")[0].id, "a");
+});
+
+test("geen beelden: dan het logo", () => {
+  const list = createPlaylist(normalizeScreen({ slides: [] }));
+  assert.equal(list.next().kind, "logo");
 });

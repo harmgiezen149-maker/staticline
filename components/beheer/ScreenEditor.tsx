@@ -46,6 +46,16 @@ const small =
 const ghost =
   "inline-flex items-center justify-center border border-line-strong px-4 py-2 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] hover:border-primary disabled:opacity-60";
 
+/**
+ * Hoe vaak dit beeld in beeld komt, in woorden: "3 van elke 6 beelden". Het
+ * logo telt niet mee.
+ */
+function chance(slides: ScreenSlide[], slide: ScreenSlide) {
+  const total = slides.reduce((sum, s) => sum + s.weight, 0);
+  if (slides.length < 2 || total === 0) return "Het enige beeld: dat staat er steeds.";
+  return `${slide.weight} van elke ${total} beelden.`;
+}
+
 let seq = 0;
 const newId = () => `s${Date.now().toString(36)}${(seq++).toString(36)}`;
 
@@ -83,7 +93,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0 }],
+      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1 }],
     }));
   }
 
@@ -353,6 +363,33 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           </p>
         </div>
 
+        {/* Volgorde. Twee knoppen en geen vinkje, om dezelfde reden als bij de
+            hulplijnen: op een telefoon moeten ze met een duim te raken zijn. */}
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Volgorde</span>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Volgorde">
+            {([
+              [true, "Willekeurig"],
+              [false, "Vaste volgorde"],
+            ] as const).map(([value, text]) => (
+              <button
+                key={text}
+                type="button"
+                aria-pressed={config.shuffle === value}
+                onClick={() => set({ shuffle: value })}
+                className={`min-h-12 border px-4 py-3 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] ${config.shuffle === value ? "border-accent-alt text-accent-alt" : "border-line text-muted hover:text-primary"}`}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+          <span className="text-muted">
+            {config.shuffle
+              ? "De beelden komen in een steeds andere volgorde, nooit twee keer hetzelfde achter elkaar. Met \"Hoe vaak\" bij een beeld laat je het vaker voorbijkomen, bijvoorbeeld de bandinfo op 3×."
+              : "De beelden komen in de volgorde van de lijst hieronder. \"Hoe vaak\" telt alleen bij willekeurig."}
+          </span>
+        </div>
+
         {config.slides.length === 0 && (
           <p className="border border-dashed border-line px-4 py-6 text-center text-muted">
             Nog geen beelden. {config.logo.on ? "Zolang staat alleen het logo op het scherm." : "Zolang staat het logo op het scherm."}
@@ -460,6 +497,27 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                   onChange={(v) => setSlide(slide.id, { noise: v })}
                   hint="0% = geen ruis. Hoe hoger, hoe minder doorzichtig de ruislaag."
                 />
+
+                <div className={`flex flex-col gap-1 ${config.shuffle ? "" : "opacity-40"}`}>
+                  <span className="font-mono text-11 text-faint uppercase">Hoe vaak</span>
+                  <div className="grid grid-cols-5 gap-2" role="group" aria-label="Hoe vaak">
+                    {Array.from({ length: LIMITS.weight[1] }, (_, k) => k + 1).map((w) => (
+                      <button
+                        key={w}
+                        type="button"
+                        aria-pressed={slide.weight === w}
+                        disabled={!config.shuffle}
+                        onClick={() => setSlide(slide.id, { weight: w })}
+                        className={`min-h-11 border font-mono text-14 transition-colors duration-[120ms] ${slide.weight === w ? "border-accent-alt text-accent-alt" : "border-line text-muted enabled:hover:text-primary"}`}
+                      >
+                        {w}×
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-muted">
+                    {chance(config.slides, slide)}
+                  </span>
+                </div>
               </li>
             );
           })}
@@ -491,7 +549,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
               slides: asSlides
                 ? [
                     ...c.slides,
-                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0 })),
+                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0, weight: 1 })),
                   ].slice(0, LIMITS.slides)
                 : c.slides,
             };
