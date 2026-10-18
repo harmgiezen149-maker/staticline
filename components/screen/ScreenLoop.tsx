@@ -372,7 +372,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         : { width: "100vw", height: "100dvh" }),
     "--noise-brightness": String(noiseBrightness(look.noiseLevel)),
   } as unknown as CSSProperties;
-  const guides = effective === "eigen" && custom.guides;
+  // Hulplijnen bij elk formaat; de maten alleen bij "eigen", want alleen
+  // daar stel je ze zelf in.
+  const guides = custom.guides;
   const pctText = (n: number) => `${String(n).replace(".", ",")}%`;
 
   const item = items[shown % items.length];
@@ -467,7 +469,11 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         {guides && (
           <div className="scr__guides" aria-hidden="true">
             <span className="scr__guides-label">
-              {pctText(custom.width)} × {pctText(custom.height)} · x {pctText(custom.x)} · y {pctText(custom.y)}
+              {effective === "eigen"
+                ? `${pctText(custom.width)} × ${pctText(custom.height)} · x ${pctText(custom.x)} · y ${pctText(custom.y)}`
+                : effective === "auto"
+                  ? "Automatisch"
+                  : effective}
             </span>
           </div>
         )}

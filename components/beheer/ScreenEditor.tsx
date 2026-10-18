@@ -226,13 +226,34 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           </span>
         </label>
 
+        {/* Een knop en geen vinkje: op een telefoon drukte de lange tekst
+            ernaast het vinkje plat tot een paar pixels, en dan raak je het niet.
+            Altijd zichtbaar, ook buiten "eigen maat": de rand van het beeld is
+            bij elk formaat handig om te zien waar het precies valt. */}
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Hulplijnen op het scherm</span>
+          <button
+            type="button"
+            aria-pressed={config.custom.guides}
+            onClick={() => set({ custom: { ...config.custom, guides: !config.custom.guides } })}
+            className={`min-h-12 border px-4 py-3 text-left font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] ${config.custom.guides ? "border-accent-alt text-accent-alt" : "border-line-strong hover:border-primary"}`}
+          >
+            {config.custom.guides ? "Hulplijnen staan aan — tik om uit te zetten" : "Hulplijnen aanzetten"}
+          </button>
+          <span className="text-muted">
+            Een lijn langs de rand van het beeld en een kruis door het midden
+            {config.format === "eigen" ? ", met de maten erbij" : ""}. Te zien op het scherm zelf na Opslaan, en in het
+            voorbeeld hierboven. Zet ze na het afstellen weer uit.
+          </span>
+        </div>
+
         {config.format === "eigen" && (
           <fieldset className="flex flex-col gap-3 border border-line p-4">
             <legend className="px-1 font-mono text-11 text-faint uppercase">Eigen maat</legend>
             <p className="text-muted">
               Voor een scherm achter het glas van een beeldbuistelevisie: maak het beeld zo groot als de opening, en
               schuif het tot het erin valt. Alles in procenten van het scherm. Open het scherm op het lcd-paneel, zet de
-              hulplijnen aan en druk na elke aanpassing op Opslaan: binnen tien seconden past het scherm zich aan.
+              hulplijnen hierboven aan en druk na elke aanpassing op Opslaan: binnen tien seconden past het scherm zich aan.
             </p>
             <Slider
               label="Breedte"
@@ -272,15 +293,6 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
               onChange={(v) => set({ custom: { ...config.custom, y: v } })}
               hint="Min is omhoog, plus is omlaag."
             />
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={config.custom.guides}
-                onChange={(e) => set({ custom: { ...config.custom, guides: e.target.checked } })}
-                className="h-5 w-5 accent-[var(--accent-alt)]"
-              />
-              <span>Hulplijnen tonen: de rand van het beeld, een kruis door het midden en de maten</span>
-            </label>
             <button
               type="button"
               className={`${small} self-start`}
@@ -298,7 +310,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
               type="checkbox"
               checked={config.logo.on}
               onChange={(e) => set({ logo: { ...config.logo, on: e.target.checked } })}
-              className="h-5 w-5 accent-[var(--accent-alt)]"
+              className="h-5 w-5 shrink-0 accent-[var(--accent-alt)]"
             />
             <span>Het wordmark komt als eigen beeld voorbij</span>
           </label>

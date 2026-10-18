@@ -63,7 +63,10 @@ export type ScreenConfig = {
   noiseLevel: number;
   /** De verhouding van het beeld. "auto" vult elk scherm. */
   format: ScreenFormat;
-  /** Bij "eigen": het kader in procenten van het scherm, en of de hulplijnen aan staan. */
+  /**
+   * Bij "eigen": het kader in procenten van het scherm. De hulplijnen erin
+   * gelden bij elk formaat.
+   */
   custom: ScreenCustom;
   /** Het wordmark als eigen beeld, na elke `every` beelden, met eigen ruis. */
   logo: { on: boolean; every: number; noise: number };
