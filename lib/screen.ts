@@ -111,6 +111,13 @@ export type ScreenConfig = {
    */
   glitch: number;
   /**
+   * Hoe onrustig de foto's zijn, 0–100: een zender die net niet goed
+   * afgestemd is. Het beeld trilt en flikkert zacht, en af en toe rolt het
+   * omhoog door, met de zwarte balk ertussen, of hapert het even. Alleen de
+   * foto; de tekst blijft staan. 0 = stil. Zie unrestTiming.
+   */
+  unrest: number;
+  /**
    * Hoe snel de banden dichtklappen en opengaan bij een wissel, 0–100. 0 is
    * het tempo van de startanimatie op de site; 100 is een korte flits. Zie
    * transitionTiming.
@@ -180,6 +187,34 @@ export function glitchTiming(level: number) {
     shift: lerp(3, 32),
   };
 }
+/** Standaard een beetje onrust; ook voor een instelling van hiervoor. */
+export const DEFAULT_UNREST = 50;
+
+/**
+ * De onrust van de foto's bij een stand van 0–100.
+ *
+ * - `jitter`: hoe ver het beeld trilt, in procenten van de korte zijde.
+ * - `flicker`: hoeveel de helderheid op en neer gaat, als fractie. Nooit meer
+ *   dan 8%: zo blijft het een flikkering en geen flits — WCAG 2.3.1 telt pas
+ *   een verandering van 10% van het maximum als flits, en dit is 8% van de
+ *   helderheid van de foto zelf.
+ * - `pause`: hoe lang tussen twee keer rollen of haperen, in ms.
+ * - `roll`: hoe lang één keer rond rollen duurt, in ms. Een keer rond is één
+ *   donkere balk die voorbijkomt, dus ook bij de hoogste stand ver onder de
+ *   drie per seconde.
+ */
+export function unrestTiming(level: number) {
+  const t = Math.min(100, Math.max(0, level)) / 100;
+  const lerp = (a: number, b: number) => a + (b - a) * t;
+  return {
+    on: t > 0,
+    jitter: Math.round(lerp(0, 0.9) * 100) / 100,
+    flicker: Math.round(lerp(0, 0.08) * 1000) / 1000,
+    pause: [Math.round(lerp(22000, 2500)), Math.round(lerp(34000, 7000))] as const,
+    roll: [Math.round(lerp(1600, 600)), Math.round(lerp(2400, 1100))] as const,
+  };
+}
+
 /** Standaard een vlotte wissel; ook voor een instelling van hiervoor. */
 export const DEFAULT_SPEED = 70;
 
@@ -231,6 +266,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   readout: true,
   glitch: DEFAULT_GLITCH,
   speed: DEFAULT_SPEED,
+  unrest: DEFAULT_UNREST,
   bands: true,
   format: "auto",
   custom: { width: 100, height: 100, x: 0, y: 0, guides: false },
@@ -326,6 +362,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     noiseStyle: NOISE_STYLES.includes(raw.noiseStyle as NoiseStyle) ? (raw.noiseStyle as NoiseStyle) : "kleur",
     glitch: clampInt(raw.glitch, [0, 100], DEFAULT_GLITCH),
     speed: clampInt(raw.speed, [0, 100], DEFAULT_SPEED),
+    unrest: clampInt(raw.unrest, [0, 100], DEFAULT_UNREST),
     readout: raw.readout !== false,
     bands: raw.bands !== false,
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",

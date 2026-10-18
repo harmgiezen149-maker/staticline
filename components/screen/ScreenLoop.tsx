@@ -21,6 +21,7 @@ import {
   nextShowable,
   noiseDuration,
   transitionTiming,
+  unrestTiming,
   ratioOf,
   sequence,
   showable,
@@ -84,6 +85,7 @@ const lookOf = (c: ScreenConfig) => ({
   noiseLevel: c.noiseLevel,
   noiseStyle: c.noiseStyle,
   readout: c.readout,
+  unrest: c.unrest,
   glitch: c.glitch,
 });
 
@@ -487,6 +489,55 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     };
   }, [look.glitch]);
 
+  // ── Rollen en haperen ───────────────────────────────────────────────────
+  // Af en toe verliest de foto zijn verticale houvast, zoals een oude tv die
+  // net niet goed afgestemd is: hij rolt een keer helemaal rond, met de zwarte
+  // balk ertussen, of schiet een stuk omhoog en valt terug. Het trillen en
+  // flikkeren zelf is CSS (`.is-unrest` in styles/screen.css); dit is alleen
+  // wanneer. Net als de glitches alleen als er een beeld staat, niet bij
+  // minder beweging en niet op de achtergrond.
+  useEffect(() => {
+    const timing = unrestTiming(look.unrest);
+    const box = frame.current;
+    if (!timing.on || reduced() || !box) return;
+    let timer = 0;
+    let running: Animation | null = null;
+    const slip = () => {
+      const roll = box.querySelector<HTMLElement>(".scr__roll");
+      if (roll && holding.current && !document.hidden) {
+        const h = box.clientHeight;
+        const lap = h * 1.07; // de hoogte van een beeld plus de zwarte balk
+        if (Math.random() < 0.55) {
+          // Een of twee keer helemaal rond, met constante snelheid, en dan
+          // weer vast.
+          running = roll.animate(
+            [{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(0,${-lap}px,0)` }],
+            { duration: between(...timing.roll), iterations: Math.random() < 0.3 ? 2 : 1, easing: "linear" },
+          );
+        } else {
+          // Haperen: een stuk omhoog, nog wat verder, en terugvallen.
+          const up = -lap * between(0.08, 0.35);
+          running = roll.animate(
+            [
+              { transform: "translate3d(0,0,0)", offset: 0 },
+              { transform: `translate3d(0,${up}px,0)`, offset: 0.2 },
+              { transform: `translate3d(0,${up * 1.3}px,0)`, offset: 0.55 },
+              { transform: `translate3d(0,${up * 0.2}px,0)`, offset: 0.8 },
+              { transform: "translate3d(0,0,0)", offset: 1 },
+            ],
+            { duration: between(350, 700), easing: "steps(6, end)" },
+          );
+        }
+      }
+      timer = window.setTimeout(slip, between(...timing.pause));
+    };
+    timer = window.setTimeout(slip, between(...timing.pause));
+    return () => {
+      window.clearTimeout(timer);
+      running?.cancel();
+    };
+  }, [look.unrest]);
+
   // ── De tekst zo groot als past ──────────────────────────────────────────
   const fit = useCallback(() => {
     const box = frame.current;
@@ -530,6 +581,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   }, [fit]);
 
   const effective = format ?? look.format;
+  const unrest = unrestTiming(look.unrest);
   const ratio = ratioOf(effective);
   const { custom } = look;
   const frameStyle = {
@@ -541,6 +593,8 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         ? { aspectRatio: String(ratio), width: `min(100vw, calc(100dvh * ${ratio}))` }
         : { width: "100vw", height: "100dvh" }),
     "--noise-brightness": String(noiseBrightness(look.noiseLevel, look.noiseStyle)),
+    "--jitter": `${unrest.jitter}cqmin`,
+    "--flicker": String(unrest.flicker),
   } as unknown as CSSProperties;
   // Hulplijnen bij elk formaat; de maten alleen bij "eigen", want alleen
   // daar stel je ze zelf in.
@@ -548,6 +602,30 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const pctText = (n: number) => `${String(n).replace(".", ",")}%`;
 
   const { item } = view;
+  // De foto van een beeld. De hoes van het nummer is een gewone <img>, want
+  // die staat op Spotify en next.config.ts laat alleen de eigen opslag toe.
+  const shot = (cover: string, photo: string, opacity: number, first: boolean) =>
+    cover ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        className="scr__photo scr__cover"
+        src={cover}
+        alt=""
+        style={{ opacity: opacity / 100 }}
+        onError={() => setBadCover(cover)}
+      />
+    ) : (
+      <Image
+        className="scr__photo"
+        src={photo}
+        alt=""
+        fill
+        sizes="100vw"
+        priority={first}
+        loading={first ? undefined : "eager"}
+        style={{ opacity: opacity / 100 }}
+      />
+    );
   // Wat er op een beeld staat. Bij een nu-speelt-beeld de titel, artiest en
   // hoes van het nummer; anders wat er is ingevuld.
   const copy =
@@ -578,7 +656,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
 
   return (
     <main className={`scr${idle ? " is-idle" : ""}`}>
-      <div ref={frame} className="scr__frame" style={frameStyle}>
+      <div ref={frame} className={`scr__frame${unrest.on ? " is-unrest" : ""}`} style={frameStyle}>
         {/* Het beeld. Een nieuwe `key` per beeld: dan begint React met een
             schone tekst, en loopt een decode niet over twee beelden heen. */}
         <div ref={stage} className="scr__stage" key={`${view.n}-${item?.kind === "slide" ? item.slide.id : "logo"}`}>
@@ -588,27 +666,24 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
             </div>
           ) : item ? (
             <>
-              {/* De hoes van het nummer: een gewone <img>, want die staat op
-                  Spotify en next.config.ts laat alleen de eigen opslag toe. */}
-              {copy.cover ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  className="scr__photo scr__cover"
-                  src={copy.cover}
-                  alt=""
-                  style={{ opacity: item.slide.opacity / 100 }}
-                  onError={() => setBadCover(copy.cover)}
-                />
-              ) : item.slide.photo && (
-                <Image
-                  className="scr__photo"
-                  src={item.slide.photo}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  priority
-                  style={{ opacity: item.slide.opacity / 100 }}
-                />
+              {/* De foto als op een tv met slechte ontvangst: hij trilt en
+                  flikkert in .scr__tv, en rolt in .scr__roll. Om te kunnen
+                  doorrollen staat hij er twee keer, met de zwarte balk
+                  ertussen; zie `.scr__roll` in styles/screen.css. */}
+              {(copy.cover || item.slide.photo) && (
+                <div className="scr__tv">
+                  <div className="scr__roll">
+                    <div className="scr__shot">{shot(copy.cover, item.slide.photo, item.slide.opacity, true)}</div>
+                    {look.unrest > 0 && (
+                      <>
+                        <div className="scr__rollbar" />
+                        <div className="scr__shot scr__shot--b" aria-hidden="true">
+                          {shot(copy.cover, item.slide.photo, item.slide.opacity, false)}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               )}
               {(copy.label || copy.title) && (
                 <div className="scr__copy">

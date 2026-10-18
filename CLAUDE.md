@@ -323,7 +323,11 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   als keuze "zwart-wit". Een beeld "Nu speelt" (`source: "nu"`) toont het
   nummer dat de bediener van de podiumweergave in de Band App open heeft, met
   de hoes uit Spotify: `/api/public/live` daar, via `/api/scherm/nu` hier
-  (`fetchNowPlaying`). Zolang niemand bedient, slaat het scherm dat beeld over
+  (`fetchNowPlaying`). Zolang niemand bedient, slaat het scherm dat beeld over.
+  De foto's zijn "onrustig" als op een slecht afgestemde tv (`unrestTiming`):
+  ze trillen en flikkeren, met de flikkering onder de 8% zodat het geen flits
+  wordt, en rollen af en toe door met een zwarte balk ertussen. De tekst
+  staat stil
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

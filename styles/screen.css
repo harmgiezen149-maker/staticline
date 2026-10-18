@@ -74,6 +74,46 @@
   color: var(--text-primary);
   overflow-wrap: break-word;
 }
+/* ── De foto als op een tv met slechte ontvangst ── *
+ * .scr__tv trilt en flikkert (alleen met `.is-unrest`, zie onderaan), en
+ * .scr__roll rolt: ScreenLoop schuift hem af en toe een beeldhoogte plus de
+ * balk omhoog. Daarvoor staat de foto er twee keer onder elkaar, met een
+ * zwarte balk ertussen, zodat het rollen naadloos rondgaat zoals de
+ * beeldsynchronisatie van een beeldbuis die het niet houdt. Alleen de foto:
+ * de tekst blijft staan, anders is hij niet te lezen. */
+.scr__tv {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.scr__roll {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 214cqh;
+}
+.scr__shot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100cqh;
+}
+.scr__shot--b {
+  top: 107cqh;
+}
+/* Zwart en geen token, net als de randen naast het kader: dit is de balk
+   tussen twee beelden van een tv die niet meer weet waar boven is. */
+.scr__rollbar {
+  position: absolute;
+  top: 100cqh;
+  left: 0;
+  right: 0;
+  height: 7cqh;
+  background: #000;
+}
+
 /* De artiest onder de titel van een nu-speelt-beeld: de maat van het label,
    de kleur van de titel. */
 .scr__artist {
@@ -304,6 +344,40 @@
 }
 .reduce-motion .scr__glitch {
   display: none;
+}
+
+/* Onrust: trillen en flikkeren, op een eigen ritme met ongelijke stappen
+   zodat het niet als een lus aanvoelt. Hoe ver en hoe sterk komt uit
+   unrestTiming (--jitter, --flicker); de flikkering blijft onder de 8%. */
+.js:not(.reduce-motion) .is-unrest .scr__tv {
+  animation:
+    scr-jitter 1.9s steps(1, end) infinite,
+    scr-flicker 1.3s steps(1, end) infinite;
+}
+@keyframes scr-jitter {
+  0% { transform: translate3d(0, 0, 0); }
+  7% { transform: translate3d(calc(var(--jitter) * 0.6), 0, 0); }
+  13% { transform: translate3d(calc(var(--jitter) * -0.4), calc(var(--jitter) * 0.2), 0); }
+  21% { transform: translate3d(0, 0, 0); }
+  34% { transform: translate3d(calc(var(--jitter) * -0.8), 0, 0); }
+  38% { transform: translate3d(calc(var(--jitter) * 1), calc(var(--jitter) * -0.3), 0); }
+  44% { transform: translate3d(calc(var(--jitter) * 0.2), 0, 0); }
+  58% { transform: translate3d(0, calc(var(--jitter) * 0.3), 0); }
+  66% { transform: translate3d(calc(var(--jitter) * -0.3), 0, 0); }
+  79% { transform: translate3d(calc(var(--jitter) * 0.5), calc(var(--jitter) * -0.2), 0); }
+  86% { transform: translate3d(calc(var(--jitter) * -0.6), 0, 0); }
+  93% { transform: translate3d(0, 0, 0); }
+}
+@keyframes scr-flicker {
+  0% { filter: brightness(1); }
+  9% { filter: brightness(calc(1 - var(--flicker))); }
+  17% { filter: brightness(calc(1 + var(--flicker) * 0.6)); }
+  29% { filter: brightness(1); }
+  41% { filter: brightness(calc(1 - var(--flicker) * 0.5)); }
+  52% { filter: brightness(calc(1 + var(--flicker))); }
+  61% { filter: brightness(calc(1 - var(--flicker) * 0.8)); }
+  73% { filter: brightness(1); }
+  88% { filter: brightness(calc(1 + var(--flicker) * 0.4)); }
 }
 
 /* ── Hulplijnen bij "eigen maat" ── *

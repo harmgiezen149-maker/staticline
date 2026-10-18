@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, NOT_PLAYING, createPlaylist, glitchTiming, nextShowable, showable, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, NOT_PLAYING, createPlaylist, unrestTiming, glitchTiming, nextShowable, showable, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 import { bandAt, drawColorNoise } from "./screen-noise.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
@@ -274,4 +274,16 @@ test("nu speelt: een beeld zonder tekst blijft staan, en wordt overgeslagen als 
   // Alleen een nu-speelt-beeld en geen logo: dan het wordmark in plaats van eindeloos zoeken.
   const only = normalizeScreen({ logo: { on: false }, slides: [{ id: "nu", source: "nu" }] });
   assert.deepEqual(nextShowable(createPlaylist(only, Math.random, null), NOT_PLAYING), { kind: "logo" });
+});
+
+test("onrustig beeld: standaard aan, uit op 0, flikkering nooit boven de 8%", () => {
+  assert.equal(normalizeScreen({}).unrest, 50);
+  assert.equal(normalizeScreen({ unrest: 0 }).unrest, 0);
+  assert.equal(unrestTiming(0).on, false);
+  const max = unrestTiming(100);
+  assert.ok(max.flicker <= 0.08);
+  assert.ok(max.pause[0] >= 2000);
+  // Eén keer rond = één donkere balk; nooit meer dan drie per seconde.
+  assert.ok(max.roll[0] >= 334);
+  assert.ok(unrestTiming(50).jitter > 0);
 });

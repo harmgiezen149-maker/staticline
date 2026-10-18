@@ -349,6 +349,21 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           }
         />
 
+        <Slider
+          label="Onrustig beeld"
+          min={0}
+          max={100}
+          step={5}
+          value={config.unrest}
+          unit="%"
+          onChange={(v) => set({ unrest: v })}
+          hint={
+            config.unrest === 0
+              ? "Uit: de foto's staan stil."
+              : "De foto's als op een tv die net niet goed afgestemd is: ze trillen en flikkeren zacht, en af en toe rolt het beeld omhoog door, met de zwarte balk ertussen, of hapert het even. De tekst blijft staan. Hoe hoger, hoe onrustiger en hoe vaker."
+          }
+        />
+
         <label className="flex flex-col gap-1">
           <span className="font-mono text-11 text-faint uppercase">Formaat</span>
           <select value={config.format} onChange={(e) => set({ format: e.target.value as ScreenFormat })} className={input}>
