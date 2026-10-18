@@ -312,7 +312,9 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   een kader met een zelf ingestelde breedte, hoogte en verschuiving in procenten
   van het scherm, met hulplijnen om het passend te maken: voor een lcd achter
   het glas van een oude beeldbuistelevisie. De ruisduur bij een wissel is
-  willekeurig tussen een minimum en een maximum. De beelden komen standaard in
+  willekeurig tussen een minimum en een maximum, en het tempo van de wissel
+  is instelbaar, van dat van de startanimatie tot een korte flits
+  (`transitionTiming`). De beelden komen standaard in
   willekeurige volgorde, in rondes waarin elk beeld zo vaak zit als zijn
   "hoe vaak" (1–5×) en nooit twee keer achter elkaar (`createPlaylist`). De
   ruis is standaard kleurensneeuw zoals op een oude beeldbuis

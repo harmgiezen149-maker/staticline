@@ -83,6 +83,12 @@ export type ScreenConfig = {
    * blauw uiteenvalt. 0 = uit; hoger = vaker en heftiger. Zie glitchTiming.
    */
   glitch: number;
+  /**
+   * Hoe snel de banden dichtklappen en opengaan bij een wissel, 0–100. 0 is
+   * het tempo van de startanimatie op de site; 100 is een korte flits. Zie
+   * transitionTiming.
+   */
+  speed: number;
   /** De verhouding van het beeld. "auto" vult elk scherm. */
   format: ScreenFormat;
   /**
@@ -101,7 +107,7 @@ export type ScreenConfig = {
 
 export const LIMITS = {
   seconds: [3, 60],
-  noiseSeconds: [0.5, 10],
+  noiseSeconds: [0.1, 10],
   size: [10, 100],
   shift: [-50, 50],
   every: [1, 20],
@@ -142,6 +148,38 @@ export function glitchTiming(level: number) {
     shift: lerp(3, 32),
   };
 }
+/** Standaard een vlotte wissel; ook voor een instelling van hiervoor. */
+export const DEFAULT_SPEED = 70;
+
+/**
+ * De duur van elk stuk van de wissel in ms, bij een snelheid van 0–100. De
+ * basis is het tempo van de loader (`--loader-collapse` en `--loader-open`);
+ * alles schaalt mee, ook de pauzes en het oplichten van de lijn, zodat de
+ * wissel bij 100 een flits van een paar honderd milliseconden is in plaats
+ * van ruim twee seconden. Eén flits per wissel en minstens drie seconden
+ * beeld ertussen: ruim binnen de drie flitsen per seconde van WCAG 2.3.1.
+ */
+export function transitionTiming(level: number, base = { collapse: 520, open: 1000 }) {
+  const t = Math.min(100, Math.max(0, level)) / 100;
+  const f = 1 - 0.9 * t;
+  const r = (n: number, min = 0) => Math.max(min, Math.round(n * f));
+  return {
+    /** Ruis klapt samen tot de lijn, en springt weer open. */
+    collapse: r(base.collapse, 30),
+    /** De lijn opent zich tot beeld. */
+    open: r(base.open, 60),
+    /** De banden sluiten over het beeld. */
+    close: r(base.open * 0.7, 50),
+    /** De lijn staat even alleen. */
+    gap: r(260),
+    settle: r(200),
+    /** Het oplichten en wegvallen van de lijn en de tekst. */
+    fade: r(160, 30),
+    lineOut: r(400, 40),
+    lineDelay: r(240),
+  };
+}
+
 export const noiseBrightness = (level: number, style: NoiseStyle = "zwart-wit") => {
   const t = Math.min(100, Math.max(0, level)) / 100;
   // De kleurenruis tekent zelf al licht; met dezelfde vermenigvuldiging als
@@ -159,6 +197,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   noiseLevel: DEFAULT_NOISE_LEVEL,
   noiseStyle: "kleur",
   glitch: DEFAULT_GLITCH,
+  speed: DEFAULT_SPEED,
   format: "auto",
   custom: { width: 100, height: 100, x: 0, y: 0, guides: false },
   logo: { on: true, every: 3, noise: 0 },
@@ -248,6 +287,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     noiseLevel: clampInt(raw.noiseLevel, [0, 100], DEFAULT_NOISE_LEVEL),
     noiseStyle: NOISE_STYLES.includes(raw.noiseStyle as NoiseStyle) ? (raw.noiseStyle as NoiseStyle) : "kleur",
     glitch: clampInt(raw.glitch, [0, 100], DEFAULT_GLITCH),
+    speed: clampInt(raw.speed, [0, 100], DEFAULT_SPEED),
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",
     custom: {
       width: clampTenth(custom.width, LIMITS.size, 100),

@@ -13,6 +13,7 @@ import {
   type ScreenFormat,
   type ScreenPhoto,
   type ScreenSlide,
+  transitionTiming,
 } from "@/lib/screen";
 
 /**
@@ -39,6 +40,13 @@ const FORMAT_LABEL: Record<ScreenFormat, string> = {
   "1:1": "Vierkant 1:1",
   eigen: "Eigen maat — zelf instellen",
 };
+
+/** Hoe lang de wissel bij deze snelheid duurt, in gewone woorden. */
+function speedText(speed: number) {
+  const t = transitionTiming(speed);
+  const total = t.close + t.settle + t.collapse * 2 + t.gap + t.open;
+  return total >= 1000 ? `samen ${String(Math.round(total / 100) / 10).replace(".", ",")} s` : `samen ${total} ms`;
+}
 
 const input =
   "border border-line bg-inset px-4 py-3 text-primary transition-colors duration-[120ms] focus:border-line-strong";
@@ -208,10 +216,21 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
             hint={
               config.noiseMin === config.noiseMax
                 ? "Nu staat de ruis elke keer even lang. Zet het maximum hoger, dan wordt het elke wissel een willekeurige duur daartussen."
-                : "Elke wissel kiest het scherm een willekeurige duur hiertussen. Daarna klapt de ruis in ruim anderhalve seconde dicht tot de lijn en opent het beeld."
+                : "Elke wissel kiest het scherm een willekeurige duur hiertussen. Daarna klapt de ruis dicht tot de lijn en opent het beeld, in het tempo hieronder."
             }
           />
         </fieldset>
+
+        <Slider
+          label="Snelheid van de wissel"
+          min={0}
+          max={100}
+          step={5}
+          value={config.speed}
+          unit="%"
+          onChange={(v) => set({ speed: v })}
+          hint={`Hoe snel de banden dichtklappen en het volgende beeld opengaat: ${speedText(config.speed)}. 0% is het rustige tempo van de startanimatie, 100% een korte flits. Voor een echte flits zet je de ruis hierboven ook kort, bijvoorbeeld 0,2 s.`}
+        />
 
         {/* Soort ruis. Twee knoppen, zoals bij de volgorde. */}
         <div className="flex flex-col gap-1">

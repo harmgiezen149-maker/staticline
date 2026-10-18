@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, createPlaylist, glitchTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, createPlaylist, glitchTiming, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 import { bandAt, drawColorNoise } from "./screen-noise.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
@@ -89,7 +89,7 @@ test("ruis: tijd, helderheid en ruis over het beeld", () => {
   assert.equal(c.noiseLevel, 100);
   assert.equal(c.logo.noise, 40);
   assert.deepEqual(c.slides.map((s) => s.noise), [25, 0, 0]);
-  assert.equal(normalizeScreen({ noiseSeconds: 0 }).noiseMin, 0.5);
+  assert.equal(normalizeScreen({ noiseSeconds: 0 }).noiseMin, 0.1);
   assert.equal(normalizeScreen({ noiseSeconds: 99 }).noiseMax, 10);
   // Een opgeslagen instelling van vóór deze velden krijgt de standaard.
   const old = normalizeScreen({ seconds: 8, slides: [{ title: "A" }] });
@@ -217,4 +217,18 @@ test("kleurenruis: vult elk punt, ondoorzichtig, met banden", () => {
   const bands = Array.from({ length: w }, (_, x) => bandAt(x, w, 1.5));
   assert.ok(Math.max(...bands) - Math.min(...bands) > 0.4);
   for (const b of bands) assert.ok(b >= 0.25 && b <= 1.1);
+});
+
+test("snelheid van de wissel: van rustig tot een flits", () => {
+  assert.equal(normalizeScreen({}).speed, 70);
+  assert.equal(normalizeScreen({ speed: 140 }).speed, 100);
+  const calm = transitionTiming(0);
+  assert.equal(calm.collapse, 520);
+  assert.equal(calm.open, 1000);
+  const flash = transitionTiming(100);
+  const total = (t: typeof calm) => t.close + t.settle + t.collapse * 2 + t.gap + t.open;
+  assert.ok(total(flash) < 400, `flits duurt ${total(flash)} ms`);
+  assert.ok(total(calm) > 2000);
+  assert.ok(flash.collapse >= 30 && flash.fade >= 30);
+  assert.equal(normalizeScreen({ noiseMin: 0.1, noiseMax: 0.1 }).noiseMin, 0.1);
 });

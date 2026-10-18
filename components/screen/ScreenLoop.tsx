@@ -16,6 +16,7 @@ import {
   glitchTiming,
   noiseBrightness,
   noiseDuration,
+  transitionTiming,
   ratioOf,
   sequence,
 } from "@/lib/screen";
@@ -165,8 +166,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     let alive = true;
     const motion = !reduced();
 
-    const collapseT = ms("--loader-collapse") || 520;
-    const openT = ms("--loader-open") || 1000;
+    const base = { collapse: ms("--loader-collapse") || 520, open: ms("--loader-open") || 1000 };
     const easeBand = tok("--ease-band") || "ease-in-out";
     const easeCut = tok("--ease-cut") || "ease-in";
 
@@ -199,7 +199,8 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
 
     // Ruis → lijn → beeld. Het beeld staat er al onder. `noiseT` is hoe lang
     // de ruis met het label staat, uit de instelling.
-    const reveal = async (noiseT: number) => {
+    type Timing = ReturnType<typeof transitionTiming>;
+    const reveal = async (noiseT: number, tt: Timing) => {
       countUp(noiseT);
       await Promise.all([
         decode(label.current, { duration: Math.min(700, noiseT * 0.8), hot: 0.2 }),
@@ -208,38 +209,37 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       ]);
       if (!alive) return;
 
-      void play(text.current, [{ opacity: 1 }, { opacity: 0 }], { duration: 120 });
-      void play(line.current, [{ opacity: 0 }, { opacity: 1 }], { duration: 120, delay: collapseT * 0.75 });
-      await play(signal.current, [{ transform: "scaleY(1)" }, { transform: "scaleY(0.004)" }], { duration: collapseT, easing: easeCut });
+      void play(text.current, [{ opacity: 1 }, { opacity: 0 }], { duration: Math.min(120, tt.fade) });
+      void play(line.current, [{ opacity: 0 }, { opacity: 1 }], { duration: Math.min(120, tt.fade), delay: tt.collapse * 0.75 });
+      await play(signal.current, [{ transform: "scaleY(1)" }, { transform: "scaleY(0.004)" }], { duration: tt.collapse, easing: easeCut });
       stopNoise();
       if (signal.current) signal.current.style.visibility = "hidden";
-      await wait(260);
+      await wait(tt.gap);
       if (!alive) return;
 
-      void play(line.current, [{ opacity: 1 }, { opacity: 0 }], { duration: 400, delay: 240 });
+      void play(line.current, [{ opacity: 1 }, { opacity: 0 }], { duration: tt.lineOut, delay: tt.lineDelay });
       await Promise.all([
-        play(top.current, [{ transform: "translate3d(0,0,0)" }, { transform: "translate3d(0,-100%,0)" }], { duration: openT, easing: easeBand }),
-        play(bottom.current, [{ transform: "translate3d(0,0,0)" }, { transform: "translate3d(0,100%,0)" }], { duration: openT, easing: easeBand }),
+        play(top.current, [{ transform: "translate3d(0,0,0)" }, { transform: "translate3d(0,-100%,0)" }], { duration: tt.open, easing: easeBand }),
+        play(bottom.current, [{ transform: "translate3d(0,0,0)" }, { transform: "translate3d(0,100%,0)" }], { duration: tt.open, easing: easeBand }),
       ]);
       const title = stage.current?.querySelector<HTMLElement>(".scr__title");
       void decode(title ?? null, { duration: 900, hot: 0.12 });
     };
 
     // Beeld → lijn → ruis: de banden sluiten, de lijn springt open.
-    const cover = async () => {
-      const closeT = openT * 0.7;
-      void play(line.current, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: closeT * 0.8 });
+    const cover = async (tt: Timing) => {
+      void play(line.current, [{ opacity: 0 }, { opacity: 1 }], { duration: tt.fade, delay: tt.close * 0.8 });
       await Promise.all([
-        play(top.current, [{ transform: "translate3d(0,-100%,0)" }, { transform: "translate3d(0,0,0)" }], { duration: closeT, easing: easeBand }),
-        play(bottom.current, [{ transform: "translate3d(0,100%,0)" }, { transform: "translate3d(0,0,0)" }], { duration: closeT, easing: easeBand }),
+        play(top.current, [{ transform: "translate3d(0,-100%,0)" }, { transform: "translate3d(0,0,0)" }], { duration: tt.close, easing: easeBand }),
+        play(bottom.current, [{ transform: "translate3d(0,100%,0)" }, { transform: "translate3d(0,0,0)" }], { duration: tt.close, easing: easeBand }),
       ]);
-      await wait(200);
+      await wait(tt.settle);
       if (!alive) return;
       if (signal.current) signal.current.style.visibility = "visible";
       noise();
-      void play(line.current, [{ opacity: 1 }, { opacity: 0 }], { duration: 160, delay: collapseT * 0.5 });
-      void play(text.current, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: collapseT * 0.6 });
-      await play(signal.current, [{ transform: "scaleY(0.004)" }, { transform: "scaleY(1)" }], { duration: collapseT, easing: easeBand });
+      void play(line.current, [{ opacity: 1 }, { opacity: 0 }], { duration: tt.fade, delay: tt.collapse * 0.5 });
+      void play(text.current, [{ opacity: 0 }, { opacity: 1 }], { duration: tt.fade, delay: tt.collapse * 0.6 });
+      await play(signal.current, [{ transform: "scaleY(0.004)" }, { transform: "scaleY(1)" }], { duration: tt.collapse, easing: easeBand });
     };
 
     // Wacht één beeld zodat React de nieuwe inhoud onder de banden getekend heeft.
@@ -268,7 +268,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (!alive) return;
 
         // Elke wissel een andere ruisduur, tussen het minimum en het maximum.
-        if (motion) await reveal(noiseDuration(cfg));
+        if (motion) await reveal(noiseDuration(cfg), transitionTiming(cfg.speed, base));
         else await photoReady(stage.current, 1500);
         if (!alive) return;
 
@@ -277,7 +277,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         holding.current = false;
         if (!alive) return;
 
-        if (motion) await cover();
+        // De snelheid van deze wissel; een nieuwe instelling gaat pas bij het
+        // volgende beeld in, zodat een wissel niet halverwege van tempo verandert.
+        if (motion) await cover(transitionTiming(cfg.speed, base));
         n += 1;
         current = upcoming;
         upcoming = list.next();
