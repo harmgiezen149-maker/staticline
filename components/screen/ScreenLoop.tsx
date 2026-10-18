@@ -6,10 +6,12 @@ import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useRef, us
 import { decode } from "@/lib/motion/decode";
 import { ms, reduced, tok, wait } from "@/lib/motion/env";
 import { startNoise } from "@/lib/motion/loader";
+import { startColorNoise } from "@/lib/screen-noise";
 import {
   type ScreenConfig,
   type ScreenFormat,
   type ScreenItem,
+  type NoiseStyle,
   createPlaylist,
   glitchTiming,
   noiseBrightness,
@@ -68,7 +70,17 @@ const POLL_MS = 10_000;
  * Wat het kader bepaalt: formaat, eigen maat en helderheid. Een wijziging
  * daarin gaat meteen in; de beelden zelf wisselen pas bij de volgende wissel.
  */
-const lookOf = (c: ScreenConfig) => ({ format: c.format, custom: c.custom, noiseLevel: c.noiseLevel, glitch: c.glitch });
+const lookOf = (c: ScreenConfig) => ({
+  format: c.format,
+  custom: c.custom,
+  noiseLevel: c.noiseLevel,
+  noiseStyle: c.noiseStyle,
+  glitch: c.glitch,
+});
+
+/** De ruis tekenen in de gekozen soort; geeft de functie om te stoppen. */
+const runNoise = (canvas: HTMLCanvasElement, style: NoiseStyle) =>
+  style === "kleur" ? startColorNoise(canvas) : startNoise(canvas);
 
 const between = (min: number, max: number) => min + Math.random() * (max - min);
 /** Na zoveel stilstand verdwijnen de cursor en de knop. */
@@ -138,6 +150,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   // Of er nu een beeld staat (en dus niet net ruis, een lijn of een wissel):
   // alleen dan komen er glitches.
   const holding = useRef(false);
+  // De soort ruis voor de volgende wissel; de lus leest hem pas als hij ruis
+  // start, zodat een nieuwe instelling niet midden in een wissel omslaat.
+  const noiseStyle = useRef(initial.noiseStyle);
   const line = useRef<HTMLDivElement>(null);
   const top = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
@@ -158,7 +173,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     let stopNoise = () => {};
     const noise = () => {
       stopNoise();
-      if (canvas.current) stopNoise = startNoise(canvas.current);
+      if (canvas.current) stopNoise = runNoise(canvas.current, noiseStyle.current);
     };
 
     // Wachten, tenzij iemand op → drukt of het scherm stopt.
@@ -289,6 +304,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (json === current.current) return;
         current.current = json;
         pending.current = next;
+        noiseStyle.current = next.noiseStyle;
         setLook(lookOf(next));
       } catch {
         // Geen verbinding in de zaal: dan draait gewoon door wat er staat.
@@ -434,7 +450,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       : ratio
         ? { aspectRatio: String(ratio), width: `min(100vw, calc(100dvh * ${ratio}))` }
         : { width: "100vw", height: "100dvh" }),
-    "--noise-brightness": String(noiseBrightness(look.noiseLevel)),
+    "--noise-brightness": String(noiseBrightness(look.noiseLevel, look.noiseStyle)),
   } as unknown as CSSProperties;
   // Hulplijnen bij elk formaat; de maten alleen bij "eigen", want alleen
   // daar stel je ze zelf in.
@@ -452,8 +468,8 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   // beweging nooit.
   useEffect(() => {
     if (!overlayOn || reduced() || !overlayCanvas.current) return;
-    return startNoise(overlayCanvas.current);
-  }, [overlayOn]);
+    return runNoise(overlayCanvas.current, look.noiseStyle);
+  }, [overlayOn, look.noiseStyle]);
   const next = view.next;
   const nextPhoto = next?.kind === "slide" ? next.slide.photo : "";
 

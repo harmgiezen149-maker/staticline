@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { DEFAULT_SCREEN, createPlaylist, glitchTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { bandAt, drawColorNoise } from "./screen-noise.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
 
@@ -196,4 +197,24 @@ test("glitches: standaard aan, 0 is uit, nooit sneller dan om de ruim een second
   assert.ok(max.pause[0] >= 1000);
   assert.ok(max.duration[1] < max.pause[0]);
   assert.ok(glitchTiming(80).shift > glitchTiming(20).shift);
+});
+
+test("soort ruis: standaard kleur, met een eigen helderheidsschaal", () => {
+  assert.equal(normalizeScreen({}).noiseStyle, "kleur");
+  assert.equal(normalizeScreen({ noiseStyle: "zwart-wit" }).noiseStyle, "zwart-wit");
+  assert.equal(normalizeScreen({ noiseStyle: "regenboog" }).noiseStyle, "kleur");
+  assert.equal(noiseBrightness(16), 1.01);
+  assert.ok(noiseBrightness(100, "kleur") < 2);
+  assert.ok(Math.abs(noiseBrightness(60, "kleur") - 1) < 0.05);
+});
+
+test("kleurenruis: vult elk punt, ondoorzichtig, met banden", () => {
+  const w = 64;
+  const h = 32;
+  const buffer = new Uint32Array(w * h);
+  drawColorNoise(buffer, w, h, 1.5);
+  for (const px of buffer) assert.equal(px >>> 24, 0xff);
+  const bands = Array.from({ length: w }, (_, x) => bandAt(x, w, 1.5));
+  assert.ok(Math.max(...bands) - Math.min(...bands) > 0.4);
+  for (const b of bands) assert.ok(b >= 0.25 && b <= 1.1);
 });

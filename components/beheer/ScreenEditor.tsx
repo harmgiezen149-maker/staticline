@@ -213,6 +213,32 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           />
         </fieldset>
 
+        {/* Soort ruis. Twee knoppen, zoals bij de volgorde. */}
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Soort ruis</span>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Soort ruis">
+            {([
+              ["kleur", "Kleur"],
+              ["zwart-wit", "Zwart-wit"],
+            ] as const).map(([value, text]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={config.noiseStyle === value}
+                onClick={() => set({ noiseStyle: value })}
+                className={`min-h-12 border px-4 py-3 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] ${config.noiseStyle === value ? "border-accent-alt text-accent-alt" : "border-line text-muted hover:text-primary"}`}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+          <span className="text-muted">
+            {config.noiseStyle === "kleur"
+              ? "De sneeuw van een oude beeldbuis zonder zender: korrels in blauw, cyaan, groen en wit, met golvende lichte banden erdoor."
+              : "De grijze ruis van de startanimatie op de site."}
+          </span>
+        </div>
+
         <Slider
           label="Helderheid van de ruis"
           min={0}
@@ -220,7 +246,11 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           value={config.noiseLevel}
           unit="%"
           onChange={(v) => set({ noiseLevel: v })}
-          hint={`Geldt voor de ruis bij de wissel én de ruis over de beelden. ${DEFAULT_NOISE_LEVEL}% is de ruis van de startanimatie op de site.`}
+          hint={
+            config.noiseStyle === "kleur"
+              ? "Geldt voor de ruis bij de wissel én de ruis over de beelden. Rond 60% staat de kleurenruis zoals hij getekend is; daarboven wordt hij feller."
+              : `Geldt voor de ruis bij de wissel én de ruis over de beelden. ${DEFAULT_NOISE_LEVEL}% is de ruis van de startanimatie op de site.`
+          }
         />
 
         <Slider

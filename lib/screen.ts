@@ -23,6 +23,15 @@ export const SCREEN_KEY = "scherm";
 export const FORMATS = ["auto", "16:9", "4:3", "9:16", "1:1", "eigen"] as const;
 export type ScreenFormat = (typeof FORMATS)[number];
 
+/**
+ * Het soort ruis. "kleur" is de sneeuw van een beeldbuis zonder zender:
+ * korrels in blauw, cyaan, groen en wit, af en toe een rode, met golvende
+ * lichte banden erdoor (zie lib/screen-noise.ts). "zwart-wit" is de grijze
+ * ruis van de startanimatie op de site.
+ */
+export const NOISE_STYLES = ["kleur", "zwart-wit"] as const;
+export type NoiseStyle = (typeof NOISE_STYLES)[number];
+
 export type ScreenSlide = {
   id: string;
   /** De kleine regel erboven, in monoletters. Mag leeg. */
@@ -66,6 +75,8 @@ export type ScreenConfig = {
   noiseMax: number;
   /** Helderheid van de ruis, 0–100. Zie noiseBrightness. */
   noiseLevel: number;
+  /** Kleurensneeuw van een beeldbuis, of de grijze ruis van de site. */
+  noiseStyle: NoiseStyle;
   /**
    * Glitches terwijl een beeld staat, 0–100: korte storingen waarin het beeld
    * verspringt, banden sneeuw erdoorheen schieten en de tekst in rood en
@@ -131,8 +142,14 @@ export function glitchTiming(level: number) {
     shift: lerp(3, 32),
   };
 }
-export const noiseBrightness = (level: number) =>
-  Math.round((0.25 + (Math.min(100, Math.max(0, level)) / 100) * 4.75) * 100) / 100;
+export const noiseBrightness = (level: number, style: NoiseStyle = "zwart-wit") => {
+  const t = Math.min(100, Math.max(0, level)) / 100;
+  // De kleurenruis tekent zelf al licht; met dezelfde vermenigvuldiging als
+  // het donkere grijs zou hij bij een hoge stand helemaal wit worden. Daarom
+  // een kortere schaal: 60 is de ruis zoals hij getekend wordt, 100 iets feller.
+  const value = style === "kleur" ? 0.2 + t * 1.35 : 0.25 + t * 4.75;
+  return Math.round(value * 100) / 100;
+};
 
 /** Wat er staat zolang er in /beheer/scherm nog niets is opgeslagen. */
 export const DEFAULT_SCREEN: ScreenConfig = {
@@ -140,6 +157,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   noiseMin: 1.4,
   noiseMax: 1.4,
   noiseLevel: DEFAULT_NOISE_LEVEL,
+  noiseStyle: "kleur",
   glitch: DEFAULT_GLITCH,
   format: "auto",
   custom: { width: 100, height: 100, x: 0, y: 0, guides: false },
@@ -228,6 +246,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     seconds: clampInt(raw.seconds, LIMITS.seconds, DEFAULT_SCREEN.seconds),
     ...noiseRange(raw),
     noiseLevel: clampInt(raw.noiseLevel, [0, 100], DEFAULT_NOISE_LEVEL),
+    noiseStyle: NOISE_STYLES.includes(raw.noiseStyle as NoiseStyle) ? (raw.noiseStyle as NoiseStyle) : "kleur",
     glitch: clampInt(raw.glitch, [0, 100], DEFAULT_GLITCH),
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",
     custom: {
