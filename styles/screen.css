@@ -74,6 +74,26 @@
   color: var(--text-primary);
   overflow-wrap: break-word;
 }
+/* De artiest onder de titel van een nu-speelt-beeld: de maat van het label,
+   de kleur van de titel. */
+.scr__artist {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(16px, 4.2cqmin, 64px);
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+/* De hoes is een gewone <img> (zie ScreenLoop); dezelfde vulling als de foto's
+   die via next/image met `fill` komen. */
+.scr__cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
 .scr__logo {
   position: absolute;
   inset: 0;
@@ -228,12 +248,14 @@
   animation: scr-glitch-shift var(--glitch-dur, 400ms) steps(1, end) 1;
 }
 .is-glitching .scr__title,
-.is-glitching .scr__label {
+.is-glitching .scr__label,
+.is-glitching .scr__artist {
   animation: scr-glitch-split var(--glitch-dur, 400ms) steps(1, end) 1;
 }
 /* De kleine regel valt minder ver uiteen: dezelfde pixels als bij de grote
    tekst maken hem onleesbaar. */
-.scr__label {
+.scr__label,
+.scr__artist {
   --split: 0.3;
 }
 @keyframes scr-glitch-band {

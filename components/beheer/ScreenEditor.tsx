@@ -9,6 +9,7 @@ import {
   DEFAULT_NOISE_LEVEL,
   DEFAULT_OPACITY,
   LIMITS,
+  NOW_LABEL,
   type ScreenConfig,
   type ScreenFormat,
   type ScreenPhoto,
@@ -102,14 +103,23 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1 }],
+      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true }],
+    }));
+  }
+
+  // Het beeld met het nummer dat nu gespeeld wordt. De hoes komt voller in
+  // beeld dan een gewone foto, want daar draait dit beeld om.
+  function addNowSlide() {
+    setConfig((c) => ({
+      ...c,
+      slides: [...c.slides, { id: newId(), label: NOW_LABEL, title: "", photo: "", opacity: 60, noise: 0, weight: 2, source: "nu", cover: true }],
     }));
   }
 
   function save() {
     // Een beeld zonder tekst en zonder foto valt bij het opslaan weg; liever
     // dat zeggen dan het stilletjes laten verdwijnen.
-    const empty = config.slides.filter((s) => !s.title.trim() && !s.photo).length;
+    const empty = config.slides.filter((s) => !s.source && !s.title.trim() && !s.photo).length;
     if (empty && !window.confirm(`${empty === 1 ? "Eén beeld heeft" : `${empty} beelden hebben`} geen tekst en geen foto en ${empty === 1 ? "valt" : "vallen"} weg. Toch opslaan?`)) return;
     setMessage(null);
     startTransition(async () => {
@@ -517,10 +527,17 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
         <ol className="flex flex-col gap-4">
           {config.slides.map((slide, i) => {
             const photo = choices.find((p) => p.url === slide.photo);
+            const now = slide.source === "nu";
+            // Bij een nu-speelt-beeld kan de hoes de foto zijn, ook zonder
+            // gekozen foto: dan telt de zichtbaarheid ook.
+            const hasPhoto = Boolean(slide.photo) || (now && slide.cover);
             return (
-              <li key={slide.id} className="flex flex-col gap-4 border border-line p-4">
+              <li key={slide.id} className={`flex flex-col gap-4 border p-4 ${now ? "border-accent-alt" : "border-line"}`}>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-12 text-muted">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="font-mono text-12 text-muted">
+                    {String(i + 1).padStart(2, "0")}
+                    {now && <span className="ml-3 text-accent-alt">Nu speelt · uit de Band App</span>}
+                  </span>
                   <span className="flex items-center gap-4">
                     <button type="button" className={small} onClick={() => move(i, -1)} disabled={i === 0}>
                       ↑ Omhoog
@@ -545,12 +562,45 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                   <input
                     value={slide.label}
                     maxLength={LIMITS.label}
-                    placeholder="Live"
+                    placeholder={now ? NOW_LABEL : "Live"}
                     onChange={(e) => setSlide(slide.id, { label: e.target.value })}
                     className={input}
                   />
                 </label>
 
+                {now ? (
+                  <>
+                    <p className="text-muted">
+                      De titel en artiest komen uit de podiumweergave van de Band App: het nummer dat de bediener op dat
+                      moment open heeft. Zolang daar niemand bedient, slaat het scherm dit beeld over.
+                    </p>
+                    {/* Hoes of eigen foto. Twee knoppen, zoals bij de volgorde. */}
+                    <div className="flex flex-col gap-1">
+                      <span className="font-mono text-11 text-faint uppercase">Hoes van het nummer</span>
+                      <div className="grid grid-cols-2 gap-2" role="group" aria-label="Hoes van het nummer">
+                        {([
+                          [true, "Tonen"],
+                          [false, "Niet tonen"],
+                        ] as const).map(([value, text]) => (
+                          <button
+                            key={text}
+                            type="button"
+                            aria-pressed={slide.cover === value}
+                            onClick={() => setSlide(slide.id, { cover: value })}
+                            className={`min-h-12 border px-4 py-3 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] ${slide.cover === value ? "border-accent-alt text-accent-alt" : "border-line text-muted hover:text-primary"}`}
+                          >
+                            {text}
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-muted">
+                        {slide.cover
+                          ? "De hoes uit Spotify, als het nummer die in de Band App heeft. Zonder hoes komt de foto hieronder."
+                          : "Altijd de foto hieronder, of geen foto."}
+                      </span>
+                    </div>
+                  </>
+                ) : (
                 <label className="flex flex-col gap-1">
                   <span className="font-mono text-11 text-faint uppercase">
                     Tekst <span className="normal-case">— leeg = alleen de foto</span>
@@ -564,10 +614,11 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                     className={input}
                   />
                 </label>
+                )}
 
                 <div className="flex flex-wrap items-end gap-4">
                   <label className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="font-mono text-11 text-faint uppercase">Foto erachter</span>
+                    <span className="font-mono text-11 text-faint uppercase">{now && slide.cover ? "Foto als er geen hoes is" : "Foto erachter"}</span>
                     <select
                       value={slide.photo}
                       onChange={(e) => setSlide(slide.id, { photo: e.target.value })}
@@ -588,7 +639,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                   )}
                 </div>
 
-                <label className={`flex flex-col gap-1 ${slide.photo ? "" : "opacity-40"}`}>
+                <label className={`flex flex-col gap-1 ${hasPhoto ? "" : "opacity-40"}`}>
                   <span className="font-mono text-11 text-faint uppercase">Zichtbaarheid van de foto</span>
                   <span className="flex items-center gap-4">
                     <input
@@ -597,7 +648,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                       max={100}
                       step={5}
                       value={slide.opacity}
-                      disabled={!slide.photo}
+                      disabled={!hasPhoto}
                       onChange={(e) => setSlide(slide.id, { opacity: Number(e.target.value) })}
                       className="w-full accent-[var(--accent-alt)]"
                     />
@@ -650,6 +701,15 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
             ＋ Beeld toevoegen
           </button>
         )}
+        {config.slides.length < LIMITS.slides && !config.slides.some((s) => s.source === "nu") && (
+          <button
+            type="button"
+            onClick={addNowSlide}
+            className="border border-dashed border-accent-alt px-4 py-3 font-display text-14 font-bold tracking-wide12 text-accent-alt uppercase transition-colors duration-[120ms] hover:border-primary hover:text-primary"
+          >
+            ＋ Beeld “Nu speelt” toevoegen
+          </button>
+        )}
       </section>
 
       <PhotoUpload
@@ -667,7 +727,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
               slides: asSlides
                 ? [
                     ...c.slides,
-                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0, weight: 1 })),
+                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0, weight: 1, source: "" as const, cover: true })),
                   ].slice(0, LIMITS.slides)
                 : c.slides,
             };

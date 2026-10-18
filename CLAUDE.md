@@ -320,7 +320,10 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   ruis is standaard kleurensneeuw zoals op een oude beeldbuis
   (`lib/screen-noise.ts`), op verzoek en naar een foto: blauw, cyaan, groen en
   wit buiten de tokens om. Alleen hier; de grijze ruis van de site blijft er
-  als keuze "zwart-wit"
+  als keuze "zwart-wit". Een beeld "Nu speelt" (`source: "nu"`) toont het
+  nummer dat de bediener van de podiumweergave in de Band App open heeft, met
+  de hoes uit Spotify: `/api/public/live` daar, via `/api/scherm/nu` hier
+  (`fetchNowPlaying`). Zolang niemand bedient, slaat het scherm dat beeld over
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

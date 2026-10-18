@@ -1,5 +1,7 @@
 import "server-only";
 
+import { NOT_PLAYING, type NowPlaying } from "@/lib/screen";
+
 /**
  * De koppeling met de Band App.
  *
@@ -110,6 +112,34 @@ export async function fetchBandAppPublic(): Promise<BandAppPublic | null> {
   } catch (error) {
     console.error("[band-app] /api/public niet bereikbaar:", error);
     return null;
+  }
+}
+
+/**
+ * Het nummer dat de band nu speelt, voor het scherm op /scherm.
+ *
+ * Uit /api/public/live van de Band App: titel, artiest en hoes van het nummer
+ * dat de bediener van de podiumweergave open heeft, of `live: false` als
+ * niemand bedient. Niet gecachet — een scherm vraagt dit om de paar seconden
+ * en moet bij het volgende nummer zijn — en met een korte time-out, zodat een
+ * trage Band App het scherm niet laat hangen. Bij elke fout: niets speelt.
+ */
+export async function fetchNowPlaying(): Promise<NowPlaying> {
+  try {
+    const res = await fetch(`${BASE_URL}/api/public/live`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return NOT_PLAYING;
+    const data = (await res.json()) as Record<string, unknown>;
+    const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+    const title = str(data.title, 200);
+    if (data.live !== true || !title) return NOT_PLAYING;
+    // Alleen een https-adres als hoes: het scherm zet hem in een <img>.
+    const cover = str(data.coverUrl, 500);
+    return { live: true, title, artist: str(data.artist, 200), coverUrl: /^https:\/\/[^\s"'<>]+$/.test(cover) ? cover : "" };
+  } catch {
+    return NOT_PLAYING;
   }
 }
 

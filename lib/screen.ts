@@ -49,7 +49,29 @@ export type ScreenSlide = {
    * het twee keer zo vaak als een beeld op 1. Alleen bij willekeurige volgorde.
    */
   weight: number;
+  /**
+   * Waar de tekst vandaan komt. Leeg: zoals ingevuld. "nu": het nummer dat de
+   * band op dit moment speelt, uit de podiumweergave van de Band App (zie
+   * NowPlaying). Zo'n beeld wordt overgeslagen zolang daar niemand bedient.
+   */
+  source: "" | "nu";
+  /** Bij "nu": de hoes van het nummer als foto, als die er is; anders `photo`. */
+  cover: boolean;
 };
+
+/**
+ * Wat er nu gespeeld wordt, via /api/scherm/nu uit /api/public/live van de
+ * Band App. `live: false` als niemand de podiumweergave bedient.
+ */
+export type NowPlaying = { live: boolean; title: string; artist: string; coverUrl: string };
+export const NOT_PLAYING: NowPlaying = { live: false, title: "", artist: "", coverUrl: "" };
+
+/** Het label boven een nu-speelt-beeld als er niets is ingevuld. */
+export const NOW_LABEL = "Nu speelt";
+
+/** Of een beeld nu getoond kan worden: een nu-speelt-beeld alleen als er iets speelt. */
+export const showable = (item: ScreenItem, now: NowPlaying) =>
+  item.kind !== "slide" || item.slide.source !== "nu" || (now.live && now.title !== "");
 
 export type ScreenPhoto = { url: string; alt: string };
 
@@ -215,8 +237,8 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   logo: { on: true, every: 3, noise: 0 },
   photos: [],
   slides: [
-    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1 },
-    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1 },
+    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true },
+    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true },
   ],
   shuffle: true,
 };
@@ -276,8 +298,10 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     const title = text(r.title, LIMITS.title);
     const photoUrl = text(r.photo, 500);
     const photo = isPhotoUrl(photoUrl) ? photoUrl : "";
-    // Zonder tekst én zonder foto is er niets te tonen.
-    if (!title && !photo) continue;
+    const source = r.source === "nu" ? "nu" : "";
+    // Zonder tekst én zonder foto is er niets te tonen, behalve bij een
+    // nu-speelt-beeld: die tekst komt live binnen.
+    if (!title && !photo && !source) continue;
     let id = text(r.id, 40).replace(/[^a-z0-9_-]/gi, "") || `s${i + 1}`;
     while (ids.has(id)) id = `${id}x`;
     ids.add(id);
@@ -289,6 +313,8 @@ export function normalizeScreen(input: unknown): ScreenConfig {
       opacity: clampInt(r.opacity, [0, 100], DEFAULT_OPACITY),
       noise: clampInt(r.noise, [0, 100], 0),
       weight: clampInt(r.weight, LIMITS.weight, 1),
+      source,
+      cover: r.cover !== false,
     });
     if (slides.length >= LIMITS.slides) break;
   }
@@ -449,6 +475,19 @@ export function createPlaylist(
       return { kind: "slide", slide };
     },
   };
+}
+
+/**
+ * Het volgende beeld dat nu getoond kan worden: nu-speelt-beelden die niets
+ * te tonen hebben worden overgeslagen. Staan er alleen zulke beelden in de
+ * lijst en speelt er niets, dan het wordmark, in plaats van eindeloos zoeken.
+ */
+export function nextShowable(list: { next(): ScreenItem }, now: NowPlaying, tries = 200): ScreenItem {
+  for (let k = 0; k < tries; k++) {
+    const item = list.next();
+    if (showable(item, now)) return item;
+  }
+  return { kind: "logo" };
 }
 
 /**

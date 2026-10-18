@@ -10,15 +10,20 @@ import { startColorNoise } from "@/lib/screen-noise";
 import {
   type ScreenConfig,
   type ScreenFormat,
+  type NowPlaying,
   type ScreenItem,
   type NoiseStyle,
+  NOT_PLAYING,
+  NOW_LABEL,
   createPlaylist,
   glitchTiming,
   noiseBrightness,
+  nextShowable,
   noiseDuration,
   transitionTiming,
   ratioOf,
   sequence,
+  showable,
 } from "@/lib/screen";
 
 /**
@@ -66,6 +71,8 @@ type Props = {
  * één klein verzoek dat op de server uit de cache komt.
  */
 const POLL_MS = 10_000;
+/** Hoe vaak het nummer uit de Band App opgehaald wordt, als er een nu-speelt-beeld is. */
+const NOW_POLL_MS = 4_000;
 
 /**
  * Wat het kader bepaalt: formaat, eigen maat en helderheid. Een wijziging
@@ -91,7 +98,11 @@ const IDLE_MS = 2500;
 const DEFAULT_LABEL = "Signaal zoeken";
 
 const labelOf = (item: ScreenItem | undefined) =>
-  !item ? DEFAULT_LABEL : item.kind === "logo" ? "Static Line" : item.slide.label || DEFAULT_LABEL;
+  !item
+    ? DEFAULT_LABEL
+    : item.kind === "logo"
+      ? "Static Line"
+      : item.slide.label || (item.slide.source === "nu" ? NOW_LABEL : DEFAULT_LABEL);
 
 /** Een animatie afspelen en de eindstand vastzetten, zodat er niets blijft hangen. */
 async function play(el: Element | null, frames: Keyframe[], options: KeyframeAnimationOptions) {
@@ -137,6 +148,13 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   }));
   const [readout, setReadout] = useState(labelOf(view.item));
   const [idle, setIdle] = useState(false);
+  // Het nummer dat de band nu speelt, voor een nu-speelt-beeld. De lus leest
+  // het via de ref, het beeld zelf via de stand.
+  const [now, setNow] = useState<NowPlaying>(NOT_PLAYING);
+  const nowRef = useRef<NowPlaying>(NOT_PLAYING);
+  // Een hoes die niet laadt (verlopen adres, geen verbinding): dan de eigen
+  // foto van het beeld, in plaats van een kapot plaatje.
+  const [badCover, setBadCover] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
 
   // De lus houdt zijn eigen stand bij en begint bij wat de server meegaf; een
@@ -284,9 +302,12 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     const run = async () => {
       let cfg = start.current;
       let current: ScreenItem = sequence(cfg)[0];
+      // Een nu-speelt-beeld zonder nummer wordt overgeslagen; zie showable.
+      const pick = () => nextShowable(list, nowRef.current);
       const idOf = (item: ScreenItem) => (item.kind === "slide" ? item.slide.id : null);
       let list = createPlaylist(cfg, Math.random, idOf(current));
-      let upcoming = list.next();
+      if (!showable(current, nowRef.current)) current = pick();
+      let upcoming = pick();
       let n = 0;
       if (motion) noise();
       while (alive) {
@@ -296,7 +317,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
           pending.current = null;
           setConfig(cfg);
           list = createPlaylist(cfg, Math.random, idOf(current));
-          upcoming = list.next();
+          upcoming = pick();
         }
         setView({ n, item: current, next: upcoming });
         setReadout(labelOf(current));
@@ -317,8 +338,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         // volgende beeld in, zodat een wissel niet halverwege van tempo verandert.
         if (motion) await cover(transitionTiming(cfg.speed, base), cfg.bands);
         n += 1;
-        current = upcoming;
-        upcoming = list.next();
+        // Opnieuw kijken: het nummer kan intussen gestopt zijn.
+        current = showable(upcoming, nowRef.current) ? upcoming : pick();
+        upcoming = pick();
       }
     };
     void run();
@@ -329,6 +351,36 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       stopNoise();
     };
   }, []);
+
+  // ── Het nummer dat nu gespeeld wordt ────────────────────────────────────
+  // Alleen als er een nu-speelt-beeld in de lijst staat. De stand houdt het
+  // laatste nummer vast, zodat een beeld dat al staat niet leeg valt als de
+  // bediener net stopt; de lus kijkt naar de ref, en slaat het beeld daarna over.
+  const hasNow = config.slides.some((s) => s.source === "nu");
+  useEffect(() => {
+    if (!hasNow) {
+      nowRef.current = NOT_PLAYING;
+      return;
+    }
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/scherm/nu", { cache: "no-store" });
+        if (!res.ok || !alive) return;
+        const next = (await res.json()) as NowPlaying;
+        nowRef.current = next;
+        if (next.live) setNow((cur) => (cur.title === next.title && cur.artist === next.artist && cur.coverUrl === next.coverUrl ? cur : next));
+      } catch {
+        // Geen verbinding: dan blijft staan wat er stond.
+      }
+    };
+    void load();
+    const id = setInterval(load, NOW_POLL_MS);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [hasNow]);
 
   // ── Nieuwe instelling ophalen ───────────────────────────────────────────
   useEffect(() => {
@@ -466,7 +518,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     el.style.overflowWrap = "";
   }, []);
 
-  useLayoutEffect(fit, [fit, view]);
+  useLayoutEffect(fit, [fit, view, now]);
   useEffect(() => {
     if (!frame.current) return;
     const observer = new ResizeObserver(fit);
@@ -496,6 +548,19 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const pctText = (n: number) => `${String(n).replace(".", ",")}%`;
 
   const { item } = view;
+  // Wat er op een beeld staat. Bij een nu-speelt-beeld de titel, artiest en
+  // hoes van het nummer; anders wat er is ingevuld.
+  const copy =
+    item?.kind === "slide" && item.slide.source === "nu"
+      ? {
+          label: item.slide.label || NOW_LABEL,
+          title: now.title,
+          artist: now.artist,
+          cover: item.slide.cover && now.coverUrl !== badCover ? now.coverUrl : "",
+        }
+      : item?.kind === "slide"
+        ? { label: item.slide.label, title: item.slide.title, artist: "", cover: "" }
+        : { label: "", title: "", artist: "", cover: "" };
   // Ruis over het staande beeld: per beeld, of bij het wordmark.
   const overlay = !item ? 0 : item.kind === "logo" ? config.logo.noise : item.slide.noise;
   const overlayOn = overlay > 0;
@@ -523,7 +588,18 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
             </div>
           ) : item ? (
             <>
-              {item.slide.photo && (
+              {/* De hoes van het nummer: een gewone <img>, want die staat op
+                  Spotify en next.config.ts laat alleen de eigen opslag toe. */}
+              {copy.cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  className="scr__photo scr__cover"
+                  src={copy.cover}
+                  alt=""
+                  style={{ opacity: item.slide.opacity / 100 }}
+                  onError={() => setBadCover(copy.cover)}
+                />
+              ) : item.slide.photo && (
                 <Image
                   className="scr__photo"
                   src={item.slide.photo}
@@ -534,14 +610,15 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
                   style={{ opacity: item.slide.opacity / 100 }}
                 />
               )}
-              {(item.slide.label || item.slide.title) && (
+              {(copy.label || copy.title) && (
                 <div className="scr__copy">
-                  {item.slide.label && <p className="scr__label">{item.slide.label}</p>}
-                  {item.slide.title && (
+                  {copy.label && <p className="scr__label">{copy.label}</p>}
+                  {copy.title && (
                     <p className="scr__title" data-decode="">
-                      {item.slide.title}
+                      {copy.title}
                     </p>
                   )}
+                  {copy.artist && <p className="scr__artist">{copy.artist}</p>}
                 </div>
               )}
             </>

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, createPlaylist, glitchTiming, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, NOT_PLAYING, createPlaylist, glitchTiming, nextShowable, showable, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 import { bandAt, drawColorNoise } from "./screen-noise.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
@@ -244,4 +244,34 @@ test("zwarte overgang: standaard aan, alleen expliciet uit", () => {
   assert.equal(normalizeScreen({}).bands, true);
   assert.equal(normalizeScreen({ bands: false }).bands, false);
   assert.equal(normalizeScreen({ bands: 0 }).bands, true);
+});
+
+test("nu speelt: een beeld zonder tekst blijft staan, en wordt overgeslagen als er niets speelt", () => {
+  const c = normalizeScreen({
+    slides: [
+      { id: "a", title: "Static Line" },
+      { id: "nu", source: "nu", label: "", weight: 3 },
+      { id: "leeg" },
+    ],
+  });
+  assert.deepEqual(c.slides.map((s) => s.id), ["a", "nu"]);
+  assert.equal(c.slides[1].source, "nu");
+  assert.equal(c.slides[1].cover, true);
+  assert.equal(normalizeScreen({ slides: [{ title: "x", source: "iets" }] }).slides[0].source, "");
+
+  const nu = { kind: "slide" as const, slide: c.slides[1] };
+  const playing = { live: true, title: "Valerie", artist: "Amy Winehouse", coverUrl: "" };
+  assert.equal(showable(nu, NOT_PLAYING), false);
+  assert.equal(showable(nu, playing), true);
+  assert.equal(showable({ kind: "slide", slide: c.slides[0] }, NOT_PLAYING), true);
+
+  // Niets speelt: het nu-speelt-beeld komt nooit voorbij.
+  const list = createPlaylist(c, Math.random, null);
+  for (let k = 0; k < 50; k++) {
+    const item = nextShowable(list, NOT_PLAYING);
+    assert.ok(item.kind === "logo" || item.slide.id === "a");
+  }
+  // Alleen een nu-speelt-beeld en geen logo: dan het wordmark in plaats van eindeloos zoeken.
+  const only = normalizeScreen({ logo: { on: false }, slides: [{ id: "nu", source: "nu" }] });
+  assert.deepEqual(nextShowable(createPlaylist(only, Math.random, null), NOT_PLAYING), { kind: "logo" });
 });
