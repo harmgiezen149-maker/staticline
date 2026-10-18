@@ -78,6 +78,11 @@ export type ScreenConfig = {
   /** Kleurensneeuw van een beeldbuis, of de grijze ruis van de site. */
   noiseStyle: NoiseStyle;
   /**
+   * De tekst in de ruis bij een wissel: het label van het volgende beeld
+   * ("Signaal zoeken" als er geen is) met de teller. Uit = alleen ruis.
+   */
+  readout: boolean;
+  /**
    * Glitches terwijl een beeld staat, 0–100: korte storingen waarin het beeld
    * verspringt, banden sneeuw erdoorheen schieten en de tekst in rood en
    * blauw uiteenvalt. 0 = uit; hoger = vaker en heftiger. Zie glitchTiming.
@@ -196,6 +201,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   noiseMax: 1.4,
   noiseLevel: DEFAULT_NOISE_LEVEL,
   noiseStyle: "kleur",
+  readout: true,
   glitch: DEFAULT_GLITCH,
   speed: DEFAULT_SPEED,
   format: "auto",
@@ -288,6 +294,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     noiseStyle: NOISE_STYLES.includes(raw.noiseStyle as NoiseStyle) ? (raw.noiseStyle as NoiseStyle) : "kleur",
     glitch: clampInt(raw.glitch, [0, 100], DEFAULT_GLITCH),
     speed: clampInt(raw.speed, [0, 100], DEFAULT_SPEED),
+    readout: raw.readout !== false,
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",
     custom: {
       width: clampTenth(custom.width, LIMITS.size, 100),

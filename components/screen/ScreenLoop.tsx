@@ -76,6 +76,7 @@ const lookOf = (c: ScreenConfig) => ({
   custom: c.custom,
   noiseLevel: c.noiseLevel,
   noiseStyle: c.noiseStyle,
+  readout: c.readout,
   glitch: c.glitch,
 });
 
@@ -545,7 +546,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
             <div className="scr__scan" />
           </div>
           <div ref={line} className="scr__line" />
-          <div ref={text} className="scr__readout">
+          {/* Uit te zetten in /beheer/scherm; dan blijft het element staan
+              (de lus laat het in- en uitfaden) maar is het onzichtbaar. */}
+          <div ref={text} className="scr__readout" style={look.readout ? undefined : { visibility: "hidden" }}>
             <span ref={label} key={readout} data-decode="">
               {readout}
             </span>

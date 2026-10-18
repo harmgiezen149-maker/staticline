@@ -232,3 +232,9 @@ test("snelheid van de wissel: van rustig tot een flits", () => {
   assert.ok(flash.collapse >= 30 && flash.fade >= 30);
   assert.equal(normalizeScreen({ noiseMin: 0.1, noiseMax: 0.1 }).noiseMin, 0.1);
 });
+
+test("tekst in de ruis: standaard aan, alleen expliciet uit", () => {
+  assert.equal(normalizeScreen({}).readout, true);
+  assert.equal(normalizeScreen({ readout: false }).readout, false);
+  assert.equal(normalizeScreen({ readout: "nee" }).readout, true);
+});

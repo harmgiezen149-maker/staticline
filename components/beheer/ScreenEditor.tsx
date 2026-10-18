@@ -232,6 +232,32 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           hint={`Hoe snel de banden dichtklappen en het volgende beeld opengaat: ${speedText(config.speed)}. 0% is het rustige tempo van de startanimatie, 100% een korte flits. Voor een echte flits zet je de ruis hierboven ook kort, bijvoorbeeld 0,2 s.`}
         />
 
+        {/* Tekst in de ruis. Twee knoppen, zoals bij de volgorde. */}
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Tekst in de ruis</span>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Tekst in de ruis">
+            {([
+              [true, "Aan"],
+              [false, "Uit"],
+            ] as const).map(([value, text]) => (
+              <button
+                key={text}
+                type="button"
+                aria-pressed={config.readout === value}
+                onClick={() => set({ readout: value })}
+                className={`min-h-12 border px-4 py-3 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] ${config.readout === value ? "border-accent-alt text-accent-alt" : "border-line text-muted hover:text-primary"}`}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+          <span className="text-muted">
+            {config.readout
+              ? "Tijdens de ruis staat onderin het label van het volgende beeld (of \"Signaal zoeken\" als dat er niet is), met de teller van 000 naar 100."
+              : "Tijdens de ruis staat er geen tekst en geen teller: alleen ruis."}
+          </span>
+        </div>
+
         {/* Soort ruis. Twee knoppen, zoals bij de volgorde. */}
         <div className="flex flex-col gap-1">
           <span className="font-mono text-11 text-faint uppercase">Soort ruis</span>
