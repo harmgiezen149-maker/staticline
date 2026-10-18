@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 
-import { parseList, portalConfigured, roleFor } from "./access.ts";
+import { cleanEmail, isFixed, parseList, portalConfigured, roleFor, strongest } from "./access.ts";
 
 const SECRET = "x".repeat(32);
 
@@ -66,4 +66,28 @@ test("het portaal is pas ingesteld met een sleutel én een beheerder", () => {
 
   process.env.PORTAL_SECRET = "te-kort";
   assert.equal(portalConfigured(), false, "een korte sleutel telt niet");
+});
+
+test("de sterkste rol wint, en iets wint van niets", () => {
+  assert.equal(strongest("member", "admin"), "admin");
+  assert.equal(strongest("admin", null), "admin");
+  assert.equal(strongest(null, "member"), "member");
+  assert.equal(strongest("member", "member"), "member");
+  assert.equal(strongest(null, null), null);
+});
+
+test("een ingevuld adres: genormaliseerd, of null als het er geen is", () => {
+  assert.equal(cleanEmail("  Niels@Example.NL "), "niels@example.nl");
+  assert.equal(cleanEmail("niels@example"), null);
+  assert.equal(cleanEmail("a@b.nl, c@d.nl"), null);
+  assert.equal(cleanEmail(""), null);
+  assert.equal(cleanEmail(42), null);
+});
+
+test("vast in Vercel: alleen wat in een van de twee lijsten staat", () => {
+  process.env.PORTAL_ADMINS = "harm@example.nl";
+  process.env.PORTAL_MEMBERS = "niels@example.nl";
+  assert.equal(isFixed("HARM@example.nl"), true);
+  assert.equal(isFixed("niels@example.nl"), true);
+  assert.equal(isFixed("quinten@example.nl"), false);
 });

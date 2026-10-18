@@ -25,6 +25,7 @@ const LINKS = [
   { href: "/beheer/bandapp", label: "Band App" },
   { href: "/beheer/vertalingen", label: "Vertalingen" },
   { href: "/beheer/tov", label: "Tone of voice" },
+  { href: "/beheer/toegang", label: "Toegang" },
   { href: "/beheer/database", label: "Database" },
 ] as const;
 

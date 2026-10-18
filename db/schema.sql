@@ -95,6 +95,20 @@ CREATE TABLE IF NOT EXISTS portal_login_tokens (
 CREATE INDEX IF NOT EXISTS portal_login_tokens_expires_idx
   ON portal_login_tokens (expires_at);
 
+-- Wie er in /beheer mag, naast PORTAL_ADMINS en PORTAL_MEMBERS in Vercel.
+--
+-- Toegevoegd in /beheer/toegang. De lijsten in Vercel blijven de vaste kern en
+-- staan hier niet in; telt een adres op beide plekken, dan wint de hoogste rol.
+-- Zie lib/portal/users.ts, die deze tabel ook zelf aanmaakt bij het eerste
+-- gebruik.
+CREATE TABLE IF NOT EXISTS portal_users (
+  email    text        PRIMARY KEY,
+  -- "admin" of "member"
+  role     text        NOT NULL CHECK (role IN ('admin', 'member')),
+  added_by text        NOT NULL DEFAULT '',
+  added_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- Wie wat wanneer gewijzigd heeft.
 --
 -- docs/04-band-app-integration.md noemt dit expliciet niet-optioneel, en dat is

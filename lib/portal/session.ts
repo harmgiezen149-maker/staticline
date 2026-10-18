@@ -2,8 +2,9 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-import { type Role, roleFor } from "./access";
+import type { Role } from "./access";
 import { MIN_SECRET_LENGTH, seal as sealValue, unseal as unsealValue } from "./seal";
+import { roleOf } from "./users";
 
 /**
  * De sessie van het besloten deel.
@@ -60,18 +61,19 @@ export function seal(email: string): string | null {
 /**
  * Een koekje controleren. `null` bij elke twijfel.
  *
- * De rol komt uit de omgeving en niet uit het koekje. Anders houdt iemand die uit
- * PORTAL_ADMINS gehaald is zijn rechten tot het koekje verloopt, en dat is niet
- * wat je verwacht als je iemand rechten afneemt.
+ * De rol komt uit de omgeving en de database (roleOf in ./users) en niet uit
+ * het koekje. Anders houdt iemand die uit PORTAL_ADMINS of /beheer/toegang
+ * gehaald is zijn rechten tot het koekje verloopt, en dat is niet wat je
+ * verwacht als je iemand rechten afneemt.
  */
-export function unseal(value: string): Session | null {
+export async function unseal(value: string): Promise<Session | null> {
   const secret = key();
   if (!secret) return null;
 
   const opened = unsealValue(value, secret);
   if (!opened) return null;
 
-  const role = roleFor(opened.email);
+  const role = await roleOf(opened.email);
   if (!role) return null;
 
   return { email: opened.email, role, exp: opened.exp };

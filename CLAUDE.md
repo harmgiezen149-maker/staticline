@@ -362,7 +362,7 @@ sleutel ontbreekt.
 | `RESEND_API_KEY` | bevestigingsmail aan de afzender en de dubbele opt-in van de nieuwsbrief |
 | `SITE_URL` | het volledige adres voor links in die mails; standaard `https://www.staticline.nl` |
 | `PORTAL_SECRET` | ondertekent het sessiekoekje van `/beheer`; minimaal 32 tekens |
-| `PORTAL_ADMINS` + `PORTAL_MEMBERS` | kommalijsten met wie er in het besloten deel mag |
+| `PORTAL_ADMINS` + `PORTAL_MEMBERS` | kommalijsten met wie er altijd in het besloten deel mag. Anderen geef je toegang in `/beheer/toegang` (tabel `portal_users`, zie `lib/portal/users.ts`); wie in Vercel staat is daar niet aan te passen, zodat er altijd een beheerder overblijft |
 | `BLOB_READ_WRITE_TOKEN` | de Vercel Blob-opslag voor de foto's; Vercel zet deze zelf zodra je een Blob-store koppelt |
 | `SITE_API_TOKEN` | schrijven naar de Band App vanuit `/beheer/bandapp`; dezelfde waarde moet bij béíde Vercel-projecten staan |
 | `ANTHROPIC_API_KEY` | de teksten uit de Band App naar het Engels vertalen in `/beheer/vertalingen`, en de herschrijfmodule op `/beheer/tov`; zonder deze kan het vertalen nog met de hand |

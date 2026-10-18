@@ -320,6 +320,15 @@ PORTAL_MEMBERS=vedran@voorbeeld.nl, niels@voorbeeld.nl, quinten@voorbeeld.nl
 Hoofdletters en extra spaties maken niet uit. Staat een adres per ongeluk in
 beide lijsten, dan wint beheerder.
 
+**Anderen toegang geven zonder Vercel.** Wie in een van deze lijsten staat, kan
+in `/beheer/toegang` zelf mensen toevoegen, als lid of als beheerder, en ze daar
+ook weer beheerder of lid maken of hun toegang intrekken. Dat gaat meteen in,
+zonder opnieuw uit te rollen. Die adressen staan in de database (tabel
+`portal_users`, die vanzelf wordt aangemaakt). De lijsten hier in Vercel blijven
+de vaste kern: die zijn in het beheer niet aan te passen, zodat er altijd een
+beheerder overblijft die erin kan. Zet daarom minstens jezelf in
+`PORTAL_ADMINS`. Staat iemand op beide plekken, dan telt de hoogste rol.
+
 Iemand rechten afnemen is het adres uit de lijst halen. Dat werkt meteen, ook
 bij iemand die al ingelogd is: de rol wordt bij elke paginaweergave opnieuw in
 deze lijsten opgezocht en niet uit het koekje gelezen.

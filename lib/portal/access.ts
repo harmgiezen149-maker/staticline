@@ -29,7 +29,33 @@ export function parseList(raw: string | undefined): string[] {
 }
 
 /**
- * De rol van een adres, of `null` als het er niet in staat.
+ * De sterkste van twee rollen: beheerder wint van lid, en iets wint van niets.
+ * Zo telt een adres dat zowel in Vercel als in het beheer staat met de hoogste
+ * van de twee, en kan een rol uit het beheer een rol uit Vercel nooit verlagen.
+ */
+export function strongest(a: Role | null, b: Role | null): Role | null {
+  if (a === "admin" || b === "admin") return "admin";
+  return a ?? b;
+}
+
+/** Een ingevuld e-mailadres, genormaliseerd, of `null` als het er geen is. */
+export function cleanEmail(raw: unknown): string | null {
+  const value = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+  if (value.length > 254 || !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(value)) return null;
+  return value;
+}
+
+/**
+ * Of een adres vast in Vercel staat (PORTAL_ADMINS of PORTAL_MEMBERS). Die
+ * zijn in /beheer/toegang niet aan te passen: dat is de vaste kern waarmee je
+ * er altijd in kunt, ook als er in het beheer iets misgaat.
+ */
+export const isFixed = (email: string) => roleFor(email) !== null;
+
+/**
+ * De rol van een adres volgens Vercel, of `null` als het er niet in staat.
+ * Wie in /beheer/toegang is toegevoegd, staat in de database; de rol die echt
+ * telt komt uit roleOf in lib/portal/users.ts, die allebei combineert.
  *
  * Admin wint van member, zodat een adres dat per ongeluk in beide lijsten staat
  * niet stil rechten kwijtraakt.

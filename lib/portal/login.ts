@@ -7,7 +7,8 @@ import { sendMail } from "@/lib/mail";
 import { makeLimiter } from "@/lib/rate-limit";
 import { siteUrl } from "@/lib/site";
 
-import { type Role, roleFor } from "./access";
+import type { Role } from "./access";
+import { roleOf } from "./users";
 import { log } from "./audit";
 
 /**
@@ -61,7 +62,7 @@ export async function requestLink(email: string, ip: string): Promise<LinkResult
     return "rate-limited";
   }
 
-  const role = roleFor(address);
+  const role = await roleOf(address);
   if (!role) {
     console.warn(`[beheer] inlogpoging voor onbekend adres vanaf ${ip}`);
     return "ok";
@@ -149,7 +150,7 @@ export async function consume(token: string): Promise<Consumed> {
 
     // De rol nu pas opzoeken. Wie tussen aanvragen en klikken uit de lijst
     // gehaald is, komt er niet meer in.
-    const role = roleFor(row.email);
+    const role = await roleOf(row.email);
     if (!role) return { ok: false, reason: "unknown" };
 
     // Afstempelen met de voorwaarde er nog een keer bij: klikt iemand twee keer
