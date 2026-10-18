@@ -298,5 +298,5 @@ test("signaal kwijt: zwart nooit meer dan een vijfde, golf binnen de maat", () =
   }
   assert.deepEqual(pickBands(0), []);
   for (let y = 0; y <= 1; y += 0.05) assert.ok(Math.abs(waveAt(y, 3.2, 1)) <= 0.16 + 1e-9);
-  assert.equal(waveAt(0.4, 1, 0), 0);
+  assert.equal(Math.abs(waveAt(0.4, 1, 0)), 0);
 });
