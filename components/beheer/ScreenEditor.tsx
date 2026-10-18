@@ -34,6 +34,7 @@ type Props = {
 const FORMAT_LABEL: Record<ScreenFormat, string> = {
   auto: "Automatisch — vult elk scherm",
   "16:9": "Liggend 16:9 — beamer, tv, stream",
+  "4:3": "Liggend 4:3 — oude tv, oudere beamer",
   "9:16": "Staand 9:16 — staande tv, Reels",
   "1:1": "Vierkant 1:1",
   eigen: "Eigen maat — zelf instellen",
@@ -130,6 +131,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           <span className="font-mono text-12 text-muted">
             staticline.nl/scherm · <a className="underline" href="/scherm?formaat=16:9" target="_blank" rel="noopener">?formaat=16:9</a>{" "}
             · <a className="underline" href="/scherm?formaat=9:16" target="_blank" rel="noopener">9:16</a> ·{" "}
+            <a className="underline" href="/scherm?formaat=4:3" target="_blank" rel="noopener">4:3</a> ·{" "}
             <a className="underline" href="/scherm?formaat=1:1" target="_blank" rel="noopener">1:1</a>
           </span>
         </div>
@@ -140,7 +142,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="font-mono text-11 text-faint uppercase">Voorbeeld — de opgeslagen versie</h2>
           <div className="flex gap-2" role="group" aria-label="Formaat van het voorbeeld">
-            {(["16:9", "9:16", "1:1", "eigen"] as const).map((f) => (
+            {(["16:9", "4:3", "9:16", "1:1", "eigen"] as const).map((f) => (
               <button
                 key={f}
                 type="button"
@@ -162,7 +164,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
             style={{
               // Eigen maat in een liggend scherm, zoals een lcd-paneel.
               aspectRatio: preview === "eigen" ? "16 / 9" : preview.replace(":", " / "),
-              maxWidth: preview === "9:16" ? 320 : preview === "1:1" ? 480 : undefined,
+              maxWidth: preview === "9:16" ? 320 : preview === "1:1" ? 480 : preview === "4:3" ? 640 : undefined,
             }}
           />
         </div>

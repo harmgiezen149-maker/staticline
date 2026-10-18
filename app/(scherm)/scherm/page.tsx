@@ -6,7 +6,7 @@ import { getWordmark } from "@/lib/site-content";
 /**
  * /scherm — zie app/(scherm)/layout.tsx en components/screen/ScreenLoop.tsx.
  *
- * `?formaat=9:16` (of 16:9, 1:1, auto) zet het formaat voor dit ene scherm,
+ * `?formaat=9:16` (of 16:9, 4:3, 1:1, auto) zet het formaat voor dit ene scherm,
  * los van de instelling in /beheer/scherm. `?voorbeeld=1` is voor het
  * voorbeeld in het beheer: dan geen volledig-schermknop en geen wake lock.
  */

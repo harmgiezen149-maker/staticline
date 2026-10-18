@@ -20,7 +20,7 @@ export const SCREEN_KEY = "scherm";
  * een oude beeldbuistelevisie: dan valt maar een deel van het paneel in de
  * opening, en dat deel moet het beeld zijn.
  */
-export const FORMATS = ["auto", "16:9", "9:16", "1:1", "eigen"] as const;
+export const FORMATS = ["auto", "16:9", "4:3", "9:16", "1:1", "eigen"] as const;
 export type ScreenFormat = (typeof FORMATS)[number];
 
 export type ScreenSlide = {

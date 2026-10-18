@@ -14,7 +14,7 @@ test("niets opgeslagen of kapot: de standaard", () => {
 test("grenzen: tempo, logo, dekking", () => {
   const c = normalizeScreen({
     seconds: 1,
-    format: "4:3",
+    format: "21:9",
     logo: { on: "ja", every: 99 },
     slides: [{ title: "A", opacity: 150 }, { title: "B", opacity: -5 }, { title: "C", opacity: "35" }],
   });
@@ -72,6 +72,8 @@ test("formaat: het adres wint van de instelling", () => {
   assert.equal(pickFormat(undefined, c), "16:9");
   assert.equal(ratioOf("auto"), null);
   assert.equal(ratioOf("1:1"), 1);
+  assert.equal(ratioOf("4:3"), 4 / 3);
+  assert.equal(pickFormat("4x3", c), "4:3");
 });
 
 test("ruis: tijd, helderheid en ruis over het beeld", () => {
