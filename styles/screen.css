@@ -75,43 +75,32 @@
   overflow-wrap: break-word;
 }
 /* ── De foto als op een tv met slechte ontvangst ── *
- * .scr__tv trilt en flikkert (alleen met `.is-unrest`, zie onderaan), en
- * .scr__roll rolt: ScreenLoop schuift hem af en toe een beeldhoogte plus de
- * balk omhoog. Daarvoor staat de foto er twee keer onder elkaar, met een
- * zwarte balk ertussen, zodat het rollen naadloos rondgaat zoals de
- * beeldsynchronisatie van een beeldbuis die het niet houdt. Alleen de foto:
- * de tekst blijft staan, anders is hij niet te lezen. */
+ * .scr__tv trilt en flikkert (alleen met `.is-unrest`, zie onderaan). Als het
+ * signaal even weg is, tekent ScreenLoop de foto golvend en gescheurd op
+ * .scr__warp (lib/screen-warp.ts) en zet `.is-warping` op .scr__tv; zolang
+ * staat de foto zelf verborgen. Alleen de foto: de tekst blijft staan,
+ * anders is hij niet te lezen. */
 .scr__tv {
   position: absolute;
   inset: 0;
   overflow: hidden;
 }
-.scr__roll {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 214cqh;
-}
 .scr__shot {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100cqh;
+  inset: 0;
 }
-.scr__shot--b {
-  top: 107cqh;
-}
-/* Zwart en geen token, net als de randen naast het kader: dit is de balk
-   tussen twee beelden van een tv die niet meer weet waar boven is. */
-.scr__rollbar {
+.scr__warp {
   position: absolute;
-  top: 100cqh;
-  left: 0;
-  right: 0;
-  height: 7cqh;
-  background: #000;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+}
+.is-warping .scr__warp {
+  visibility: visible;
+}
+.is-warping .scr__shot {
+  visibility: hidden;
 }
 
 /* De artiest onder de titel van een nu-speelt-beeld: de maat van het label,

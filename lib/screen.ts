@@ -112,9 +112,9 @@ export type ScreenConfig = {
   glitch: number;
   /**
    * Hoe onrustig de foto's zijn, 0–100: een zender die net niet goed
-   * afgestemd is. Het beeld trilt en flikkert zacht, en af en toe rolt het
-   * omhoog door, met de zwarte balk ertussen, of hapert het even. Alleen de
-   * foto; de tekst blijft staan. 0 = stil. Zie unrestTiming.
+   * afgestemd is. Het beeld trilt en flikkert zacht, en af en toe verliest het
+   * zijn signaal: het golft, scheurt, rolt en sneeuwt (lib/screen-warp.ts).
+   * Alleen de foto; de tekst blijft staan. 0 = stil. Zie unrestTiming.
    */
   unrest: number;
   /**
@@ -198,10 +198,12 @@ export const DEFAULT_UNREST = 50;
  *   dan 8%: zo blijft het een flikkering en geen flits — WCAG 2.3.1 telt pas
  *   een verandering van 10% van het maximum als flits, en dit is 8% van de
  *   helderheid van de foto zelf.
- * - `pause`: hoe lang tussen twee keer rollen of haperen, in ms.
- * - `roll`: hoe lang één keer rond rollen duurt, in ms. Een keer rond is één
- *   donkere balk die voorbijkomt, dus ook bij de hoogste stand ver onder de
- *   drie per seconde.
+ * - `pause`: hoe lang tussen twee keer signaal kwijt, in ms.
+ * - `duration`: hoe lang het signaal dan weg is, in ms.
+ * - `strength`: hoe hevig, 0–1: hoe ver het golft en hoeveel stroken er
+ *   scheuren. Zwart blijft samen onder een vijfde van het beeld en springt
+ *   hooguit een paar keer per seconde (zie pickBands), zodat het geen flits
+ *   wordt.
  */
 export function unrestTiming(level: number) {
   const t = Math.min(100, Math.max(0, level)) / 100;
@@ -210,8 +212,9 @@ export function unrestTiming(level: number) {
     on: t > 0,
     jitter: Math.round(lerp(0, 0.9) * 100) / 100,
     flicker: Math.round(lerp(0, 0.08) * 1000) / 1000,
-    pause: [Math.round(lerp(22000, 2500)), Math.round(lerp(34000, 7000))] as const,
-    roll: [Math.round(lerp(1600, 600)), Math.round(lerp(2400, 1100))] as const,
+    pause: [Math.round(lerp(16000, 1500)), Math.round(lerp(26000, 5000))] as const,
+    duration: [Math.round(lerp(500, 1500)), Math.round(lerp(1000, 4000))] as const,
+    strength: Math.round(lerp(0.35, 1) * 100) / 100,
   };
 }
 

@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import { DEFAULT_SCREEN, NOT_PLAYING, createPlaylist, unrestTiming, glitchTiming, nextShowable, showable, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 import { bandAt, drawColorNoise } from "./screen-noise.ts";
+import { pickBands, waveAt } from "./screen-warp.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
 
@@ -282,8 +283,20 @@ test("onrustig beeld: standaard aan, uit op 0, flikkering nooit boven de 8%", ()
   assert.equal(unrestTiming(0).on, false);
   const max = unrestTiming(100);
   assert.ok(max.flicker <= 0.08);
-  assert.ok(max.pause[0] >= 2000);
-  // Eén keer rond = één donkere balk; nooit meer dan drie per seconde.
-  assert.ok(max.roll[0] >= 334);
+  assert.ok(max.pause[0] >= 1000);
+  assert.ok(max.strength <= 1);
+  assert.ok(unrestTiming(10).duration[1] < max.duration[1]);
   assert.ok(unrestTiming(50).jitter > 0);
+});
+
+test("signaal kwijt: zwart nooit meer dan een vijfde, golf binnen de maat", () => {
+  for (let k = 0; k < 200; k++) {
+    const bands = pickBands(1);
+    const black = bands.filter((b) => b.kind === "black").reduce((n, b) => n + b.height, 0);
+    assert.ok(black <= 0.2 + 1e-9);
+    for (const b of bands) assert.ok(b.top >= 0 && b.top + b.height <= 1 + 1e-9);
+  }
+  assert.deepEqual(pickBands(0), []);
+  for (let y = 0; y <= 1; y += 0.05) assert.ok(Math.abs(waveAt(y, 3.2, 1)) <= 0.16 + 1e-9);
+  assert.equal(waveAt(0.4, 1, 0), 0);
 });

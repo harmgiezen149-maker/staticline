@@ -7,6 +7,7 @@ import { decode } from "@/lib/motion/decode";
 import { ms, reduced, tok, wait } from "@/lib/motion/env";
 import { startNoise } from "@/lib/motion/loader";
 import { startColorNoise } from "@/lib/screen-noise";
+import { startWarp } from "@/lib/screen-warp";
 import {
   type ScreenConfig,
   type ScreenFormat,
@@ -489,52 +490,38 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     };
   }, [look.glitch]);
 
-  // ── Rollen en haperen ───────────────────────────────────────────────────
-  // Af en toe verliest de foto zijn verticale houvast, zoals een oude tv die
-  // net niet goed afgestemd is: hij rolt een keer helemaal rond, met de zwarte
-  // balk ertussen, of schiet een stuk omhoog en valt terug. Het trillen en
-  // flikkeren zelf is CSS (`.is-unrest` in styles/screen.css); dit is alleen
-  // wanneer. Net als de glitches alleen als er een beeld staat, niet bij
-  // minder beweging en niet op de achtergrond.
+  // ── Signaal kwijt ───────────────────────────────────────────────────────
+  // Af en toe verliest de foto zijn signaal, zoals een tv die zijn
+  // synchronisatie kwijtraakt: het beeld golft, scheurt in stroken, rolt en
+  // sneeuwt. Dat tekent lib/screen-warp.ts op het canvas naast de foto; zolang
+  // dat loopt staat `.is-warping` op .scr__tv en is de foto zelf verborgen.
+  // Het trillen en flikkeren daartussen is CSS (`.is-unrest`). Net als de
+  // glitches alleen als er een beeld staat, niet bij minder beweging en niet
+  // op de achtergrond.
   useEffect(() => {
     const timing = unrestTiming(look.unrest);
     const box = frame.current;
     if (!timing.on || reduced() || !box) return;
     let timer = 0;
-    let running: Animation | null = null;
-    const slip = () => {
-      const roll = box.querySelector<HTMLElement>(".scr__roll");
-      if (roll && holding.current && !document.hidden) {
-        const h = box.clientHeight;
-        const lap = h * 1.07; // de hoogte van een beeld plus de zwarte balk
-        if (Math.random() < 0.55) {
-          // Een of twee keer helemaal rond, met constante snelheid, en dan
-          // weer vast.
-          running = roll.animate(
-            [{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(0,${-lap}px,0)` }],
-            { duration: between(...timing.roll), iterations: Math.random() < 0.3 ? 2 : 1, easing: "linear" },
-          );
-        } else {
-          // Haperen: een stuk omhoog, nog wat verder, en terugvallen.
-          const up = -lap * between(0.08, 0.35);
-          running = roll.animate(
-            [
-              { transform: "translate3d(0,0,0)", offset: 0 },
-              { transform: `translate3d(0,${up}px,0)`, offset: 0.2 },
-              { transform: `translate3d(0,${up * 1.3}px,0)`, offset: 0.55 },
-              { transform: `translate3d(0,${up * 0.2}px,0)`, offset: 0.8 },
-              { transform: "translate3d(0,0,0)", offset: 1 },
-            ],
-            { duration: between(350, 700), easing: "steps(6, end)" },
-          );
-        }
+    let stop = () => {};
+    const fire = () => {
+      const tv = box.querySelector<HTMLElement>(".scr__tv");
+      const img = tv?.querySelector<HTMLImageElement>(".scr__photo");
+      const canvas = tv?.querySelector<HTMLCanvasElement>(".scr__warp");
+      if (tv && img && canvas && img.complete && img.naturalWidth && holding.current && !document.hidden) {
+        tv.classList.add("is-warping");
+        stop = startWarp(canvas, img, {
+          strength: timing.strength * between(0.6, 1),
+          duration: between(...timing.duration),
+          onDone: () => tv.classList.remove("is-warping"),
+        });
       }
-      timer = window.setTimeout(slip, between(...timing.pause));
+      timer = window.setTimeout(fire, between(...timing.pause));
     };
-    timer = window.setTimeout(slip, between(...timing.pause));
+    timer = window.setTimeout(fire, between(...timing.pause));
     return () => {
       window.clearTimeout(timer);
-      running?.cancel();
+      stop();
     };
   }, [look.unrest]);
 
@@ -604,7 +591,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const { item } = view;
   // De foto van een beeld. De hoes van het nummer is een gewone <img>, want
   // die staat op Spotify en next.config.ts laat alleen de eigen opslag toe.
-  const shot = (cover: string, photo: string, opacity: number, first: boolean) =>
+  const shot = (cover: string, photo: string, opacity: number) =>
     cover ? (
       // eslint-disable-next-line @next/next/no-img-element
       <img
@@ -621,8 +608,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         alt=""
         fill
         sizes="100vw"
-        priority={first}
-        loading={first ? undefined : "eager"}
+        priority
         style={{ opacity: opacity / 100 }}
       />
     );
@@ -667,22 +653,15 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
           ) : item ? (
             <>
               {/* De foto als op een tv met slechte ontvangst: hij trilt en
-                  flikkert in .scr__tv, en rolt in .scr__roll. Om te kunnen
-                  doorrollen staat hij er twee keer, met de zwarte balk
-                  ertussen; zie `.scr__roll` in styles/screen.css. */}
+                  flikkert in .scr__tv, en als het signaal even weg is tekent
+                  het canvas ernaast hem golvend en gescheurd (zie het effect
+                  "Signaal kwijt" hierboven). */}
               {(copy.cover || item.slide.photo) && (
                 <div className="scr__tv">
-                  <div className="scr__roll">
-                    <div className="scr__shot">{shot(copy.cover, item.slide.photo, item.slide.opacity, true)}</div>
-                    {look.unrest > 0 && (
-                      <>
-                        <div className="scr__rollbar" />
-                        <div className="scr__shot scr__shot--b" aria-hidden="true">
-                          {shot(copy.cover, item.slide.photo, item.slide.opacity, false)}
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <div className="scr__shot">{shot(copy.cover, item.slide.photo, item.slide.opacity)}</div>
+                  {look.unrest > 0 && (
+                    <canvas className="scr__warp" aria-hidden="true" style={{ opacity: item.slide.opacity / 100 }} />
+                  )}
                 </div>
               )}
               {(copy.label || copy.title) && (

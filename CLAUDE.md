@@ -326,8 +326,10 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   (`fetchNowPlaying`). Zolang niemand bedient, slaat het scherm dat beeld over.
   De foto's zijn "onrustig" als op een slecht afgestemde tv (`unrestTiming`):
   ze trillen en flikkeren, met de flikkering onder de 8% zodat het geen flits
-  wordt, en rollen af en toe door met een zwarte balk ertussen. De tekst
-  staat stil
+  wordt, en verliezen af en toe hun signaal: dan tekent `lib/screen-warp.ts`
+  de foto regel voor regel op een canvas, golvend, gescheurd, rollend en met
+  stroken sneeuw en zwart, naar een filmpje met een testbeeld. De tekst staat
+  stil
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
