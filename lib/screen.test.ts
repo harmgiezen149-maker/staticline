@@ -90,7 +90,8 @@ test("ruis: tijd, helderheid en ruis over het beeld", () => {
   assert.equal(c.logo.noise, 40);
   assert.deepEqual(c.slides.map((s) => s.noise), [25, 0, 0]);
   assert.equal(normalizeScreen({ noiseSeconds: 0 }).noiseMin, 0.1);
-  assert.equal(normalizeScreen({ noiseSeconds: 99 }).noiseMax, 10);
+  assert.equal(normalizeScreen({ noiseSeconds: 99 }).noiseMax, 20);
+  assert.equal(normalizeScreen({ noiseMin: 15, noiseMax: 20 }).noiseMax, 20);
   // Een opgeslagen instelling van vóór deze velden krijgt de standaard.
   const old = normalizeScreen({ seconds: 8, slides: [{ title: "A" }] });
   assert.equal(old.noiseMin, 1.4);

@@ -112,7 +112,7 @@ export type ScreenConfig = {
 
 export const LIMITS = {
   seconds: [3, 60],
-  noiseSeconds: [0.1, 10],
+  noiseSeconds: [0.1, 20],
   size: [10, 100],
   shift: [-50, 50],
   every: [1, 20],
