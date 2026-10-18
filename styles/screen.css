@@ -183,6 +183,47 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Hulplijnen bij "eigen maat" ── *
+ * Om het kader passend te maken in de opening van een beeldbuistelevisie: de
+ * rand van het kader, een kruis door het midden en de maten erbij. Boven
+ * alles, ook boven de ruis, zodat je ze tijdens een wissel ook ziet. */
+.scr__guides {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: 2px solid var(--accent-alt);
+}
+.scr__guides::before,
+.scr__guides::after {
+  content: "";
+  position: absolute;
+  background: var(--accent-alt);
+}
+.scr__guides::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+.scr__guides::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+.scr__guides-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  background: var(--bg-inset);
+  color: var(--accent-alt);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
 /* ── Minder beweging: een korte crossfade per beeld ── */
 .reduce-motion .scr__stage {
   animation: scr-fade 160ms linear both;

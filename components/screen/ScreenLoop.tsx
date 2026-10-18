@@ -6,7 +6,15 @@ import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, u
 import { decode } from "@/lib/motion/decode";
 import { ms, reduced, tok, wait } from "@/lib/motion/env";
 import { startNoise } from "@/lib/motion/loader";
-import { type ScreenConfig, type ScreenFormat, type ScreenItem, noiseBrightness, ratioOf, sequence } from "@/lib/screen";
+import {
+  type ScreenConfig,
+  type ScreenFormat,
+  type ScreenItem,
+  noiseBrightness,
+  noiseDuration,
+  ratioOf,
+  sequence,
+} from "@/lib/screen";
 
 /**
  * Het scherm: de loader "Afstemmen" als lus.
@@ -32,8 +40,9 @@ import { type ScreenConfig, type ScreenFormat, type ScreenItem, noiseBrightness,
  *
  * Voor een podium: de cursor verdwijnt na een paar seconden stilstand, het
  * scherm valt niet in slaap (wake lock, waar de browser dat kan), F zet
- * volledig scherm aan en uit, → slaat een beeld over. Elke minuut haalt het de
- * instelling opnieuw op, en een wijziging gaat in bij de volgende wissel.
+ * volledig scherm aan en uit, → slaat een beeld over. Elke tien seconden haalt het de
+ * instelling opnieuw op. Formaat, eigen maat en helderheid gaan meteen in;
+ * de beelden zelf bij de volgende wissel.
  */
 
 type Props = {
@@ -45,8 +54,19 @@ type Props = {
   preview: boolean;
 };
 
-/** Hoe vaak een draaiend scherm de instelling opnieuw ophaalt. */
-const POLL_MS = 60_000;
+/**
+ * Hoe vaak een draaiend scherm de instelling opnieuw ophaalt. Tien seconden
+ * en niet een minuut: bij het passend maken van "eigen maat" op het scherm in
+ * de beeldbuis wil je zien wat een schuif doet zonder lang te wachten. Het is
+ * één klein verzoek dat op de server uit de cache komt.
+ */
+const POLL_MS = 10_000;
+
+/**
+ * Wat het kader bepaalt: formaat, eigen maat en helderheid. Een wijziging
+ * daarin gaat meteen in; de beelden zelf wisselen pas bij de volgende wissel.
+ */
+const lookOf = (c: ScreenConfig) => ({ format: c.format, custom: c.custom, noiseLevel: c.noiseLevel });
 /** Na zoveel stilstand verdwijnen de cursor en de knop. */
 const IDLE_MS = 2500;
 
@@ -83,6 +103,7 @@ function photoReady(stage: HTMLElement | null, limit: number) {
 
 export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const [config, setConfig] = useState(initial);
+  const [look, setLook] = useState(() => lookOf(initial));
   const items = useMemo(() => sequence(config), [config]);
   const [shown, setShown] = useState(0);
   const [readout, setReadout] = useState(labelOf(items[0]));
@@ -211,7 +232,8 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         await painted();
         if (!alive) return;
 
-        if (motion) await reveal(cfg.noiseSeconds * 1000);
+        // Elke wissel een andere ruisduur, tussen het minimum en het maximum.
+        if (motion) await reveal(noiseDuration(cfg));
         else await photoReady(stage.current, 1500);
         if (!alive) return;
 
@@ -243,6 +265,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (json === current.current) return;
         current.current = json;
         pending.current = next;
+        setLook(lookOf(next));
       } catch {
         // Geen verbinding in de zaal: dan draait gewoon door wat er staat.
       }
@@ -336,14 +359,21 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     return () => observer.disconnect();
   }, [fit]);
 
-  const effective = format ?? config.format;
+  const effective = format ?? look.format;
   const ratio = ratioOf(effective);
+  const { custom } = look;
   const frameStyle = {
-    ...(ratio
-      ? { aspectRatio: String(ratio), width: `min(100vw, calc(100dvh * ${ratio}))` }
-      : { width: "100vw", height: "100dvh" }),
-    "--noise-brightness": String(noiseBrightness(config.noiseLevel)),
+    ...(effective === "eigen"
+      ? // Eigen maat: een kader in procenten van het scherm, verschoven vanaf
+        // het midden. Voor het stuk lcd dat achter het glas van de beeldbuis zit.
+        { width: `${custom.width}vw`, height: `${custom.height}dvh`, translate: `${custom.x}vw ${custom.y}dvh` }
+      : ratio
+        ? { aspectRatio: String(ratio), width: `min(100vw, calc(100dvh * ${ratio}))` }
+        : { width: "100vw", height: "100dvh" }),
+    "--noise-brightness": String(noiseBrightness(look.noiseLevel)),
   } as unknown as CSSProperties;
+  const guides = effective === "eigen" && custom.guides;
+  const pctText = (n: number) => `${String(n).replace(".", ",")}%`;
 
   const item = items[shown % items.length];
   // Ruis over het staande beeld: per beeld, of bij het wordmark.
@@ -431,6 +461,16 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
             </span>
           </div>
         </div>
+
+        {/* Hulplijnen bij het passend maken: de rand van het kader, een kruis
+            in het midden en de maten. Uit te zetten in /beheer/scherm. */}
+        {guides && (
+          <div className="scr__guides" aria-hidden="true">
+            <span className="scr__guides-label">
+              {pctText(custom.width)} × {pctText(custom.height)} · x {pctText(custom.x)} · y {pctText(custom.y)}
+            </span>
+          </div>
+        )}
       </div>
 
       {!preview && !fullscreen && (

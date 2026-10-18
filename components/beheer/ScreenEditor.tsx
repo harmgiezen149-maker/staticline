@@ -36,6 +36,7 @@ const FORMAT_LABEL: Record<ScreenFormat, string> = {
   "16:9": "Liggend 16:9 — beamer, tv, stream",
   "9:16": "Staand 9:16 — staande tv, Reels",
   "1:1": "Vierkant 1:1",
+  eigen: "Eigen maat — zelf instellen",
 };
 
 const input =
@@ -129,7 +130,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="font-mono text-11 text-faint uppercase">Voorbeeld — de opgeslagen versie</h2>
           <div className="flex gap-2" role="group" aria-label="Formaat van het voorbeeld">
-            {(["16:9", "9:16", "1:1"] as const).map((f) => (
+            {(["16:9", "9:16", "1:1", "eigen"] as const).map((f) => (
               <button
                 key={f}
                 type="button"
@@ -137,7 +138,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                 onClick={() => setPreview(f)}
                 className={`border px-3 py-1 font-mono text-12 uppercase transition-colors duration-[120ms] ${preview === f ? "border-primary text-primary" : "border-line text-muted hover:text-primary"}`}
               >
-                {f}
+                {f === "eigen" ? "Eigen" : f}
               </button>
             ))}
           </div>
@@ -149,7 +150,8 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
             title="Voorbeeld van het scherm"
             className="block w-full"
             style={{
-              aspectRatio: preview.replace(":", " / "),
+              // Eigen maat in een liggend scherm, zoals een lcd-paneel.
+              aspectRatio: preview === "eigen" ? "16 / 9" : preview.replace(":", " / "),
               maxWidth: preview === "9:16" ? 320 : preview === "1:1" ? 480 : undefined,
             }}
           />
@@ -169,16 +171,35 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           onChange={(v) => set({ seconds: v })}
         />
 
-        <Slider
-          label="Hoe lang de ruis staat bij elke wissel"
-          min={LIMITS.noiseSeconds[0]}
-          max={LIMITS.noiseSeconds[1]}
-          step={0.1}
-          value={config.noiseSeconds}
-          unit="s"
-          onChange={(v) => set({ noiseSeconds: v })}
-          hint="Daarna klapt de ruis in ruim anderhalve seconde dicht tot de lijn en opent het beeld. Het dichtgaan na een beeld duurt ongeveer even lang."
-        />
+        {/* De ruisduur is elke wissel anders, ergens tussen deze twee. Schuift
+            het minimum voorbij het maximum, dan schuift het maximum mee (en
+            andersom), zodat ze nooit omgedraaid staan. */}
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-1 font-mono text-11 text-faint uppercase">Ruis bij elke wissel</legend>
+          <Slider
+            label="Minimaal"
+            min={LIMITS.noiseSeconds[0]}
+            max={LIMITS.noiseSeconds[1]}
+            step={0.1}
+            value={config.noiseMin}
+            unit="s"
+            onChange={(v) => set({ noiseMin: v, noiseMax: Math.max(v, config.noiseMax) })}
+          />
+          <Slider
+            label="Maximaal"
+            min={LIMITS.noiseSeconds[0]}
+            max={LIMITS.noiseSeconds[1]}
+            step={0.1}
+            value={config.noiseMax}
+            unit="s"
+            onChange={(v) => set({ noiseMax: v, noiseMin: Math.min(v, config.noiseMin) })}
+            hint={
+              config.noiseMin === config.noiseMax
+                ? "Nu staat de ruis elke keer even lang. Zet het maximum hoger, dan wordt het elke wissel een willekeurige duur daartussen."
+                : "Elke wissel kiest het scherm een willekeurige duur hiertussen. Daarna klapt de ruis in ruim anderhalve seconde dicht tot de lijn en opent het beeld."
+            }
+          />
+        </fieldset>
 
         <Slider
           label="Helderheid van de ruis"
@@ -204,6 +225,71 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
             bijvoorbeeld <span className="font-mono">/scherm?formaat=9:16</span> voor de staande tv bij de merch.
           </span>
         </label>
+
+        {config.format === "eigen" && (
+          <fieldset className="flex flex-col gap-3 border border-line p-4">
+            <legend className="px-1 font-mono text-11 text-faint uppercase">Eigen maat</legend>
+            <p className="text-muted">
+              Voor een scherm achter het glas van een beeldbuistelevisie: maak het beeld zo groot als de opening, en
+              schuif het tot het erin valt. Alles in procenten van het scherm. Open het scherm op het lcd-paneel, zet de
+              hulplijnen aan en druk na elke aanpassing op Opslaan: binnen tien seconden past het scherm zich aan.
+            </p>
+            <Slider
+              label="Breedte"
+              min={LIMITS.size[0]}
+              max={LIMITS.size[1]}
+              step={0.5}
+              value={config.custom.width}
+              unit="%"
+              onChange={(v) => set({ custom: { ...config.custom, width: v } })}
+            />
+            <Slider
+              label="Hoogte"
+              min={LIMITS.size[0]}
+              max={LIMITS.size[1]}
+              step={0.5}
+              value={config.custom.height}
+              unit="%"
+              onChange={(v) => set({ custom: { ...config.custom, height: v } })}
+            />
+            <Slider
+              label="Naar links of rechts"
+              min={LIMITS.shift[0]}
+              max={LIMITS.shift[1]}
+              step={0.5}
+              value={config.custom.x}
+              unit="%"
+              onChange={(v) => set({ custom: { ...config.custom, x: v } })}
+              hint="Min is naar links, plus is naar rechts."
+            />
+            <Slider
+              label="Omhoog of omlaag"
+              min={LIMITS.shift[0]}
+              max={LIMITS.shift[1]}
+              step={0.5}
+              value={config.custom.y}
+              unit="%"
+              onChange={(v) => set({ custom: { ...config.custom, y: v } })}
+              hint="Min is omhoog, plus is omlaag."
+            />
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={config.custom.guides}
+                onChange={(e) => set({ custom: { ...config.custom, guides: e.target.checked } })}
+                className="h-5 w-5 accent-[var(--accent-alt)]"
+              />
+              <span>Hulplijnen tonen: de rand van het beeld, een kruis door het midden en de maten</span>
+            </label>
+            <button
+              type="button"
+              className={`${small} self-start`}
+              onClick={() => set({ custom: { ...config.custom, width: 100, height: 100, x: 0, y: 0 } })}
+            >
+              Terug naar het hele scherm
+            </button>
+          </fieldset>
+        )}
 
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 font-mono text-11 text-faint uppercase">Logo tussendoor</legend>
@@ -536,7 +622,7 @@ function Slider({
           className="w-full accent-[var(--accent-alt)]"
         />
         <span className="w-14 shrink-0 text-right font-mono text-14">
-          {step < 1 ? value.toFixed(1).replace(".", ",") : value}
+          {Number.isInteger(value) ? value : value.toFixed(1).replace(".", ",")}
           {unit}
         </span>
       </span>

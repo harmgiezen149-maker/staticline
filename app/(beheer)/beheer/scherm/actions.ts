@@ -34,10 +34,10 @@ export async function saveScreen(json: string): Promise<ScreenSaveState> {
 
   await log({ actor: session.email, action: "screen.save", detail: `${config.slides.length} beelden` });
   // Zie refreshPublicPages in app/(beheer)/beheer/inhoud/actions.ts over
-  // `{ expire: 0 }`. Een scherm dat al draait haalt het binnen een minuut op.
+  // `{ expire: 0 }`. Een scherm dat al draait haalt het binnen tien seconden op.
   revalidateTag(CONTENT_TAG, { expire: 0 });
   revalidatePath("/scherm");
   revalidatePath("/beheer/scherm");
 
-  return { ok: true, message: "Opgeslagen. Een scherm dat al draait neemt het binnen een minuut over.", config };
+  return { ok: true, message: "Opgeslagen. Een scherm dat al draait neemt het binnen tien seconden over.", config };
 }

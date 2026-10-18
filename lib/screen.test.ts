@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, noiseBrightness, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, noiseBrightness, noiseDuration, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
 
@@ -81,15 +81,17 @@ test("ruis: tijd, helderheid en ruis over het beeld", () => {
     logo: { noise: 40 },
     slides: [{ title: "A", noise: 25 }, { title: "B", noise: "x" }, { title: "C" }],
   });
-  assert.equal(c.noiseSeconds, 2.3);
+  assert.equal(c.noiseMin, 2.3);
+  assert.equal(c.noiseMax, 2.3);
   assert.equal(c.noiseLevel, 100);
   assert.equal(c.logo.noise, 40);
   assert.deepEqual(c.slides.map((s) => s.noise), [25, 0, 0]);
-  assert.equal(normalizeScreen({ noiseSeconds: 0 }).noiseSeconds, 0.5);
-  assert.equal(normalizeScreen({ noiseSeconds: 99 }).noiseSeconds, 10);
+  assert.equal(normalizeScreen({ noiseSeconds: 0 }).noiseMin, 0.5);
+  assert.equal(normalizeScreen({ noiseSeconds: 99 }).noiseMax, 10);
   // Een opgeslagen instelling van vóór deze velden krijgt de standaard.
   const old = normalizeScreen({ seconds: 8, slides: [{ title: "A" }] });
-  assert.equal(old.noiseSeconds, 1.4);
+  assert.equal(old.noiseMin, 1.4);
+  assert.equal(old.noiseMax, 1.4);
   assert.equal(old.noiseLevel, 16);
 });
 
@@ -98,4 +100,26 @@ test("helderheid: 16 is de ruis van de startanimatie", () => {
   assert.equal(noiseBrightness(0), 0.25);
   assert.equal(noiseBrightness(100), 5);
   assert.equal(noiseBrightness(500), 5);
+});
+
+test("ruisduur: willekeurig tussen minimum en maximum", () => {
+  const c = normalizeScreen({ noiseMin: 1, noiseMax: 4 });
+  assert.equal(noiseDuration(c, () => 0), 1000);
+  assert.equal(noiseDuration(c, () => 1), 4000);
+  assert.equal(noiseDuration(c, () => 0.5), 2500);
+  // Omgedraaid ingevuld: omgewisseld, niet weggegooid.
+  const swapped = normalizeScreen({ noiseMin: 6, noiseMax: 2 });
+  assert.deepEqual([swapped.noiseMin, swapped.noiseMax], [2, 6]);
+  // Alleen een minimum: het maximum is dan hetzelfde.
+  const one = normalizeScreen({ noiseMin: 3 });
+  assert.deepEqual([one.noiseMin, one.noiseMax], [3, 3]);
+});
+
+test("eigen maat: binnen de grenzen, en hulplijnen alleen als ze aan staan", () => {
+  const c = normalizeScreen({ format: "eigen", custom: { width: 72.34, height: 5, x: -80, y: "3.5", guides: "ja" } });
+  assert.equal(c.format, "eigen");
+  assert.deepEqual(c.custom, { width: 72.3, height: 10, x: -50, y: 3.5, guides: false });
+  assert.deepEqual(normalizeScreen({}).custom, { width: 100, height: 100, x: 0, y: 0, guides: false });
+  assert.equal(pickFormat("eigen", normalizeScreen({})), "eigen");
+  assert.equal(ratioOf("eigen"), null);
 });

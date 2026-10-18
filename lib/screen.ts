@@ -14,7 +14,13 @@
 
 export const SCREEN_KEY = "scherm";
 
-export const FORMATS = ["auto", "16:9", "9:16", "1:1"] as const;
+/**
+ * "eigen" is een kader met een zelf ingestelde breedte, hoogte en positie, in
+ * procenten van het scherm. Bedoeld voor een lcd-scherm achter het glas van
+ * een oude beeldbuistelevisie: dan valt maar een deel van het paneel in de
+ * opening, en dat deel moet het beeld zijn.
+ */
+export const FORMATS = ["auto", "16:9", "9:16", "1:1", "eigen"] as const;
 export type ScreenFormat = (typeof FORMATS)[number];
 
 export type ScreenSlide = {
@@ -33,15 +39,32 @@ export type ScreenSlide = {
 
 export type ScreenPhoto = { url: string; alt: string };
 
+export type ScreenCustom = {
+  /** Breedte en hoogte in procenten van het scherm. */
+  width: number;
+  height: number;
+  /** Verschuiving van het midden, in procenten van het scherm. */
+  x: number;
+  y: number;
+  /** Een lijn langs de rand en een kruis in het midden, om het kader passend te maken. */
+  guides: boolean;
+};
+
 export type ScreenConfig = {
   /** Hoe lang een beeld blijft staan, in seconden. */
   seconds: number;
-  /** Hoe lang de ruis met het label staat bij elke wissel, in seconden. */
-  noiseSeconds: number;
+  /**
+   * Hoe lang de ruis met het label staat bij elke wissel, in seconden: elke
+   * wissel een willekeurige duur tussen deze twee. Gelijk = altijd even lang.
+   */
+  noiseMin: number;
+  noiseMax: number;
   /** Helderheid van de ruis, 0–100. Zie noiseBrightness. */
   noiseLevel: number;
   /** De verhouding van het beeld. "auto" vult elk scherm. */
   format: ScreenFormat;
+  /** Bij "eigen": het kader in procenten van het scherm, en of de hulplijnen aan staan. */
+  custom: ScreenCustom;
   /** Het wordmark als eigen beeld, na elke `every` beelden, met eigen ruis. */
   logo: { on: boolean; every: number; noise: number };
   /** Foto's die alleen voor het scherm zijn geüpload. */
@@ -52,6 +75,8 @@ export type ScreenConfig = {
 export const LIMITS = {
   seconds: [3, 60],
   noiseSeconds: [0.5, 10],
+  size: [10, 100],
+  shift: [-50, 50],
   every: [1, 20],
   slides: 50,
   photos: 60,
@@ -74,9 +99,11 @@ export const noiseBrightness = (level: number) =>
 /** Wat er staat zolang er in /beheer/scherm nog niets is opgeslagen. */
 export const DEFAULT_SCREEN: ScreenConfig = {
   seconds: 8,
-  noiseSeconds: 1.4,
+  noiseMin: 1.4,
+  noiseMax: 1.4,
   noiseLevel: DEFAULT_NOISE_LEVEL,
   format: "auto",
+  custom: { width: 100, height: 100, x: 0, y: 0, guides: false },
   logo: { on: true, every: 3, noise: 0 },
   photos: [],
   slides: [
@@ -121,6 +148,7 @@ const record = (v: unknown): Record<string, unknown> =>
 export function normalizeScreen(input: unknown): ScreenConfig {
   const raw = record(input);
   const logo = record(raw.logo);
+  const custom = record(raw.custom);
 
   const photos: ScreenPhoto[] = [];
   const seen = new Set<string>();
@@ -157,9 +185,16 @@ export function normalizeScreen(input: unknown): ScreenConfig {
 
   return {
     seconds: clampInt(raw.seconds, LIMITS.seconds, DEFAULT_SCREEN.seconds),
-    noiseSeconds: clampTenth(raw.noiseSeconds, LIMITS.noiseSeconds, DEFAULT_SCREEN.noiseSeconds),
+    ...noiseRange(raw),
     noiseLevel: clampInt(raw.noiseLevel, [0, 100], DEFAULT_NOISE_LEVEL),
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",
+    custom: {
+      width: clampTenth(custom.width, LIMITS.size, 100),
+      height: clampTenth(custom.height, LIMITS.size, 100),
+      x: clampTenth(custom.x, LIMITS.shift, 0),
+      y: clampTenth(custom.y, LIMITS.shift, 0),
+      guides: custom.guides === true,
+    },
     logo: {
       on: typeof logo.on === "boolean" ? logo.on : DEFAULT_SCREEN.logo.on,
       every: clampInt(logo.every, LIMITS.every, DEFAULT_SCREEN.logo.every),
@@ -178,6 +213,23 @@ export function parseScreen(stored: string | undefined | null): ScreenConfig {
   } catch {
     return DEFAULT_SCREEN;
   }
+}
+
+/**
+ * De ruisduur: een minimum en een maximum. Een instelling van vóór die twee
+ * had één `noiseSeconds`; die wordt dan allebei. Staan ze omgedraaid, dan
+ * worden ze omgewisseld in plaats van dat er één verloren gaat.
+ */
+function noiseRange(raw: Record<string, unknown>) {
+  const single = clampTenth(raw.noiseSeconds, LIMITS.noiseSeconds, DEFAULT_SCREEN.noiseMin);
+  const a = clampTenth(raw.noiseMin, LIMITS.noiseSeconds, single);
+  const b = clampTenth(raw.noiseMax, LIMITS.noiseSeconds, raw.noiseMin === undefined ? single : a);
+  return { noiseMin: Math.min(a, b), noiseMax: Math.max(a, b) };
+}
+
+/** Eén ruisduur in milliseconden, tussen het minimum en het maximum. */
+export function noiseDuration(config: ScreenConfig, random: () => number = Math.random): number {
+  return Math.round((config.noiseMin + (config.noiseMax - config.noiseMin) * random()) * 1000);
 }
 
 export type ScreenItem = { kind: "slide"; slide: ScreenSlide } | { kind: "logo" };
@@ -211,7 +263,7 @@ export function pickFormat(param: string | undefined | null, config: ScreenConfi
 
 /** Breedte gedeeld door hoogte, of null voor "vul het scherm". */
 export function ratioOf(format: ScreenFormat): number | null {
-  if (format === "auto") return null;
+  if (format === "auto" || format === "eigen") return null;
   const [w, h] = format.split(":").map(Number);
   return w / h;
 }

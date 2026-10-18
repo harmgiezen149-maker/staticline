@@ -307,8 +307,12 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   Een vierde root layout, `app/(scherm)`, zonder kop, menu of motion-laag;
   openbaar maar niet gelinkt en `noindex`. De instelling is één JSON-waarde in
   `site_content` (sleutel `scherm`, zie `lib/screen.ts`), en een draaiend
-  scherm haalt hem elke minuut opnieuw op via `/api/scherm`.
-  `?formaat=9:16` in het adres wint van de instelling
+  scherm haalt hem elke tien seconden opnieuw op via `/api/scherm`.
+  `?formaat=9:16` in het adres wint van de instelling. Het formaat "eigen" is
+  een kader met een zelf ingestelde breedte, hoogte en verschuiving in procenten
+  van het scherm, met hulplijnen om het passend te maken: voor een lcd achter
+  het glas van een oude beeldbuistelevisie. De ruisduur bij een wissel is
+  willekeurig tussen een minimum en een maximum
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
