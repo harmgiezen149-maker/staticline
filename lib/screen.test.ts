@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, createPlaylist, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, createPlaylist, glitchTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
 
@@ -183,4 +183,15 @@ test("een rondje begint niet met het beeld waar het vorige mee eindigde", () => 
 test("geen beelden: dan het logo", () => {
   const list = createPlaylist(normalizeScreen({ slides: [] }));
   assert.equal(list.next().kind, "logo");
+});
+
+test("glitches: standaard aan, 0 is uit, nooit sneller dan om de ruim een seconde", () => {
+  assert.equal(normalizeScreen({}).glitch, 40);
+  assert.equal(normalizeScreen({ glitch: 0 }).glitch, 0);
+  assert.equal(normalizeScreen({ glitch: 250 }).glitch, 100);
+  assert.equal(glitchTiming(0).on, false);
+  const max = glitchTiming(100);
+  assert.ok(max.pause[0] >= 1000);
+  assert.ok(max.duration[1] < max.pause[0]);
+  assert.ok(glitchTiming(80).shift > glitchTiming(20).shift);
 });

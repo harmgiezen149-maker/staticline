@@ -66,6 +66,12 @@ export type ScreenConfig = {
   noiseMax: number;
   /** Helderheid van de ruis, 0–100. Zie noiseBrightness. */
   noiseLevel: number;
+  /**
+   * Glitches terwijl een beeld staat, 0–100: korte storingen waarin het beeld
+   * verspringt, banden sneeuw erdoorheen schieten en de tekst in rood en
+   * blauw uiteenvalt. 0 = uit; hoger = vaker en heftiger. Zie glitchTiming.
+   */
+  glitch: number;
   /** De verhouding van het beeld. "auto" vult elk scherm. */
   format: ScreenFormat;
   /**
@@ -104,6 +110,27 @@ export const DEFAULT_OPACITY = 20;
  * 100 is ruim vier keer zo licht.
  */
 export const DEFAULT_NOISE_LEVEL = 16;
+
+/** Standaard een paar glitches per beeld; ook voor een instelling van hiervoor. */
+export const DEFAULT_GLITCH = 40;
+
+/**
+ * Wanneer en hoe hard een glitch komt, bij een stand van 0–100. Bij 0 nooit.
+ * Hoe hoger, hoe korter de pauze ertussen, hoe langer de storing en hoe
+ * verder het beeld verspringt. De pauze blijft altijd boven de seconde: meer
+ * dan drie flitsen per seconde is wat WCAG 2.3.1 verbiedt, en ook los
+ * daarvan is het dan geen storing meer maar een kapot scherm.
+ */
+export function glitchTiming(level: number) {
+  const t = Math.min(100, Math.max(0, level)) / 100;
+  const lerp = (a: number, b: number) => Math.round(a + (b - a) * t);
+  return {
+    on: t > 0,
+    pause: [lerp(9000, 1200), lerp(14000, 3500)] as const,
+    duration: [lerp(160, 260), lerp(320, 900)] as const,
+    shift: lerp(3, 32),
+  };
+}
 export const noiseBrightness = (level: number) =>
   Math.round((0.25 + (Math.min(100, Math.max(0, level)) / 100) * 4.75) * 100) / 100;
 
@@ -113,6 +140,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   noiseMin: 1.4,
   noiseMax: 1.4,
   noiseLevel: DEFAULT_NOISE_LEVEL,
+  glitch: DEFAULT_GLITCH,
   format: "auto",
   custom: { width: 100, height: 100, x: 0, y: 0, guides: false },
   logo: { on: true, every: 3, noise: 0 },
@@ -200,6 +228,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     seconds: clampInt(raw.seconds, LIMITS.seconds, DEFAULT_SCREEN.seconds),
     ...noiseRange(raw),
     noiseLevel: clampInt(raw.noiseLevel, [0, 100], DEFAULT_NOISE_LEVEL),
+    glitch: clampInt(raw.glitch, [0, 100], DEFAULT_GLITCH),
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",
     custom: {
       width: clampTenth(custom.width, LIMITS.size, 100),

@@ -10,8 +10,9 @@ import {
   type ScreenConfig,
   type ScreenFormat,
   type ScreenItem,
-  noiseBrightness,
   createPlaylist,
+  glitchTiming,
+  noiseBrightness,
   noiseDuration,
   ratioOf,
   sequence,
@@ -67,7 +68,9 @@ const POLL_MS = 10_000;
  * Wat het kader bepaalt: formaat, eigen maat en helderheid. Een wijziging
  * daarin gaat meteen in; de beelden zelf wisselen pas bij de volgende wissel.
  */
-const lookOf = (c: ScreenConfig) => ({ format: c.format, custom: c.custom, noiseLevel: c.noiseLevel });
+const lookOf = (c: ScreenConfig) => ({ format: c.format, custom: c.custom, noiseLevel: c.noiseLevel, glitch: c.glitch });
+
+const between = (min: number, max: number) => min + Math.random() * (max - min);
 /** Na zoveel stilstand verdwijnen de cursor en de knop. */
 const IDLE_MS = 2500;
 
@@ -131,6 +134,10 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const signal = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlayCanvas = useRef<HTMLCanvasElement>(null);
+  const glitchLayer = useRef<HTMLDivElement>(null);
+  // Of er nu een beeld staat (en dus niet net ruis, een lijn of een wissel):
+  // alleen dan komen er glitches.
+  const holding = useRef(false);
   const line = useRef<HTMLDivElement>(null);
   const top = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
@@ -250,7 +257,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         else await photoReady(stage.current, 1500);
         if (!alive) return;
 
+        holding.current = true;
         await hold(cfg.seconds * 1000);
+        holding.current = false;
         if (!alive) return;
 
         if (motion) await cover();
@@ -331,6 +340,46 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       void lock?.release().catch(() => {});
     };
   }, [preview]);
+
+  // ── Glitches ────────────────────────────────────────────────────────────
+  // Korte storingen terwijl een beeld staat, op een eigen klok: na een
+  // willekeurige pauze een storing van een willekeurige duur, met elke keer
+  // andere banden. Hoe het eruitziet staat bij `.is-glitching` in
+  // styles/screen.css; hier alleen wanneer, hoe lang en hoe ver. Dezelfde
+  // aanpak als de signaalstoring op de bandfoto's (lib/motion/storing.ts).
+  // Niet bij minder beweging, en niet met het tabblad op de achtergrond.
+  useEffect(() => {
+    const timing = glitchTiming(look.glitch);
+    const box = frame.current;
+    if (!timing.on || reduced() || !box) return;
+    let timer = 0;
+    let off = 0;
+    const burst = () => {
+      const layer = glitchLayer.current;
+      if (layer && holding.current && !document.hidden) {
+        const duration = Math.round(between(...timing.duration));
+        box.style.setProperty("--glitch-dur", `${duration}ms`);
+        box.style.setProperty("--glitch-px", `${Math.round(between(0.5, 1) * timing.shift)}px`);
+        layer.querySelectorAll<HTMLElement>("i").forEach((band) => {
+          band.style.setProperty("--top", `${between(0, 92).toFixed(1)}%`);
+          band.style.setProperty("--hoogte", `${between(1.5, 14).toFixed(1)}%`);
+          band.style.setProperty("--later", `${Math.round(between(0, duration * 0.3))}ms`);
+          band.style.setProperty("--opzij", `${between(-12, 12).toFixed(1)}%`);
+        });
+        box.classList.remove("is-glitching");
+        void box.offsetWidth; // opnieuw starten, ook als de vorige net klaar is
+        box.classList.add("is-glitching");
+        off = window.setTimeout(() => box.classList.remove("is-glitching"), duration * 1.2);
+      }
+      timer = window.setTimeout(burst, between(...timing.pause));
+    };
+    timer = window.setTimeout(burst, between(...timing.pause));
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(off);
+      box.classList.remove("is-glitching");
+    };
+  }, [look.glitch]);
 
   // ── De tekst zo groot als past ──────────────────────────────────────────
   const fit = useCallback(() => {
@@ -459,6 +508,15 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
           aria-hidden="true"
           style={{ opacity: overlay / 100 }}
         />
+
+        {/* De banden sneeuw van een glitch. Altijd in de markup, verborgen tot
+            het kader `.is-glitching` krijgt; zie het effect hierboven. */}
+        <div ref={glitchLayer} className="scr__glitch" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
 
         {/* De ruis en de banden, zoals de loader op de homepage. */}
         <div className="scr__veil" aria-hidden="true">

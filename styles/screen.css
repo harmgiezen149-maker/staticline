@@ -183,6 +183,107 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Glitches ── *
+ * Korte storingen terwijl een beeld staat; wanneer en hoe lang regelt
+ * ScreenLoop (zie glitchTiming in lib/screen.ts). Drie lagen, elk met
+ * `steps()` zodat het verspringt in plaats van glijdt:
+ *   - de foto verspringt opzij en flikkert even in helderheid;
+ *   - de tekst verspringt en valt uiteen in teal en oxiderood (AFW-1, de
+ *     kanaalverschuiving van de site, hier op de monotekst van het beeld);
+ *   - banden sneeuw schieten erdoorheen, dezelfde korrel als de
+ *     signaalstoring op de bandfoto's.
+ * Het wordmark verschuift alleen als geheel en wordt nooit van kleur of
+ * helderheid veranderd; de banden liggen er als losse laag overheen.
+ * Geen scanlines (AFW-2). Met minder beweging staat dit allemaal uit. */
+.scr__glitch {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+.scr__glitch i {
+  position: absolute;
+  left: -15%;
+  right: -15%;
+  top: var(--top, 40%);
+  height: var(--hoogte, 6%);
+  background-image: var(--grain);
+  background-size: 512px 512px;
+  image-rendering: pixelated;
+  filter: contrast(1.8);
+  opacity: 0;
+}
+.is-glitching .scr__glitch {
+  visibility: visible;
+}
+.is-glitching .scr__glitch i {
+  animation: scr-glitch-band var(--glitch-dur, 400ms) steps(1, end) var(--later, 0ms) 1 both;
+}
+.is-glitching .scr__photo {
+  animation: scr-glitch-photo var(--glitch-dur, 400ms) steps(1, end) 1;
+}
+.is-glitching .scr__copy,
+.is-glitching .scr__logo {
+  animation: scr-glitch-shift var(--glitch-dur, 400ms) steps(1, end) 1;
+}
+.is-glitching .scr__title,
+.is-glitching .scr__label {
+  animation: scr-glitch-split var(--glitch-dur, 400ms) steps(1, end) 1;
+}
+/* De kleine regel valt minder ver uiteen: dezelfde pixels als bij de grote
+   tekst maken hem onleesbaar. */
+.scr__label {
+  --split: 0.3;
+}
+@keyframes scr-glitch-band {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); background-position: 0 0; }
+  10% { opacity: 0.9; transform: translate3d(var(--opzij, -4%), 0, 0); background-position: 37px 81px; }
+  30% { opacity: 0.35; transform: translate3d(calc(var(--opzij, -4%) * -0.6), 0, 0); background-position: -120px 12px; }
+  50% { opacity: 1; transform: translate3d(calc(var(--opzij, -4%) * 0.4), -30%, 0); background-position: 64px -90px; }
+  72% { opacity: 0.25; transform: translate3d(0, 20%, 0); background-position: -30px 140px; }
+  100% { opacity: 0; transform: translate3d(0, 0, 0); }
+}
+@keyframes scr-glitch-photo {
+  0% { transform: translate3d(0, 0, 0); filter: none; }
+  12% { transform: translate3d(var(--glitch-px, 8px), 0, 0); filter: brightness(1.3) contrast(0.85); }
+  28% { transform: translate3d(calc(var(--glitch-px, 8px) * -0.7), 0, 0); filter: none; }
+  45% { transform: translate3d(calc(var(--glitch-px, 8px) * 1.4), 0, 0); filter: brightness(0.7); }
+  62% { transform: translate3d(0, 0, 0); filter: none; }
+  80% { transform: translate3d(calc(var(--glitch-px, 8px) * -0.4), 0, 0); filter: brightness(1.15); }
+  100% { transform: translate3d(0, 0, 0); filter: none; }
+}
+@keyframes scr-glitch-shift {
+  0% { transform: translate3d(0, 0, 0); }
+  15% { transform: translate3d(calc(var(--glitch-px, 8px) * -1), 0, 0); }
+  35% { transform: translate3d(calc(var(--glitch-px, 8px) * 0.6), 0, 0); }
+  55% { transform: translate3d(calc(var(--glitch-px, 8px) * -0.3), 0, 0); }
+  75% { transform: translate3d(calc(var(--glitch-px, 8px) * 0.8), 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes scr-glitch-split {
+  0%, 100% { text-shadow: none; }
+  15% {
+    text-shadow:
+      calc(var(--glitch-px, 8px) * -0.5 * var(--split, 1)) 0 var(--accent-alt),
+      calc(var(--glitch-px, 8px) * 0.5 * var(--split, 1)) 0 var(--accent);
+  }
+  45% {
+    text-shadow:
+      calc(var(--glitch-px, 8px) * 0.3 * var(--split, 1)) 0 var(--accent-alt),
+      calc(var(--glitch-px, 8px) * -0.3 * var(--split, 1)) 0 var(--accent);
+  }
+  70% { text-shadow: none; }
+  85% {
+    text-shadow:
+      calc(var(--glitch-px, 8px) * -0.2 * var(--split, 1)) 0 var(--accent-alt),
+      calc(var(--glitch-px, 8px) * 0.2 * var(--split, 1)) 0 var(--accent);
+  }
+}
+.reduce-motion .scr__glitch {
+  display: none;
+}
+
 /* ── Hulplijnen bij "eigen maat" ── *
  * Om het kader passend te maken in de opening van een beeldbuistelevisie: de
  * rand van het kader, een kruis door het midden en de maten erbij. Boven

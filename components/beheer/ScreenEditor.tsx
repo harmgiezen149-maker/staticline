@@ -221,6 +221,21 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           hint={`Geldt voor de ruis bij de wissel én de ruis over de beelden. ${DEFAULT_NOISE_LEVEL}% is de ruis van de startanimatie op de site.`}
         />
 
+        <Slider
+          label="Glitches"
+          min={0}
+          max={100}
+          step={5}
+          value={config.glitch}
+          unit="%"
+          onChange={(v) => set({ glitch: v })}
+          hint={
+            config.glitch === 0
+              ? "Uit: de beelden staan stil tussen de wissels."
+              : "Korte storingen terwijl een beeld staat: het beeld verspringt, er schieten banden sneeuw doorheen en de tekst valt even uiteen in rood en blauw. Hoe hoger, hoe vaker en heftiger. Op 100% om de één à drie seconden."
+          }
+        />
+
         <label className="flex flex-col gap-1">
           <span className="font-mono text-11 text-faint uppercase">Formaat</span>
           <select value={config.format} onChange={(e) => set({ format: e.target.value as ScreenFormat })} className={input}>
