@@ -329,7 +329,8 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   wordt, en verliezen af en toe hun signaal: dan tekent `lib/screen-warp.ts`
   de foto regel voor regel op een canvas, golvend, gescheurd, rollend en met
   stroken sneeuw en zwart, naar een filmpje met een testbeeld. De tekst staat
-  stil
+  stil, en ligt boven de ruis over het beeld en de glitchbanden, zodat hij
+  scherp blijft; alleen de wissel zelf gaat eroverheen
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

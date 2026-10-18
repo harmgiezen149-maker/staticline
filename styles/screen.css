@@ -39,8 +39,15 @@
 .scr__photo {
   object-fit: cover;
 }
+/* De tekst ligt boven de ruis over het beeld en de banden sneeuw van een
+   glitch, zodat hij scherp blijft; die ruis valt alleen over de foto. Onder
+   de wissel (.scr__veil) en de hulplijnen. De lagen in het kader, van onder
+   naar boven: foto · ruis en glitchbanden · tekst (1) · wissel (2) ·
+   hulplijnen (3). Het kader is met `container-type` zijn eigen stapel, dus
+   deze nummers gelden alleen daarbinnen. */
 .scr__copy {
   position: absolute;
+  z-index: 1;
   left: 6cqmin;
   right: 6cqmin;
   bottom: 6cqmin;
@@ -153,6 +160,7 @@
 .js:not(.reduce-motion) .scr__veil {
   display: block;
   position: absolute;
+  z-index: 2;
   inset: 0;
   pointer-events: none;
 }
@@ -185,7 +193,8 @@
   /* De helderheid uit /beheer/scherm, zie noiseBrightness in lib/screen.ts. */
   filter: brightness(var(--noise-brightness, 1));
 }
-/* Ruis over het staande beeld, ook over de tekst en het wordmark. De dekking
+/* Ruis over het staande beeld: over de foto en het wordmark, onder de tekst
+   (zie .scr__copy), zodat die scherp blijft. De dekking
    staat per beeld inline: 0 is geen ruis, 100 is alleen ruis. Een gewone laag
    en geen mengmodus, zodat de korrel ook over lichte delen zichtbaar is. Met
    minder beweging, of zolang JavaScript niet draait, staat hij er niet. */
@@ -376,7 +385,7 @@
 .scr__guides {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 3;
   pointer-events: none;
   border: 2px solid var(--accent-alt);
 }
