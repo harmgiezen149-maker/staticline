@@ -6,6 +6,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 
 import { saveScreen } from "@/app/(beheer)/beheer/scherm/actions";
 import {
+  DEFAULT_NOISE_LEVEL,
   DEFAULT_OPACITY,
   LIMITS,
   type ScreenConfig,
@@ -81,7 +82,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY }],
+      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0 }],
     }));
   }
 
@@ -159,21 +160,35 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
       <section className="flex flex-col gap-6">
         <h2 className="font-mono text-11 text-faint uppercase">Instellingen</h2>
 
-        <label className="flex flex-col gap-1">
-          <span className="font-mono text-11 text-faint uppercase">Seconden per beeld</span>
-          <span className="flex items-center gap-4">
-            <input
-              type="range"
-              min={LIMITS.seconds[0]}
-              max={LIMITS.seconds[1]}
-              value={config.seconds}
-              onChange={(e) => set({ seconds: Number(e.target.value) })}
-              className="w-full accent-[var(--accent-alt)]"
-            />
-            <span className="w-12 shrink-0 text-right font-mono text-14">{config.seconds}s</span>
-          </span>
-          <span className="text-muted">Daarbovenop komt de wissel zelf: ruim drie seconden ruis en lijn.</span>
-        </label>
+        <Slider
+          label="Hoe lang een beeld staat"
+          min={LIMITS.seconds[0]}
+          max={LIMITS.seconds[1]}
+          value={config.seconds}
+          unit="s"
+          onChange={(v) => set({ seconds: v })}
+        />
+
+        <Slider
+          label="Hoe lang de ruis staat bij elke wissel"
+          min={LIMITS.noiseSeconds[0]}
+          max={LIMITS.noiseSeconds[1]}
+          step={0.1}
+          value={config.noiseSeconds}
+          unit="s"
+          onChange={(v) => set({ noiseSeconds: v })}
+          hint="Daarna klapt de ruis in ruim anderhalve seconde dicht tot de lijn en opent het beeld. Het dichtgaan na een beeld duurt ongeveer even lang."
+        />
+
+        <Slider
+          label="Helderheid van de ruis"
+          min={0}
+          max={100}
+          value={config.noiseLevel}
+          unit="%"
+          onChange={(v) => set({ noiseLevel: v })}
+          hint={`Geldt voor de ruis bij de wissel én de ruis over de beelden. ${DEFAULT_NOISE_LEVEL}% is de ruis van de startanimatie op de site.`}
+        />
 
         <label className="flex flex-col gap-1">
           <span className="font-mono text-11 text-faint uppercase">Formaat</span>
@@ -214,6 +229,19 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
             />
             <span>{config.logo.every === 1 ? "beeld" : "beelden"}</span>
           </label>
+          <div className={config.logo.on ? "" : "opacity-40"}>
+            <Slider
+              label="Ruis over het wordmark"
+              min={0}
+              max={100}
+              step={5}
+              value={config.logo.noise}
+              unit="%"
+              disabled={!config.logo.on}
+              onChange={(v) => set({ logo: { ...config.logo, noise: v } })}
+              hint="0% = geen ruis. Hoe hoger, hoe minder doorzichtig de ruislaag over het logo."
+            />
+          </div>
         </fieldset>
       </section>
 
@@ -323,6 +351,17 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                     <span className="w-12 shrink-0 text-right font-mono text-14">{slide.opacity}%</span>
                   </span>
                 </label>
+
+                <Slider
+                  label="Ruis over het beeld"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={slide.noise}
+                  unit="%"
+                  onChange={(v) => setSlide(slide.id, { noise: v })}
+                  hint="0% = geen ruis. Hoe hoger, hoe minder doorzichtig de ruislaag."
+                />
               </li>
             );
           })}
@@ -457,5 +496,51 @@ function PhotoUpload({
         </div>
       </form>
     </section>
+  );
+}
+
+/** Een schuif met de waarde ernaast, zoals elke schuif op dit scherm. */
+function Slider({
+  label,
+  min,
+  max,
+  step = 1,
+  value,
+  unit,
+  hint,
+  disabled = false,
+  onChange,
+}: {
+  label: string;
+  min: number;
+  max: number;
+  step?: number;
+  value: number;
+  unit: string;
+  hint?: string;
+  disabled?: boolean;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="font-mono text-11 text-faint uppercase">{label}</span>
+      <span className="flex items-center gap-4">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full accent-[var(--accent-alt)]"
+        />
+        <span className="w-14 shrink-0 text-right font-mono text-14">
+          {step < 1 ? value.toFixed(1).replace(".", ",") : value}
+          {unit}
+        </span>
+      </span>
+      {hint && <span className="text-muted">{hint}</span>}
+    </label>
   );
 }

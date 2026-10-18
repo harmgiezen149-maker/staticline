@@ -133,6 +133,18 @@
   width: 100%;
   height: 100%;
   opacity: 0.9;
+  /* De helderheid uit /beheer/scherm, zie noiseBrightness in lib/screen.ts. */
+  filter: brightness(var(--noise-brightness, 1));
+}
+/* Ruis over het staande beeld, ook over de tekst en het wordmark. De dekking
+   staat per beeld inline: 0 is geen ruis, 100 is alleen ruis. Een gewone laag
+   en geen mengmodus, zodat de korrel ook over lichte delen zichtbaar is. Met
+   minder beweging, of zolang JavaScript niet draait, staat hij er niet. */
+.scr__overlay {
+  pointer-events: none;
+}
+.reduce-motion .scr__overlay {
+  display: none;
 }
 .scr__scan {
   position: absolute;

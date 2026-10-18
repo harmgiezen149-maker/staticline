@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { decode } from "@/lib/motion/decode";
 import { ms, reduced, tok, wait } from "@/lib/motion/env";
 import { startNoise } from "@/lib/motion/loader";
-import { type ScreenConfig, type ScreenFormat, type ScreenItem, ratioOf, sequence } from "@/lib/screen";
+import { type ScreenConfig, type ScreenFormat, type ScreenItem, noiseBrightness, ratioOf, sequence } from "@/lib/screen";
 
 /**
  * Het scherm: de loader "Afstemmen" als lus.
@@ -21,6 +21,11 @@ import { type ScreenConfig, type ScreenFormat, type ScreenItem, ratioOf, sequenc
  * Het beeld onder de banden is een tekst, een foto met een instelbare dekking,
  * of het wordmark. De scanlines horen bij de ruisfase en staan dus alleen
  * tijdens een wissel in beeld (AFW-2).
+ *
+ * De ruis kan ook tijdens het staan over een beeld liggen, met een eigen
+ * transparantie per beeld (ook bij het wordmark): een tweede canvas boven het
+ * beeld en onder de banden. Hoe lang de ruis bij een wissel staat en hoe licht
+ * hij is, stel je in /beheer/scherm in.
  *
  * Met minder beweging geen ruis en geen banden: de beelden wisselen met een
  * korte crossfade, zoals de paginawissel dat dan ook doet (MOTION.md §7).
@@ -40,8 +45,6 @@ type Props = {
   preview: boolean;
 };
 
-/** Hoe lang de ruis met het label staat voordat hij samenklapt. */
-const NOISE_MS = 1400;
 /** Hoe vaak een draaiend scherm de instelling opnieuw ophaalt. */
 const POLL_MS = 60_000;
 /** Na zoveel stilstand verdwijnen de cursor en de knop. */
@@ -97,6 +100,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const stage = useRef<HTMLDivElement>(null);
   const signal = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const overlayCanvas = useRef<HTMLCanvasElement>(null);
   const line = useRef<HTMLDivElement>(null);
   const top = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
@@ -141,10 +145,15 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       requestAnimationFrame(tick);
     };
 
-    // Ruis → lijn → beeld. Het beeld staat er al onder.
-    const reveal = async () => {
-      countUp(NOISE_MS);
-      await Promise.all([decode(label.current, { duration: 700, hot: 0.2 }), wait(NOISE_MS), photoReady(stage.current, NOISE_MS)]);
+    // Ruis → lijn → beeld. Het beeld staat er al onder. `noiseT` is hoe lang
+    // de ruis met het label staat, uit de instelling.
+    const reveal = async (noiseT: number) => {
+      countUp(noiseT);
+      await Promise.all([
+        decode(label.current, { duration: Math.min(700, noiseT * 0.8), hot: 0.2 }),
+        wait(noiseT),
+        photoReady(stage.current, Math.max(noiseT, 1500)),
+      ]);
       if (!alive) return;
 
       void play(text.current, [{ opacity: 1 }, { opacity: 0 }], { duration: 120 });
@@ -202,7 +211,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         await painted();
         if (!alive) return;
 
-        if (motion) await reveal();
+        if (motion) await reveal(cfg.noiseSeconds * 1000);
         else await photoReady(stage.current, 1500);
         if (!alive) return;
 
@@ -329,11 +338,26 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
 
   const effective = format ?? config.format;
   const ratio = ratioOf(effective);
-  const frameStyle = ratio
-    ? { aspectRatio: String(ratio), width: `min(100vw, calc(100dvh * ${ratio}))` }
-    : { width: "100vw", height: "100dvh" };
+  const frameStyle = {
+    ...(ratio
+      ? { aspectRatio: String(ratio), width: `min(100vw, calc(100dvh * ${ratio}))` }
+      : { width: "100vw", height: "100dvh" }),
+    "--noise-brightness": String(noiseBrightness(config.noiseLevel)),
+  } as unknown as CSSProperties;
 
   const item = items[shown % items.length];
+  // Ruis over het staande beeld: per beeld, of bij het wordmark.
+  const overlay = !item ? 0 : item.kind === "logo" ? config.logo.noise : item.slide.noise;
+  const overlayOn = overlay > 0;
+
+  // ── Ruis over het beeld ─────────────────────────────────────────────────
+  // Draait alleen zolang het beeld in beeld er ruis over wil; bij 0 staat het
+  // canvas stil, zodat een scherm zonder overlay niets extra rekent. Met minder
+  // beweging nooit.
+  useEffect(() => {
+    if (!overlayOn || reduced() || !overlayCanvas.current) return;
+    return startNoise(overlayCanvas.current);
+  }, [overlayOn]);
   const next = items[(shown + 1) % items.length];
   const nextPhoto = next?.kind === "slide" ? next.slide.photo : "";
 
@@ -380,6 +404,14 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
             <Image src={nextPhoto} alt="" fill sizes="100vw" loading="eager" />
           </div>
         )}
+
+        {/* Ruis over het staande beeld, met de transparantie van dit beeld. */}
+        <canvas
+          ref={overlayCanvas}
+          className="scr__noise scr__overlay"
+          aria-hidden="true"
+          style={{ opacity: overlay / 100 }}
+        />
 
         {/* De ruis en de banden, zoals de loader op de homepage. */}
         <div className="scr__veil" aria-hidden="true">

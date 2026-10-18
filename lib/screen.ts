@@ -27,6 +27,8 @@ export type ScreenSlide = {
   photo: string;
   /** Hoe zichtbaar die foto is, 0–100. Laag = transparant. */
   opacity: number;
+  /** Ruis over het beeld, 0–100. 0 = geen; hoger = minder transparant. */
+  noise: number;
 };
 
 export type ScreenPhoto = { url: string; alt: string };
@@ -34,10 +36,14 @@ export type ScreenPhoto = { url: string; alt: string };
 export type ScreenConfig = {
   /** Hoe lang een beeld blijft staan, in seconden. */
   seconds: number;
+  /** Hoe lang de ruis met het label staat bij elke wissel, in seconden. */
+  noiseSeconds: number;
+  /** Helderheid van de ruis, 0–100. Zie noiseBrightness. */
+  noiseLevel: number;
   /** De verhouding van het beeld. "auto" vult elk scherm. */
   format: ScreenFormat;
-  /** Het wordmark als eigen beeld, na elke `every` beelden. */
-  logo: { on: boolean; every: number };
+  /** Het wordmark als eigen beeld, na elke `every` beelden, met eigen ruis. */
+  logo: { on: boolean; every: number; noise: number };
   /** Foto's die alleen voor het scherm zijn geüpload. */
   photos: ScreenPhoto[];
   slides: ScreenSlide[];
@@ -45,6 +51,7 @@ export type ScreenConfig = {
 
 export const LIMITS = {
   seconds: [3, 60],
+  noiseSeconds: [0.5, 10],
   every: [1, 20],
   slides: 50,
   photos: 60,
@@ -54,15 +61,27 @@ export const LIMITS = {
 
 export const DEFAULT_OPACITY = 20;
 
+/**
+ * De helderheid van de ruis als CSS-filter. Het canvas tekent grijs tussen
+ * #090909 en #393939 (zie startNoise in lib/motion/loader.ts); de schuif
+ * vermenigvuldigt dat. 16 is de ruis zoals de startanimatie hem laat zien,
+ * 100 is ruim vier keer zo licht.
+ */
+export const DEFAULT_NOISE_LEVEL = 16;
+export const noiseBrightness = (level: number) =>
+  Math.round((0.25 + (Math.min(100, Math.max(0, level)) / 100) * 4.75) * 100) / 100;
+
 /** Wat er staat zolang er in /beheer/scherm nog niets is opgeslagen. */
 export const DEFAULT_SCREEN: ScreenConfig = {
   seconds: 8,
+  noiseSeconds: 1.4,
+  noiseLevel: DEFAULT_NOISE_LEVEL,
   format: "auto",
-  logo: { on: true, every: 3 },
+  logo: { on: true, every: 3, noise: 0 },
   photos: [],
   slides: [
-    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY },
-    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY },
+    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0 },
+    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0 },
   ],
 };
 
@@ -81,6 +100,13 @@ function clampInt(v: unknown, [min, max]: readonly [number, number], fallback: n
   const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, Math.round(n)));
+}
+
+/** Op een tiende, voor de seconden van de ruis. */
+function clampTenth(v: unknown, [min, max]: readonly [number, number], fallback: number) {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  if (!Number.isFinite(n)) return fallback;
+  return Math.round(Math.min(max, Math.max(min, n)) * 10) / 10;
 }
 
 const record = (v: unknown): Record<string, unknown> =>
@@ -124,16 +150,20 @@ export function normalizeScreen(input: unknown): ScreenConfig {
       title,
       photo,
       opacity: clampInt(r.opacity, [0, 100], DEFAULT_OPACITY),
+      noise: clampInt(r.noise, [0, 100], 0),
     });
     if (slides.length >= LIMITS.slides) break;
   }
 
   return {
     seconds: clampInt(raw.seconds, LIMITS.seconds, DEFAULT_SCREEN.seconds),
+    noiseSeconds: clampTenth(raw.noiseSeconds, LIMITS.noiseSeconds, DEFAULT_SCREEN.noiseSeconds),
+    noiseLevel: clampInt(raw.noiseLevel, [0, 100], DEFAULT_NOISE_LEVEL),
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",
     logo: {
       on: typeof logo.on === "boolean" ? logo.on : DEFAULT_SCREEN.logo.on,
       every: clampInt(logo.every, LIMITS.every, DEFAULT_SCREEN.logo.every),
+      noise: clampInt(logo.noise, [0, 100], 0),
     },
     photos,
     slides,

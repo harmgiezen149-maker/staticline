@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, noiseBrightness, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
 
 const BLOB = "https://abc123.public.blob.vercel-storage.com/band-x1.jpg";
 
@@ -20,7 +20,7 @@ test("grenzen: tempo, logo, dekking", () => {
   });
   assert.equal(c.seconds, 3);
   assert.equal(c.format, "auto");
-  assert.deepEqual(c.logo, { on: true, every: 20 });
+  assert.deepEqual(c.logo, { on: true, every: 20, noise: 0 });
   assert.deepEqual(c.slides.map((s) => s.opacity), [100, 0, 35]);
   assert.equal(normalizeScreen({ seconds: 600 }).seconds, 60);
 });
@@ -72,4 +72,30 @@ test("formaat: het adres wint van de instelling", () => {
   assert.equal(pickFormat(undefined, c), "16:9");
   assert.equal(ratioOf("auto"), null);
   assert.equal(ratioOf("1:1"), 1);
+});
+
+test("ruis: tijd, helderheid en ruis over het beeld", () => {
+  const c = normalizeScreen({
+    noiseSeconds: 2.345,
+    noiseLevel: 140,
+    logo: { noise: 40 },
+    slides: [{ title: "A", noise: 25 }, { title: "B", noise: "x" }, { title: "C" }],
+  });
+  assert.equal(c.noiseSeconds, 2.3);
+  assert.equal(c.noiseLevel, 100);
+  assert.equal(c.logo.noise, 40);
+  assert.deepEqual(c.slides.map((s) => s.noise), [25, 0, 0]);
+  assert.equal(normalizeScreen({ noiseSeconds: 0 }).noiseSeconds, 0.5);
+  assert.equal(normalizeScreen({ noiseSeconds: 99 }).noiseSeconds, 10);
+  // Een opgeslagen instelling van vóór deze velden krijgt de standaard.
+  const old = normalizeScreen({ seconds: 8, slides: [{ title: "A" }] });
+  assert.equal(old.noiseSeconds, 1.4);
+  assert.equal(old.noiseLevel, 16);
+});
+
+test("helderheid: 16 is de ruis van de startanimatie", () => {
+  assert.equal(noiseBrightness(16), 1.01);
+  assert.equal(noiseBrightness(0), 0.25);
+  assert.equal(noiseBrightness(100), 5);
+  assert.equal(noiseBrightness(500), 5);
 });
