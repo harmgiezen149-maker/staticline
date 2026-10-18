@@ -314,7 +314,11 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   het glas van een oude beeldbuistelevisie. De ruisduur bij een wissel is
   willekeurig tussen een minimum en een maximum. De beelden komen standaard in
   willekeurige volgorde, in rondes waarin elk beeld zo vaak zit als zijn
-  "hoe vaak" (1–5×) en nooit twee keer achter elkaar (`createPlaylist`)
+  "hoe vaak" (1–5×) en nooit twee keer achter elkaar (`createPlaylist`). De
+  ruis is standaard kleurensneeuw zoals op een oude beeldbuis
+  (`lib/screen-noise.ts`), op verzoek en naar een foto: blauw, cyaan, groen en
+  wit buiten de tokens om. Alleen hier; de grijze ruis van de site blijft er
+  als keuze "zwart-wit"
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
