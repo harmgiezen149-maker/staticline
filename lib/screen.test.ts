@@ -239,3 +239,9 @@ test("tekst in de ruis: standaard aan, alleen expliciet uit", () => {
   assert.equal(normalizeScreen({ readout: false }).readout, false);
   assert.equal(normalizeScreen({ readout: "nee" }).readout, true);
 });
+
+test("zwarte overgang: standaard aan, alleen expliciet uit", () => {
+  assert.equal(normalizeScreen({}).bands, true);
+  assert.equal(normalizeScreen({ bands: false }).bands, false);
+  assert.equal(normalizeScreen({ bands: 0 }).bands, true);
+});

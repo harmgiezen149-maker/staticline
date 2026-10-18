@@ -106,6 +106,9 @@ async function play(el: Element | null, frames: Keyframe[], options: KeyframeAni
   animation.cancel();
 }
 
+/** Meteen naar een stand, zonder beweging; dezelfde eindstand als `play`. */
+const jump = (el: Element | null, frame: Keyframe) => play(el, [frame, frame], { duration: 1 });
+
 /** Wachten op de foto in beeld, maar nooit langer dan de ruis kan duren. */
 function photoReady(stage: HTMLElement | null, limit: number) {
   const img = stage?.querySelector<HTMLImageElement>(".scr__photo, .scr__logo img");
@@ -201,7 +204,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     // Ruis → lijn → beeld. Het beeld staat er al onder. `noiseT` is hoe lang
     // de ruis met het label staat, uit de instelling.
     type Timing = ReturnType<typeof transitionTiming>;
-    const reveal = async (noiseT: number, tt: Timing) => {
+    const reveal = async (noiseT: number, tt: Timing, bands: boolean) => {
       countUp(noiseT);
       await Promise.all([
         decode(label.current, { duration: Math.min(700, noiseT * 0.8), hot: 0.2 }),
@@ -209,6 +212,24 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         photoReady(stage.current, Math.max(noiseT, 1500)),
       ]);
       if (!alive) return;
+
+      // Zonder banden: een harde knip van de ruis naar het beeld. De banden
+      // gaan onzichtbaar open, zodat de stand daarna dezelfde is als mét.
+      if (!bands) {
+        // Eerst de banden weg onder de ruis, dan de ruis: anders is er één
+        // beeld lang zwart te zien.
+        await Promise.all([
+          jump(line.current, { opacity: 0 }),
+          jump(top.current, { transform: "translate3d(0,-100%,0)" }),
+          jump(bottom.current, { transform: "translate3d(0,100%,0)" }),
+        ]);
+        stopNoise();
+        if (signal.current) signal.current.style.visibility = "hidden";
+        await jump(text.current, { opacity: 0 });
+        const title = stage.current?.querySelector<HTMLElement>(".scr__title");
+        void decode(title ?? null, { duration: 900, hot: 0.12 });
+        return;
+      }
 
       void play(text.current, [{ opacity: 1 }, { opacity: 0 }], { duration: Math.min(120, tt.fade) });
       void play(line.current, [{ opacity: 0 }, { opacity: 1 }], { duration: Math.min(120, tt.fade), delay: tt.collapse * 0.75 });
@@ -228,7 +249,21 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     };
 
     // Beeld → lijn → ruis: de banden sluiten, de lijn springt open.
-    const cover = async (tt: Timing) => {
+    const cover = async (tt: Timing, bands: boolean) => {
+      // Zonder banden: meteen ruis over het beeld. De banden sluiten eronder,
+      // onzichtbaar, zodat de stand dezelfde is als na een wissel mét.
+      if (!bands) {
+        await jump(signal.current, { transform: "scaleY(1)" });
+        if (signal.current) signal.current.style.visibility = "visible";
+        noise();
+        await Promise.all([
+          jump(top.current, { transform: "translate3d(0,0,0)" }),
+          jump(bottom.current, { transform: "translate3d(0,0,0)" }),
+          jump(line.current, { opacity: 0 }),
+          jump(text.current, { opacity: 1 }),
+        ]);
+        return;
+      }
       void play(line.current, [{ opacity: 0 }, { opacity: 1 }], { duration: tt.fade, delay: tt.close * 0.8 });
       await Promise.all([
         play(top.current, [{ transform: "translate3d(0,-100%,0)" }, { transform: "translate3d(0,0,0)" }], { duration: tt.close, easing: easeBand }),
@@ -269,7 +304,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (!alive) return;
 
         // Elke wissel een andere ruisduur, tussen het minimum en het maximum.
-        if (motion) await reveal(noiseDuration(cfg), transitionTiming(cfg.speed, base));
+        if (motion) await reveal(noiseDuration(cfg), transitionTiming(cfg.speed, base), cfg.bands);
         else await photoReady(stage.current, 1500);
         if (!alive) return;
 
@@ -280,7 +315,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
 
         // De snelheid van deze wissel; een nieuwe instelling gaat pas bij het
         // volgende beeld in, zodat een wissel niet halverwege van tempo verandert.
-        if (motion) await cover(transitionTiming(cfg.speed, base));
+        if (motion) await cover(transitionTiming(cfg.speed, base), cfg.bands);
         n += 1;
         current = upcoming;
         upcoming = list.next();

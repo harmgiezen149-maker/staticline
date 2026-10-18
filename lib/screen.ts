@@ -94,6 +94,11 @@ export type ScreenConfig = {
    * transitionTiming.
    */
   speed: number;
+  /**
+   * De donkere banden en de lijn bij een wissel. Uit = een harde knip:
+   * beeld → ruis → beeld, zonder dat het zwart wordt.
+   */
+  bands: boolean;
   /** De verhouding van het beeld. "auto" vult elk scherm. */
   format: ScreenFormat;
   /**
@@ -204,6 +209,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   readout: true,
   glitch: DEFAULT_GLITCH,
   speed: DEFAULT_SPEED,
+  bands: true,
   format: "auto",
   custom: { width: 100, height: 100, x: 0, y: 0, guides: false },
   logo: { on: true, every: 3, noise: 0 },
@@ -295,6 +301,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     glitch: clampInt(raw.glitch, [0, 100], DEFAULT_GLITCH),
     speed: clampInt(raw.speed, [0, 100], DEFAULT_SPEED),
     readout: raw.readout !== false,
+    bands: raw.bands !== false,
     format: FORMATS.includes(raw.format as ScreenFormat) ? (raw.format as ScreenFormat) : "auto",
     custom: {
       width: clampTenth(custom.width, LIMITS.size, 100),

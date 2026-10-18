@@ -221,6 +221,32 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           />
         </fieldset>
 
+        {/* De zwarte overgang. Twee knoppen, zoals bij de volgorde. */}
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-11 text-faint uppercase">Zwarte overgang</span>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Zwarte overgang">
+            {([
+              [true, "Aan"],
+              [false, "Uit"],
+            ] as const).map(([value, text]) => (
+              <button
+                key={text}
+                type="button"
+                aria-pressed={config.bands === value}
+                onClick={() => set({ bands: value })}
+                className={`min-h-12 border px-4 py-3 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] ${config.bands === value ? "border-accent-alt text-accent-alt" : "border-line text-muted hover:text-primary"}`}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+          <span className="text-muted">
+            {config.bands
+              ? "Bij elke wissel sluiten donkere banden over het beeld tot één lijn, en gaat het volgende beeld vanuit die lijn open."
+              : "Een harde knip: het beeld springt meteen naar ruis en de ruis meteen naar het volgende beeld, zonder zwart ertussen. De snelheid hieronder telt dan niet."}
+          </span>
+        </div>
+
         <Slider
           label="Snelheid van de wissel"
           min={0}
