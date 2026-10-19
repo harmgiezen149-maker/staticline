@@ -190,8 +190,9 @@
   width: 100%;
   height: 100%;
   opacity: 0.9;
-  /* De helderheid uit /beheer/scherm, zie noiseBrightness in lib/screen.ts. */
-  filter: brightness(var(--noise-brightness, 1));
+  /* De helderheid en, bij de kleurensneeuw, de verzadiging uit /beheer/scherm;
+     zie noiseBrightness en noiseSaturation in lib/screen.ts. */
+  filter: brightness(var(--noise-brightness, 1)) saturate(var(--noise-saturation, 1));
 }
 /* Ruis over het staande beeld: over de foto en het wordmark, onder de tekst
    (zie .scr__copy), zodat die scherp blijft. De dekking

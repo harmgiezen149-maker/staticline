@@ -300,3 +300,10 @@ test("signaal kwijt: zwart nooit meer dan een vijfde, golf binnen de maat", () =
   for (let y = 0; y <= 1; y += 0.05) assert.ok(Math.abs(waveAt(y, 3.2, 1)) <= 0.16 + 1e-9);
   assert.equal(Math.abs(waveAt(0.4, 1, 0)), 0);
 });
+
+test("kleur van de ruis: standaard 100, tussen 0 en 200", () => {
+  assert.equal(normalizeScreen({}).noiseSaturation, 100);
+  assert.equal(normalizeScreen({ noiseSaturation: 0 }).noiseSaturation, 0);
+  assert.equal(normalizeScreen({ noiseSaturation: 350 }).noiseSaturation, 200);
+  assert.equal(normalizeScreen({ noiseSaturation: "x" }).noiseSaturation, 100);
+});

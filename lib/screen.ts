@@ -100,6 +100,12 @@ export type ScreenConfig = {
   /** Kleurensneeuw van een beeldbuis, of de grijze ruis van de site. */
   noiseStyle: NoiseStyle;
   /**
+   * Hoe kleurig de kleurensneeuw is, 0–200: 0 is grijs, 100 zoals hij
+   * getekend wordt, 200 dubbel zo fel. Alleen bij "kleur"; de grijze ruis
+   * heeft geen kleur om aan te draaien.
+   */
+  noiseSaturation: number;
+  /**
    * De tekst in de ruis bij een wissel: het label van het volgende beeld
    * ("Signaal zoeken" als er geen is) met de teller. Uit = alleen ruis.
    */
@@ -266,6 +272,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   noiseMax: 1.4,
   noiseLevel: DEFAULT_NOISE_LEVEL,
   noiseStyle: "kleur",
+  noiseSaturation: 100,
   readout: true,
   glitch: DEFAULT_GLITCH,
   speed: DEFAULT_SPEED,
@@ -363,6 +370,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     ...noiseRange(raw),
     noiseLevel: clampInt(raw.noiseLevel, [0, 100], DEFAULT_NOISE_LEVEL),
     noiseStyle: NOISE_STYLES.includes(raw.noiseStyle as NoiseStyle) ? (raw.noiseStyle as NoiseStyle) : "kleur",
+    noiseSaturation: clampInt(raw.noiseSaturation, [0, 200], 100),
     glitch: clampInt(raw.glitch, [0, 100], DEFAULT_GLITCH),
     speed: clampInt(raw.speed, [0, 100], DEFAULT_SPEED),
     unrest: clampInt(raw.unrest, [0, 100], DEFAULT_UNREST),

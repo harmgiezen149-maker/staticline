@@ -320,6 +320,19 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           </span>
         </div>
 
+        {config.noiseStyle === "kleur" && (
+          <Slider
+            label="Kleur van de ruis"
+            min={0}
+            max={200}
+            step={5}
+            value={config.noiseSaturation}
+            unit="%"
+            onChange={(v) => set({ noiseSaturation: v })}
+            hint="Hoe kleurig de sneeuw is. 0% is grijs, 100% zoals hij getekend is, 200% dubbel zo fel. Geldt voor de ruis bij de wissel én de ruis over de beelden."
+          />
+        )}
+
         <Slider
           label="Helderheid van de ruis"
           min={0}

@@ -85,6 +85,7 @@ const lookOf = (c: ScreenConfig) => ({
   custom: c.custom,
   noiseLevel: c.noiseLevel,
   noiseStyle: c.noiseStyle,
+  noiseSaturation: c.noiseSaturation,
   readout: c.readout,
   unrest: c.unrest,
   glitch: c.glitch,
@@ -580,6 +581,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         ? { aspectRatio: String(ratio), width: `min(100vw, calc(100dvh * ${ratio}))` }
         : { width: "100vw", height: "100dvh" }),
     "--noise-brightness": String(noiseBrightness(look.noiseLevel, look.noiseStyle)),
+    "--noise-saturation": String(look.noiseStyle === "kleur" ? look.noiseSaturation / 100 : 1),
     "--jitter": `${unrest.jitter}cqmin`,
     "--flicker": String(unrest.flicker),
   } as unknown as CSSProperties;
