@@ -367,6 +367,36 @@
   86% { transform: translate3d(calc(var(--jitter) * -0.6), 0, 0); }
   93% { transform: translate3d(0, 0, 0); }
 }
+/* Het wordmark beweegt licht mee, maar alleen als geheel — verschuiven en
+   gelijkmatig groter of kleiner, nooit uitrekken, herkleuren of flikkeren
+   (de harde regel over het wordmark). Een trage ademhaling van 3%, altijd,
+   en bij "Onrustig beeld" ook het trillen van de foto's, op een derde van
+   de uitslag. Met de losse eigenschappen `scale` en `translate`, zodat het
+   verspringen van een glitch (transform op .scr__logo) er gewoon bovenop
+   komt. */
+.js:not(.reduce-motion) .scr__logo img {
+  animation: scr-logo-breathe 6.5s ease-in-out infinite alternate;
+}
+.js:not(.reduce-motion) .is-unrest .scr__logo img {
+  animation:
+    scr-logo-breathe 6.5s ease-in-out infinite alternate,
+    scr-logo-jitter 2.3s steps(1, end) infinite;
+}
+@keyframes scr-logo-breathe {
+  from { scale: 1; }
+  to { scale: 1.03; }
+}
+@keyframes scr-logo-jitter {
+  0% { translate: 0 0; }
+  9% { translate: calc(var(--jitter) * 0.3) 0; }
+  17% { translate: calc(var(--jitter) * -0.2) calc(var(--jitter) * 0.1); }
+  31% { translate: 0 0; }
+  46% { translate: calc(var(--jitter) * -0.35) 0; }
+  52% { translate: calc(var(--jitter) * 0.25) calc(var(--jitter) * -0.1); }
+  68% { translate: 0 0; }
+  81% { translate: calc(var(--jitter) * 0.2) 0; }
+  90% { translate: calc(var(--jitter) * -0.3) 0; }
+}
 @keyframes scr-flicker {
   0% { filter: brightness(1); }
   9% { filter: brightness(calc(1 - var(--flicker))); }

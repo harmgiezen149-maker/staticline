@@ -330,7 +330,10 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   de foto regel voor regel op een canvas, golvend, gescheurd, rollend en met
   stroken sneeuw en zwart, naar een filmpje met een testbeeld. De tekst staat
   stil, en ligt boven de ruis over het beeld en de glitchbanden, zodat hij
-  scherp blijft; alleen de wissel zelf gaat eroverheen
+  scherp blijft; alleen de wissel zelf gaat eroverheen. Het wordmark ademt
+  licht (3% groter en kleiner) en trilt bij "Onrustig beeld" mee, maar
+  alleen als geheel, met `scale` en `translate`: nooit flikkeren of
+  herkleuren
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
