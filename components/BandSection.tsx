@@ -7,6 +7,7 @@ import { PhotoTexture } from "@/components/PhotoTexture";
 import type { BandAppMember } from "@/lib/band-app";
 import { localePath, type Locale } from "@/lib/i18n";
 import { getSiteCopy } from "@/lib/site-content";
+import { KopBlok, KopTekst } from "./Kop";
 
 /**
  * De bandsectie op de homepage.
@@ -58,16 +59,20 @@ export async function BandSection({ locale, bio, members }: Props) {
       className="flex flex-col gap-4 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
     >
       {/* Dezelfde kop als "Alle shows" ernaast, met dezelfde entree. */}
+      <KopBlok index={3} label={copy.microduck.kickers.band}>
       <div
         className="kop-lijn flex items-baseline gap-4 border-b-2 border-primary pb-2 sm:pb-3"
         data-reveal="mask"
       >
         <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
           <span className="mask-line">
-            <span>{copy.band.title}</span>
+            <span>
+              <KopTekst text={copy.band.title} />
+            </span>
           </span>
         </h2>
       </div>
+      </KopBlok>
 
       {opening && (
         <p

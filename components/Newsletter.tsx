@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { Copy } from "@/content";
+import { splitHeading } from "@/lib/design";
 import type { Locale } from "@/lib/i18n";
 
 /**
@@ -23,9 +24,16 @@ import type { Locale } from "@/lib/i18n";
 export function Newsletter({
   locale,
   copy,
+  kop,
 }: {
   locale: Locale;
   copy: Copy["newsletter"];
+  /**
+   * Alleen in het Microduck-ontwerp: het label boven de kop. Dan staat de kop
+   * ook in twee tonen; zie components/Kop.tsx, dat hier niet kan omdat dit een
+   * clientcomponent is.
+   */
+  kop?: { index: number; label: string };
 }) {
   const [state, setState] = useState<"idle" | "sending" | "ok" | "error">(
     "idle",
@@ -62,9 +70,21 @@ export function Newsletter({
       className="flex flex-col gap-4 bg-surface px-5 py-8 sm:px-8 sm:py-10 lg:px-12"
       data-reveal="rise"
     >
-      <div className="flex flex-col gap-1">
+      <div className={kop ? "kop-blok flex flex-col gap-1" : "flex flex-col gap-1"}>
+        {kop && (
+          <p className="kop-label" data-decode>
+            {String(kop.index).padStart(2, "0")} — {kop.label}
+          </p>
+        )}
         <h2 className="font-display text-22 font-semibold tracking-tight4 uppercase sm:text-30">
-          {copy.title}
+          {kop ? (
+            <>
+              {splitHeading(copy.title)[0] && <span className="kop-eerst">{splitHeading(copy.title)[0]} </span>}
+              <span className="kop-accent">{splitHeading(copy.title)[1]}</span>
+            </>
+          ) : (
+            copy.title
+          )}
         </h2>
         <p className="max-w-[560px] text-14 leading-[22px] text-muted">
           {copy.body}

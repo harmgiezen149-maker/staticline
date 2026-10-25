@@ -320,4 +320,33 @@ export type Copy = {
     riderLink: string;
     riderEmpty: string;
   };
+  /**
+   * Teksten die alleen het Microduck-ontwerp gebruikt (zie lib/design.ts): de
+   * labels boven de secties, de looptekst onder de hero en de showkaarten.
+   */
+  microduck: {
+    /** Het label boven elke sectie op de homepage, achter het nummer. */
+    kickers: {
+      shows: string;
+      instagram: string;
+      band: string;
+      photos: string;
+      newsletter: string;
+    };
+    /** De schuine strook onder de hero. */
+    ticker: {
+      /** Voor een schermlezer: waar de strook heen gaat. */
+      label: string;
+      next: string;
+      none: string;
+    };
+    /** De showkaarten op de homepage. */
+    card: {
+      first: string;
+      next: string;
+      show: string;
+      soldout: string;
+      announced: string;
+    };
+  };
 };

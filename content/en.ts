@@ -259,4 +259,25 @@ export const en: Copy = {
     riderEmpty:
       "The rider is not shareable yet. Ask for it and we will send it over.",
   },
+  microduck: {
+    kickers: {
+      shows: "Where we play",
+      instagram: "Behind the scenes",
+      band: "Who is on stage",
+      photos: "Up close",
+      newsletter: "Never miss a show",
+    },
+    ticker: {
+      label: "To the shows",
+      next: "Next show",
+      none: "No show booked yet",
+    },
+    card: {
+      first: "First show",
+      next: "Next show",
+      show: "Show",
+      soldout: "No tickets left. Next time.",
+      announced: "Tickets coming soon.",
+    },
+  },
 };

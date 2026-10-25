@@ -22,6 +22,7 @@ const LINKS = [
   { href: "/beheer/nieuwsbrief", label: "Nieuwsbrief" },
   { href: "/beheer/inhoud", label: "Inhoud" },
   { href: "/beheer/scherm", label: "Scherm" },
+  { href: "/beheer/ontwerp", label: "Ontwerp" },
   { href: "/beheer/bandapp", label: "Band App" },
   { href: "/beheer/vertalingen", label: "Vertalingen" },
   { href: "/beheer/tov", label: "Tone of voice" },

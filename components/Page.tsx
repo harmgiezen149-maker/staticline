@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { KopTekst } from "./Kop";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 import type { Locale } from "@/lib/i18n";
@@ -47,7 +48,9 @@ export function Page({ locale, path, title, intro, children }: Props) {
             tabIndex={-1}
           >
             <span className="mask-line">
-              <span>{title}</span>
+              <span>
+                <KopTekst text={title} />
+              </span>
             </span>
           </h1>
         </header>
@@ -89,7 +92,7 @@ export function Section({
     <section id={id} className="flex flex-col gap-4 sm:gap-6" data-reveal="rise">
       <div className="kop-lijn flex flex-col gap-1 border-b border-line pb-2 [--kop-lijn-dikte:1px] [--kop-lijn-kleur:var(--border-default)]">
         <h2 className="font-display text-22 leading-[1.2] font-semibold tracking-tight4 uppercase sm:text-30">
-          {title}
+          <KopTekst text={title} />
         </h2>
         {note && (
           <p className="font-mono text-11 tracking-wide10 text-faint">{note}</p>

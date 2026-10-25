@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { KopBlok, KopTekst } from "./Kop";
+import { ShowCard } from "./ShowCard";
 import { ShowRow } from "./ShowRow";
+import { getDesign } from "@/lib/design-store";
 import { localePath, type Locale } from "@/lib/i18n";
 import { getSiteCopy } from "@/lib/site-content";
 import type { Show } from "@/lib/shows";
@@ -8,7 +11,12 @@ import type { Show } from "@/lib/shows";
 type Props = {
   locale: Locale;
   shows: Show[];
+  /** Of er al gespeeld is: dan heet de eerste kaart "volgende" en niet "eerste" show. */
+  hasPlayed?: boolean;
 };
+
+/** Hoeveel shows het Microduck-ontwerp als kaart toont; de rest staat in de agenda. */
+const CARD_LIMIT = 3;
 
 /** Het ontwerp toont op mobiel drie shows met daaronder een link naar de agenda. */
 const MOBILE_LIMIT = 3;
@@ -30,8 +38,8 @@ function formatCount(
   return template.replace("{count}", String(count));
 }
 
-export async function ShowList({ locale, shows }: Props) {
-  const copy = await getSiteCopy(locale);
+export async function ShowList({ locale, shows, hasPlayed }: Props) {
+  const [copy, design] = await Promise.all([getSiteCopy(locale), getDesign()]);
 
   return (
     <section
@@ -40,22 +48,43 @@ export async function ShowList({ locale, shows }: Props) {
     >
       {/* De kop schuift van onder een regelmasker omhoog, de lijn eronder
           tekent zichzelf en het aantal decodeert. Zie design/v2/MOTION.md §6.5. */}
+      <KopBlok index={1} label={copy.microduck.kickers.shows}>
       <div
         className="kop-lijn flex items-baseline gap-4 border-b-2 border-primary pb-2 sm:pb-3"
         data-reveal="mask"
       >
         <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
           <span className="mask-line">
-            <span>{copy.shows.heading}</span>
+            <span>
+              <KopTekst text={copy.shows.heading} />
+            </span>
           </span>
         </h2>
         <span className="hidden font-mono text-12 tracking-wide18 text-faint sm:inline" data-decode>
           {formatCount(locale, copy.shows.count, shows.length)}
         </span>
       </div>
+      </KopBlok>
 
       {shows.length === 0 ? (
         <p className="text-14 text-muted sm:text-16">{copy.shows.empty}</p>
+      ) : design === "microduck" ? (
+        // Microduck: de eerstvolgende shows als kaarten, met een link naar de
+        // volledige agenda. Op /agenda blijft het een lijst: met tien data
+        // onder elkaar werkt een rij beter dan een kaart.
+        <div className="flex flex-col gap-6">
+          <div className="show-kaarten">
+            {shows.slice(0, CARD_LIMIT).map((show, index) => (
+              <ShowCard key={show.id} locale={locale} show={show} index={index} hasPlayed={hasPlayed ?? false} />
+            ))}
+          </div>
+          <Link
+            href={localePath(locale, "/agenda")}
+            className="inline-flex min-h-11 items-center self-start font-mono text-12 tracking-wide14 text-accent-alt uppercase"
+          >
+            <span className="link-line">{copy.shows.viewAll} →</span>
+          </Link>
+        </div>
       ) : (
         <div className="show-list flex flex-col">
           {shows.map((show, index) => (

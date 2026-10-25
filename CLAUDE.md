@@ -278,6 +278,33 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   `parseFloat` maakt daar 2,2 ms van. Dat is precies wat de loader eerst
   onzichtbaar maakte, en het viel alleen in een productiebuild op.
 
+## Twee ontwerpen: klassiek en microduck
+
+De publieke site heeft twee ontwerpen, te wisselen in **`/beheer/ontwerp`**
+(alleen een beheerder, geldt meteen voor iedereen, zonder uitrol). De keuze is
+één waarde in `site_content` (sleutel `ontwerp`, zie `lib/design.ts`); de root
+layouts zetten hem als `data-ontwerp` op `<html>`.
+
+- **klassiek** is v2 zoals hierboven, en de standaard. Zijn markup is niet
+  veranderd: wat microduck nodig heeft, rendert alleen in microduck.
+- **microduck** is op verzoek gemaakt naar de productpagina van Pollen
+  Robotics' Microduck (het voorstel staat als ontwerp op claude.ai): koppen in
+  twee tonen met het laatste woord rood (`KopTekst`), een label in teal
+  erboven en een stippenraster erachter (`KopBlok`, beide in
+  `components/Kop.tsx`), knoppen met een harde plaat, een schuine looptekst
+  met de volgende show in plaats van de rode balk (`components/Ticker.tsx`) en
+  de eerstvolgende drie shows als kaarten met een statussticker
+  (`components/ShowCard.tsx`). De agenda op `/agenda` blijft een lijst. Alle
+  opmaak staat in `styles/microduck.css`, onder `[data-ontwerp="microduck"]`;
+  de teksten onder `microduck` in `content/`.
+
+Twee uitzonderingen op de harde regels gelden **alleen in microduck** en zijn
+met dat ontwerp goedgekeurd: de plaat achter knoppen en kaarten is een harde
+`box-shadow` (geen vervaging, hoek 0 — een vlak, geen schaduw), en de looptekst
+en de stickers staan schuin. Daarbuiten blijven de regels zoals ze zijn. Zet
+nieuwe opmaak voor microduck altijd onder die selector, nooit in een
+basisstijl.
+
 ## Wat niet ontworpen is
 
 De handoff dekt alleen de homepage. Alles hieronder is **geëxtrapoleerd** binnen de

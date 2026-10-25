@@ -8,6 +8,8 @@ import { getPhotos, getSiteCopy, localiseBand } from "@/lib/site-content";
 import { ShowList } from "@/components/ShowList";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { Ticker } from "@/components/Ticker";
+import { getDesign } from "@/lib/design-store";
 import type { Locale } from "@/lib/i18n";
 import { fetchBandAppPublic } from "@/lib/band-app";
 import { getShows } from "@/lib/shows";
@@ -30,18 +32,29 @@ export async function HomePage({ locale }: { locale: Locale }) {
   const bandApp = await fetchBandAppPublic();
   const band = await localiseBand(bandApp, locale);
   const copy = await getSiteCopy(locale);
+  const design = await getDesign();
 
   return (
     <>
       <SiteHeader locale={locale} path="/" />
       <main id="main" tabIndex={-1} className="site-main">
         <Hero locale={locale} next={next} hasPlayed={hasPlayed} />
-        <NextShow locale={locale} show={next} />
-        <ShowList locale={locale} shows={upcoming} />
+        {/* Het Microduck-ontwerp zet de volgende show in een looptekst en in
+            de eerste showkaart; de rode balk vervalt daar. Zie lib/design.ts. */}
+        {design === "microduck" ? (
+          <Ticker locale={locale} next={next} />
+        ) : (
+          <NextShow locale={locale} show={next} />
+        )}
+        <ShowList locale={locale} shows={upcoming} hasPlayed={hasPlayed} />
         <InstagramFeed locale={locale} />
         <BandSection locale={locale} bio={band.bio} members={band.members} />
         <PhotoGrid locale={locale} photos={photos} />
-        <Newsletter locale={locale} copy={copy.newsletter} />
+        <Newsletter
+          locale={locale}
+          copy={copy.newsletter}
+          kop={design === "microduck" ? { index: 5, label: copy.microduck.kickers.newsletter } : undefined}
+        />
       </main>
       <SiteFooter locale={locale} />
     </>

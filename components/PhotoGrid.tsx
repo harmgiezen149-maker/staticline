@@ -3,6 +3,7 @@ import { PhotoTexture } from "@/components/PhotoTexture";
 
 import type { Locale } from "@/lib/i18n";
 import { getSiteCopy } from "@/lib/site-content";
+import { KopBlok, KopTekst } from "./Kop";
 
 export type Photo = {
   src: string;
@@ -66,14 +67,18 @@ export async function PhotoGrid({ locale, photos = [], heading = true }: Props) 
 
       <div className="relative flex flex-col gap-4 sm:gap-6">
         {heading && (
+          <KopBlok index={4} label={copy.microduck.kickers.photos}>
           <h2
             className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]"
             data-reveal="mask"
           >
             <span className="mask-line">
-              <span>{copy.photos.heading}</span>
+              <span>
+                <KopTekst text={copy.photos.heading} />
+              </span>
             </span>
           </h2>
+          </KopBlok>
         )}
 
         {/* `minmax(140px,auto)` op mobiel in plaats van een vaste 140px.

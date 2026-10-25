@@ -4,6 +4,7 @@ import { MotionHead } from "@/components/motion/MotionHead";
 import { MotionLayer } from "@/components/motion/MotionLayer";
 import { Overlays } from "@/components/motion/Overlays";
 import { getCopy } from "@/content";
+import { getDesign } from "@/lib/design-store";
 import { fontVariables } from "@/lib/fonts";
 import { getSiteCopy } from "@/lib/site-content";
 import { siteUrl } from "@/lib/site";
@@ -32,13 +33,15 @@ export const metadata: Metadata = {
 
 export default async function EnLayout({ children }: LayoutProps<"/">) {
   const site = await getSiteCopy("en");
+  // Welk ontwerp: klassiek of microduck, te wisselen in /beheer/ontwerp. Zie lib/design.ts.
+  const design = await getDesign();
 
   return (
     // `no-js` staat in de HTML en het script in de kop haalt hem weg. Dat script
     // wijzigt de klassen op <html> vóór React er is; zonder suppressHydrationWarning
     // ziet React daar een verschil en meldt dat als fout. Het is een bewust
     // verschil, en het geldt alleen voor dit ene element.
-    <html lang="en" className={`no-js ${fontVariables}`} suppressHydrationWarning>
+    <html lang="en" className={`no-js ${fontVariables}`} data-ontwerp={design} suppressHydrationWarning>
       <head>
         <MotionHead />
       </head>

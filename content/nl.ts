@@ -280,4 +280,25 @@ export const nl: Copy = {
     riderEmpty:
       "De rider is er nog niet in een deelbare vorm. Vraag ernaar en we sturen hem.",
   },
+  microduck: {
+    kickers: {
+      shows: "Hier spelen we",
+      instagram: "Van achter de schermen",
+      band: "Wie er op het podium staat",
+      photos: "Van dichtbij",
+      newsletter: "Mis geen show",
+    },
+    ticker: {
+      label: "Naar de agenda",
+      next: "Volgende show",
+      none: "Nog geen show gepland",
+    },
+    card: {
+      first: "Eerste show",
+      next: "Volgende show",
+      show: "Show",
+      soldout: "Geen kaarten meer. Volgende keer.",
+      announced: "Kaartverkoop volgt.",
+    },
+  },
 };

@@ -1,0 +1,318 @@
+/* ─── Het Microduck-ontwerp ─────────────────────────────────────────────── *
+ * Een tweede ontwerp over het klassieke heen, op verzoek en naar de
+ * productpagina van Pollen Robotics' Microduck. Aan en uit in /beheer/ontwerp;
+ * zie lib/design.ts. Alles hier staat onder `[data-ontwerp="microduck"]` op
+ * <html>, zodat het klassieke ontwerp precies blijft wat het was.
+ *
+ * Wat het doet:
+ *   - koppen in twee tonen, het laatste woord in rood op een eigen regel, met
+ *     een label in teal erboven en een stippenraster erachter (.kop-blok);
+ *   - een korte kanaalverschuiving op een kop zodra hij binnenkomt;
+ *   - knoppen met een harde plaat die rechtsonder uitsteekt;
+ *   - de schuine looptekst met de volgende show (.ticker);
+ *   - showkaarten met een rasterkop en een statussticker (.show-kaart).
+ *
+ * Twee bewuste uitzonderingen op de harde regels, goedgekeurd met dit ontwerp
+ * en alleen hier: de plaat achter knoppen en kaarten is een box-shadow, maar
+ * hard (geen vervaging, hoek 0) — een vlak, geen schaduw; en de looptekst en de
+ * stickers staan schuin. Kleuren komen uit de tokens; radius blijft 0.
+ * Minder beweging: de looptekst staat stil, knoppen verspringen niet, de
+ * verschuiving op koppen valt weg (alles onder `.motion`).
+ */
+
+/* ── Koppen ── */
+[data-ontwerp="microduck"] .kop-accent {
+  display: block;
+  color: var(--accent);
+}
+[data-ontwerp="microduck"] .kop-blok {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-block: 12px;
+  background-image: radial-gradient(var(--bg-raised) 1.6px, transparent 1.7px);
+  background-size: 14px 14px;
+}
+[data-ontwerp="microduck"] #photos .kop-blok,
+[data-ontwerp="microduck"] .bg-surface .kop-blok,
+[data-ontwerp="microduck"] .bg-surface.kop-blok {
+  background-image: radial-gradient(var(--border-default) 1.6px, transparent 1.7px);
+}
+[data-ontwerp="microduck"] .kop-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-alt);
+}
+/* Groot en strak op elkaar: 44 px op een telefoon, tot 96 px op een breed
+   scherm. Rood haalt pas vanaf 24 px genoeg contrast; hier is het ruim groter. */
+[data-ontwerp="microduck"] .kop-blok h2 {
+  font-size: clamp(44px, 8vw, 96px);
+  line-height: 0.88;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+[data-ontwerp="microduck"] .kop-lijn > h1 {
+  font-size: clamp(48px, 9vw, 104px);
+  line-height: 0.88;
+  letter-spacing: 0.005em;
+}
+
+/* De kanaalverschuiving (AFW-1) op een kop, één keer, zodra hij binnenkomt;
+   daarna staat hij scherp. Teal en rood, hard, zoals op de monolabels. */
+html.motion[data-ontwerp="microduck"] .kop-lijn.is-in > :is(h1, h2),
+html.motion[data-ontwerp="microduck"] h2[data-reveal="mask"].is-in {
+  animation: md-kanaal 420ms steps(4, end) calc(var(--dur-slow, 600ms) * 0.6) 1 both;
+}
+@keyframes md-kanaal {
+  0% { text-shadow: -6px 0 0 var(--accent-alt), 6px 0 0 var(--accent); }
+  50% { text-shadow: 3px 0 0 var(--accent-alt), -3px 0 0 var(--accent); }
+  75% { text-shadow: -2px 0 0 var(--accent-alt), 2px 0 0 var(--accent); }
+  100% { text-shadow: none; }
+}
+
+/* ── Knoppen met een plaat ── */
+[data-ontwerp="microduck"] .btn--primary,
+[data-ontwerp="microduck"] .btn--ghost,
+[data-ontwerp="microduck"] .btn--inset,
+[data-ontwerp="microduck"] .site-main form button[type="submit"] {
+  border: 3px solid var(--bg-inset);
+  box-shadow: 8px 8px 0 0 var(--accent-alt);
+  transition:
+    color var(--dur-fast, 160ms) ease,
+    background-color var(--dur-fast, 160ms) ease,
+    border-color var(--dur-fast, 160ms) ease,
+    box-shadow var(--dur-instant, 80ms) ease,
+    transform var(--dur-instant, 80ms) ease;
+}
+[data-ontwerp="microduck"] .btn--ghost,
+[data-ontwerp="microduck"] .btn--inset {
+  border-color: var(--text-primary);
+  box-shadow: 8px 8px 0 0 var(--text-primary);
+}
+/* Bij hover wordt de knop blauw (zoals altijd) en de plaat rood. */
+[data-ontwerp="microduck"] .btn--primary:hover,
+[data-ontwerp="microduck"] .btn--primary:focus-visible,
+[data-ontwerp="microduck"] .site-main form button[type="submit"]:enabled:hover,
+[data-ontwerp="microduck"] .site-main form button[type="submit"]:focus-visible {
+  box-shadow: 8px 8px 0 0 var(--accent);
+}
+/* Met beweging zakt de knop in de plaat. */
+html.motion[data-ontwerp="microduck"] .btn--primary:hover,
+html.motion[data-ontwerp="microduck"] .btn--primary:focus-visible,
+html.motion[data-ontwerp="microduck"] .btn--ghost:hover,
+html.motion[data-ontwerp="microduck"] .btn--ghost:focus-visible,
+html.motion[data-ontwerp="microduck"] .btn--inset:hover,
+html.motion[data-ontwerp="microduck"] .btn--inset:focus-visible,
+html.motion[data-ontwerp="microduck"] .site-main form button[type="submit"]:enabled:hover {
+  transform: translate(4px, 4px);
+  box-shadow: 4px 4px 0 0 var(--accent);
+}
+html.motion[data-ontwerp="microduck"] .btn--ghost:hover,
+html.motion[data-ontwerp="microduck"] .btn--ghost:focus-visible,
+html.motion[data-ontwerp="microduck"] .btn--inset:hover,
+html.motion[data-ontwerp="microduck"] .btn--inset:focus-visible {
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+}
+html.motion[data-ontwerp="microduck"] .btn:active,
+html.motion[data-ontwerp="microduck"] .site-main form button[type="submit"]:enabled:active {
+  transform: translate(8px, 8px);
+  box-shadow: 0 0 0 0 transparent;
+}
+
+/* ── De looptekst ── *
+ * Ligt half over de onderrand van de hero, 2° scheef. De strook is breder dan
+ * het scherm en de wrapper knipt hem af, zodat er nooit horizontaal te scrollen
+ * valt. De tekst staat er vier keer in; schuiven over de helft gaat dan naadloos
+ * rond, ook op een breed scherm. */
+[data-ontwerp="microduck"] .ticker {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  margin-top: -28px;
+  padding-block: 16px;
+}
+[data-ontwerp="microduck"] .ticker__strook {
+  display: block;
+  margin-inline: -24px;
+  transform: rotate(-2deg);
+  overflow: hidden;
+  white-space: nowrap;
+  padding-block: 10px;
+  background: var(--accent);
+  border-block: 3px solid var(--bg-inset);
+  color: var(--text-on-accent);
+}
+[data-ontwerp="microduck"] .ticker__track,
+[data-ontwerp="microduck"] .ticker__run,
+[data-ontwerp="microduck"] .ticker__item {
+  display: inline-flex;
+  align-items: center;
+}
+[data-ontwerp="microduck"] .ticker__item {
+  gap: 24px;
+  padding-right: 24px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(18px, 2.4vw, 30px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+[data-ontwerp="microduck"] .ticker__blok {
+  font-size: 0.6em;
+  color: var(--bg-inset);
+}
+html.motion[data-ontwerp="microduck"] .ticker__track {
+  animation: md-ticker 48s linear infinite;
+}
+html.motion[data-ontwerp="microduck"] .ticker__strook:hover .ticker__track,
+html.motion[data-ontwerp="microduck"] .ticker__strook:focus-visible .ticker__track {
+  animation-play-state: paused;
+}
+@keyframes md-ticker {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* ── Showkaarten ── */
+[data-ontwerp="microduck"] .show-kaarten {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  padding: 16px 10px 10px 0;
+}
+@media (min-width: 641px) {
+  [data-ontwerp="microduck"] .show-kaarten {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1025px) {
+  [data-ontwerp="microduck"] .show-kaarten {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px;
+  }
+}
+[data-ontwerp="microduck"] .show-kaart {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 3px solid var(--bg-inset);
+  box-shadow: 10px 10px 0 0 var(--border-strong);
+}
+[data-ontwerp="microduck"] .show-kaart--eerst {
+  box-shadow: 10px 10px 0 0 var(--accent-alt);
+}
+[data-ontwerp="microduck"] .show-kaart__kop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 20px 18px;
+  border-bottom: 3px solid var(--bg-inset);
+  background-color: var(--bg-raised);
+  background-image: radial-gradient(var(--border-default) 1.8px, transparent 1.9px);
+  background-size: 12px 12px;
+}
+[data-ontwerp="microduck"] .show-kaart--eerst .show-kaart__kop {
+  background-color: var(--accent);
+  background-image: radial-gradient(rgba(13, 15, 18, 0.28) 1.8px, transparent 1.9px);
+  color: var(--text-on-accent);
+}
+[data-ontwerp="microduck"] .show-kaart__kicker {
+  margin: 0;
+  padding-right: 96px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+[data-ontwerp="microduck"] .show-kaart__naam {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(32px, 3.6vw, 48px);
+  line-height: 0.95;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+[data-ontwerp="microduck"] .show-kaart__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 20px;
+}
+[data-ontwerp="microduck"] .show-kaart__datum {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+[data-ontwerp="microduck"] .show-kaart__datum span,
+[data-ontwerp="microduck"] .show-kaart__meta,
+[data-ontwerp="microduck"] .show-kaart__noot {
+  color: var(--text-muted);
+}
+[data-ontwerp="microduck"] .show-kaart__meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-ontwerp="microduck"] .show-kaart__noot {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+}
+[data-ontwerp="microduck"] .show-kaart__knop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 10px 24px;
+  font-size: 16px;
+}
+/* De status als sticker op de hoek, elk een andere kant op gedraaid. */
+[data-ontwerp="microduck"] .show-kaart__sticker {
+  position: absolute;
+  top: -14px;
+  right: -6px;
+  margin: 0;
+  padding: 6px 12px;
+  background: var(--text-primary);
+  color: var(--bg-inset);
+  border: 3px solid var(--bg-inset);
+  transform: rotate(4deg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-ontwerp="microduck"] .show-kaart[data-status="announced"] .show-kaart__sticker {
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+  transform: rotate(-3deg);
+}
+[data-ontwerp="microduck"] .show-kaart[data-status="soldout"] .show-kaart__sticker {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  transform: rotate(5deg);
+}
+[data-ontwerp="microduck"] .show-kaart[data-status="soldout"] .show-kaart__naam {
+  text-decoration: line-through;
+  text-decoration-thickness: 4px;
+  text-decoration-color: var(--accent);
+}
+[data-ontwerp="microduck"] .show-kaart--eerst[data-status="soldout"] .show-kaart__naam {
+  text-decoration-color: var(--bg-inset);
+}

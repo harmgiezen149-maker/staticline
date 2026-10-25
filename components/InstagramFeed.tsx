@@ -2,6 +2,7 @@ import { handleFrom } from "@/lib/instagram";
 import { getInstagramPosts } from "@/lib/instagram-feed";
 import type { Locale } from "@/lib/i18n";
 import { getSiteCopy, getSocials } from "@/lib/site-content";
+import { KopBlok, KopTekst } from "./Kop";
 
 /**
  * De laatste Instagram-posts, op de homepage onder de shows.
@@ -37,13 +38,16 @@ export async function InstagramFeed({ locale }: { locale: Locale }) {
       id="instagram"
       className="flex flex-col gap-3 px-5 py-6 sm:gap-6 sm:px-8 sm:py-12 lg:px-12 lg:py-16"
     >
+      <KopBlok index={2} label={copy.microduck.kickers.instagram}>
       <div
         className="kop-lijn flex items-baseline gap-4 border-b-2 border-primary pb-2 sm:pb-3"
         data-reveal="mask"
       >
         <h2 className="font-display text-26 leading-[1.05] font-bold tracking-tight2 uppercase sm:text-[clamp(28px,4vw,44px)]">
           <span className="mask-line">
-            <span>{t.heading}</span>
+            <span>
+              <KopTekst text={t.heading} />
+            </span>
           </span>
         </h2>
         {handle && (
@@ -52,6 +56,7 @@ export async function InstagramFeed({ locale }: { locale: Locale }) {
           </span>
         )}
       </div>
+      </KopBlok>
 
       {posts.length > 0 && (
         <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3 lg:grid-cols-6">
