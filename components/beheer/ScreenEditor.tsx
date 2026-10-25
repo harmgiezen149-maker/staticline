@@ -10,6 +10,7 @@ import {
   DEFAULT_OPACITY,
   LIMITS,
   NOW_LABEL,
+  SHOW_LABEL,
   type ScreenConfig,
   type ScreenFormat,
   type ScreenPhoto,
@@ -103,7 +104,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true }],
+      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "" }],
     }));
   }
 
@@ -112,7 +113,16 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addNowSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: NOW_LABEL, title: "", photo: "", opacity: 60, noise: 0, weight: 2, source: "nu", cover: true }],
+      slides: [...c.slides, { id: newId(), label: NOW_LABEL, title: "", photo: "", opacity: 60, noise: 0, weight: 2, source: "nu", cover: true, sticker: "" }],
+    }));
+  }
+
+  // De volgende show uit de agenda, als eigen beeld. Zonder geplande show
+  // slaat het scherm hem over, net als "Nu speelt" zonder bediener.
+  function addShowSlide() {
+    setConfig((c) => ({
+      ...c,
+      slides: [...c.slides, { id: newId(), label: SHOW_LABEL, title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 2, source: "show", cover: true, sticker: "" }],
     }));
   }
 
@@ -377,6 +387,104 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           }
         />
 
+        {/* De posterlaag naar Microduck. Elk onderdeel apart aan en uit, zodat
+            je ook klassiek met alleen een looptekst kunt draaien. */}
+        <fieldset className="flex flex-col gap-5 border border-line p-4">
+          <legend className="px-1 font-mono text-11 text-faint uppercase">Posterlaag — naar Microduck</legend>
+
+          <Choice
+            label="Stijl"
+            value={config.style}
+            options={[
+              ["klassiek", "Klassiek"],
+              ["microduck", "Microduck"],
+            ]}
+            onChange={(v) => set({ style: v })}
+            hint={
+              config.style === "microduck"
+                ? "Koppen in Oswald met het laatste woord in rood, een teal label erboven, de hoes van \"Nu speelt\" als kaart en de volgende show als showkaart met het webadres. Los van het ontwerp van de site."
+                : "Koppen in monoletters, zoals het scherm altijd was."
+            }
+          />
+
+          <div className="flex flex-col gap-3">
+            <Choice
+              label="Looptekst"
+              value={config.ticker.on}
+              options={[
+                [true, "Aan"],
+                [false, "Uit"],
+              ]}
+              onChange={(v) => set({ ticker: { ...config.ticker, on: v } })}
+              hint={
+                config.ticker.on
+                  ? "Een schuine rode strook onderin, over alle beelden heen, ook tijdens de wissel."
+                  : "Geen looptekst."
+              }
+            />
+            {config.ticker.on && (
+              <div className="flex flex-col gap-2 pl-3">
+                <label className="flex min-h-11 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={config.ticker.show}
+                    onChange={(e) => set({ ticker: { ...config.ticker, show: e.target.checked } })}
+                    className="size-5 accent-[var(--accent-alt)]"
+                  />
+                  <span>De volgende show uit de agenda</span>
+                </label>
+                <label className="flex min-h-11 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={config.ticker.now}
+                    onChange={(e) => set({ ticker: { ...config.ticker, now: e.target.checked } })}
+                    className="size-5 accent-[var(--accent-alt)]"
+                  />
+                  <span>Het nummer dat nu speelt</span>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="font-mono text-11 text-faint uppercase">
+                    Eigen tekst erbij <span className="normal-case">— mag leeg</span>
+                  </span>
+                  <input
+                    value={config.ticker.text}
+                    maxLength={LIMITS.tickerText}
+                    placeholder="staticline.nl"
+                    onChange={(e) => set({ ticker: { ...config.ticker, text: e.target.value } })}
+                    className={input}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          <Slider
+            label="Drukraster op de foto's"
+            min={0}
+            max={100}
+            step={5}
+            value={config.raster}
+            unit="%"
+            onChange={(v) => set({ raster: v })}
+            hint={
+              config.raster === 0
+                ? "Uit."
+                : "Een stippenraster over de foto's, als een gedrukte poster. Hoe hoger, hoe sterker. De tekst blijft erboven."
+            }
+          />
+
+          <Choice
+            label="Stickers"
+            value={config.stickers}
+            options={[
+              [true, "Tonen"],
+              [false, "Verbergen"],
+            ]}
+            onChange={(v) => set({ stickers: v })}
+            hint="Per beeld kun je hieronder een kort woord als schuine sticker op de hoek zetten, zoals Vanavond of Live. Hier zet je ze allemaal tegelijk uit."
+          />
+        </fieldset>
+
         <label className="flex flex-col gap-1">
           <span className="font-mono text-11 text-faint uppercase">Formaat</span>
           <select value={config.format} onChange={(e) => set({ format: e.target.value as ScreenFormat })} className={input}>
@@ -556,15 +664,17 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
           {config.slides.map((slide, i) => {
             const photo = choices.find((p) => p.url === slide.photo);
             const now = slide.source === "nu";
+            const show = slide.source === "show";
             // Bij een nu-speelt-beeld kan de hoes de foto zijn, ook zonder
             // gekozen foto: dan telt de zichtbaarheid ook.
             const hasPhoto = Boolean(slide.photo) || (now && slide.cover);
             return (
-              <li key={slide.id} className={`flex flex-col gap-4 border p-4 ${now ? "border-accent-alt" : "border-line"}`}>
+              <li key={slide.id} className={`flex flex-col gap-4 border p-4 ${now || show ? "border-accent-alt" : "border-line"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-mono text-12 text-muted">
                     {String(i + 1).padStart(2, "0")}
                     {now && <span className="ml-3 text-accent-alt">Nu speelt · uit de Band App</span>}
+                    {show && <span className="ml-3 text-accent-alt">Volgende show · uit de agenda</span>}
                   </span>
                   <span className="flex items-center gap-4">
                     <button type="button" className={small} onClick={() => move(i, -1)} disabled={i === 0}>
@@ -590,11 +700,32 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                   <input
                     value={slide.label}
                     maxLength={LIMITS.label}
-                    placeholder={now ? NOW_LABEL : "Live"}
+                    placeholder={now ? NOW_LABEL : show ? SHOW_LABEL : "Live"}
                     onChange={(e) => setSlide(slide.id, { label: e.target.value })}
                     className={input}
                   />
                 </label>
+
+                <label className={`flex flex-col gap-1 ${config.stickers ? "" : "opacity-40"}`}>
+                  <span className="font-mono text-11 text-faint uppercase">
+                    Sticker <span className="normal-case">— mag leeg</span>
+                  </span>
+                  <input
+                    value={slide.sticker}
+                    maxLength={LIMITS.sticker}
+                    placeholder="Vanavond"
+                    disabled={!config.stickers}
+                    onChange={(e) => setSlide(slide.id, { sticker: e.target.value })}
+                    className={input}
+                  />
+                </label>
+
+                {show && (
+                  <p className="text-muted">
+                    De zaal, datum, tijd en status komen uit de agenda in de Band App: de eerstvolgende show. Zolang er
+                    geen show gepland staat, slaat het scherm dit beeld over.
+                  </p>
+                )}
 
                 {now ? (
                   <>
@@ -628,7 +759,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                       </span>
                     </div>
                   </>
-                ) : (
+                ) : show ? null : (
                 <label className="flex flex-col gap-1">
                   <span className="font-mono text-11 text-faint uppercase">
                     Tekst <span className="normal-case">— leeg = alleen de foto</span>
@@ -738,6 +869,15 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
             ＋ Beeld “Nu speelt” toevoegen
           </button>
         )}
+        {config.slides.length < LIMITS.slides && !config.slides.some((s) => s.source === "show") && (
+          <button
+            type="button"
+            onClick={addShowSlide}
+            className="border border-dashed border-accent-alt px-4 py-3 font-display text-14 font-bold tracking-wide12 text-accent-alt uppercase transition-colors duration-[120ms] hover:border-primary hover:text-primary"
+          >
+            ＋ Beeld “Volgende show” toevoegen
+          </button>
+        )}
       </section>
 
       <PhotoUpload
@@ -755,7 +895,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
               slides: asSlides
                 ? [
                     ...c.slides,
-                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0, weight: 1, source: "" as const, cover: true })),
+                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0, weight: 1, source: "" as const, cover: true, sticker: "" })),
                   ].slice(0, LIMITS.slides)
                 : c.slides,
             };
@@ -951,6 +1091,41 @@ function PhotoUpload({
 }
 
 /** Een schuif met de waarde ernaast, zoals elke schuif op dit scherm. */
+/** Een keuze uit twee of meer, als knoppen: op een telefoon met een duim te raken. */
+function Choice<T extends string | boolean>({
+  label,
+  value,
+  options,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: T;
+  options: readonly (readonly [T, string])[];
+  onChange: (value: T) => void;
+  hint?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="font-mono text-11 text-faint uppercase">{label}</span>
+      <div className="grid grid-cols-2 gap-2" role="group" aria-label={label}>
+        {options.map(([option, text]) => (
+          <button
+            key={String(option)}
+            type="button"
+            aria-pressed={value === option}
+            onClick={() => onChange(option)}
+            className={`min-h-12 border px-4 py-3 font-display text-14 font-bold tracking-wide12 uppercase transition-colors duration-[120ms] ${value === option ? "border-accent-alt text-accent-alt" : "border-line text-muted hover:text-primary"}`}
+          >
+            {text}
+          </button>
+        ))}
+      </div>
+      {hint && <span className="text-muted">{hint}</span>}
+    </div>
+  );
+}
+
 function Slider({
   label,
   min,

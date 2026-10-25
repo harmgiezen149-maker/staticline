@@ -360,7 +360,20 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   scherp blijft; alleen de wissel zelf gaat eroverheen. Het wordmark ademt
   licht (3% groter en kleiner) en trilt bij "Onrustig beeld" mee, maar
   alleen als geheel, met `scale` en `translate`: nooit flikkeren of
-  herkleuren
+  herkleuren. Daarbovenop zit een posterlaag naar het microduck-ontwerp
+  (het voorstel staat als ontwerp op claude.ai), die per onderdeel aan en uit
+  staat in `/beheer/scherm` en standaard uit is: een stijl "microduck"
+  (`style`: teal label, Oswald in twee tonen met het laatste woord als rood
+  blok, en in die stijl het nummer van "Nu speelt" als hoes-kaart met plaat),
+  een schuine looptekst onderin (`ticker`: de volgende show, het nummer dat nu
+  speelt en een eigen tekst, elk los aan te zetten), een stippenraster over de
+  foto's (`raster`, 0–100) en een sticker per beeld (`sticker`, met
+  `stickers` om ze allemaal te verbergen). Een beeld "Volgende show"
+  (`source: "show"`) toont de eerstvolgende show als kaart met de status als
+  sticker, via `/api/scherm/show`; zonder komende show slaat het scherm dat
+  beeld over. Alle opmaak staat in `styles/screen.css` onder `.scr--microduck`
+  en de andere `scr__`-klassen van de posterlaag; met alles uit ziet het
+  scherm er precies zo uit als ervoor
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

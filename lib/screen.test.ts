@@ -307,3 +307,41 @@ test("kleur van de ruis: standaard 100, tussen 0 en 200", () => {
   assert.equal(normalizeScreen({ noiseSaturation: 350 }).noiseSaturation, 200);
   assert.equal(normalizeScreen({ noiseSaturation: "x" }).noiseSaturation, 100);
 });
+
+test("posterlaag: standaard alles uit of klassiek, en terug te lezen", () => {
+  const d = normalizeScreen({});
+  assert.equal(d.style, "klassiek");
+  assert.equal(d.ticker.on, false);
+  assert.equal(d.ticker.text, "staticline.nl");
+  assert.equal(d.raster, 0);
+  assert.equal(d.stickers, true);
+
+  const c = normalizeScreen({
+    style: "microduck",
+    ticker: { on: true, show: false, now: true, text: "  Boek ons  " },
+    raster: 140,
+    stickers: false,
+    slides: [{ title: "A", sticker: "Vanavond is het zover en nog veel langer" }, { source: "show" }],
+  });
+  assert.equal(c.style, "microduck");
+  assert.deepEqual(c.ticker, { on: true, show: false, now: true, text: "Boek ons" });
+  assert.equal(c.raster, 100);
+  assert.equal(c.stickers, false);
+  assert.equal(c.slides[0].sticker.length, 24);
+  assert.equal(c.slides[1].source, "show");
+  assert.equal(normalizeScreen({ style: "roze" }).style, "klassiek");
+  assert.equal(normalizeScreen({ ticker: { text: "" } }).ticker.text, "");
+});
+
+test("volgende show: het beeld komt alleen als er een show gepland staat", () => {
+  const c = normalizeScreen({ logo: { on: false }, slides: [{ id: "a", title: "A" }, { id: "s", source: "show" }] });
+  const item = { kind: "slide" as const, slide: c.slides[1] };
+  const show = { name: "Loburg", date: "10.11.2026", time: "20:00", city: "", status: "Tickets", soldout: false };
+  assert.equal(showable(item, NOT_PLAYING, null), false);
+  assert.equal(showable(item, NOT_PLAYING, show), true);
+  const list = createPlaylist(c, Math.random, null);
+  for (let k = 0; k < 30; k++) {
+    const next = nextShowable(list, NOT_PLAYING, null);
+    assert.ok(next.kind === "slide" && next.slide.id === "a");
+  }
+});

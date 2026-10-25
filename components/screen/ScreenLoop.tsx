@@ -7,6 +7,7 @@ import { decode } from "@/lib/motion/decode";
 import { ms, reduced, tok, wait } from "@/lib/motion/env";
 import { startNoise } from "@/lib/motion/loader";
 import { startColorNoise } from "@/lib/screen-noise";
+import { splitHeading } from "@/lib/design";
 import { startWarp } from "@/lib/screen-warp";
 import {
   type ScreenConfig,
@@ -16,6 +17,8 @@ import {
   type NoiseStyle,
   NOT_PLAYING,
   NOW_LABEL,
+  SHOW_LABEL,
+  type ScreenShow,
   createPlaylist,
   glitchTiming,
   noiseBrightness,
@@ -75,6 +78,8 @@ type Props = {
 const POLL_MS = 10_000;
 /** Hoe vaak het nummer uit de Band App opgehaald wordt, als er een nu-speelt-beeld is. */
 const NOW_POLL_MS = 4_000;
+/** Hoe vaak de volgende show opgehaald wordt; die verandert zelden. */
+const SHOW_POLL_MS = 60_000;
 
 /**
  * Wat het kader bepaalt: formaat, eigen maat en helderheid. Een wijziging
@@ -89,6 +94,10 @@ const lookOf = (c: ScreenConfig) => ({
   readout: c.readout,
   unrest: c.unrest,
   glitch: c.glitch,
+  style: c.style,
+  ticker: c.ticker,
+  raster: c.raster,
+  stickers: c.stickers,
 });
 
 /** De ruis tekenen in de gekozen soort; geeft de functie om te stoppen. */
@@ -156,6 +165,12 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   // het via de ref, het beeld zelf via de stand.
   const [now, setNow] = useState<NowPlaying>(NOT_PLAYING);
   const nowRef = useRef<NowPlaying>(NOT_PLAYING);
+  // Of er op dit moment echt iets speelt, voor de looptekst (`now` houdt het
+  // laatste nummer vast, ook als de bediener gestopt is).
+  const [playing, setPlaying] = useState(false);
+  // De volgende show, voor een beeld "Volgende show" en de looptekst.
+  const [show, setShow] = useState<ScreenShow | null>(null);
+  const showRef = useRef<ScreenShow | null>(null);
   // Een hoes die niet laadt (verlopen adres, geen verbinding): dan de eigen
   // foto van het beeld, in plaats van een kapot plaatje.
   const [badCover, setBadCover] = useState("");
@@ -307,10 +322,10 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       let cfg = start.current;
       let current: ScreenItem = sequence(cfg)[0];
       // Een nu-speelt-beeld zonder nummer wordt overgeslagen; zie showable.
-      const pick = () => nextShowable(list, nowRef.current);
+      const pick = () => nextShowable(list, nowRef.current, showRef.current);
       const idOf = (item: ScreenItem) => (item.kind === "slide" ? item.slide.id : null);
       let list = createPlaylist(cfg, Math.random, idOf(current));
-      if (!showable(current, nowRef.current)) current = pick();
+      if (!showable(current, nowRef.current, showRef.current)) current = pick();
       let upcoming = pick();
       let n = 0;
       if (motion) noise();
@@ -343,7 +358,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (motion) await cover(transitionTiming(cfg.speed, base), cfg.bands);
         n += 1;
         // Opnieuw kijken: het nummer kan intussen gestopt zijn.
-        current = showable(upcoming, nowRef.current) ? upcoming : pick();
+        current = showable(upcoming, nowRef.current, showRef.current) ? upcoming : pick();
         upcoming = pick();
       }
     };
@@ -360,7 +375,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   // Alleen als er een nu-speelt-beeld in de lijst staat. De stand houdt het
   // laatste nummer vast, zodat een beeld dat al staat niet leeg valt als de
   // bediener net stopt; de lus kijkt naar de ref, en slaat het beeld daarna over.
-  const hasNow = config.slides.some((s) => s.source === "nu");
+  const hasNow = config.slides.some((s) => s.source === "nu") || (look.ticker.on && look.ticker.now);
   useEffect(() => {
     if (!hasNow) {
       nowRef.current = NOT_PLAYING;
@@ -373,6 +388,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (!res.ok || !alive) return;
         const next = (await res.json()) as NowPlaying;
         nowRef.current = next;
+        setPlaying(next.live);
         if (next.live) setNow((cur) => (cur.title === next.title && cur.artist === next.artist && cur.coverUrl === next.coverUrl ? cur : next));
       } catch {
         // Geen verbinding: dan blijft staan wat er stond.
@@ -385,6 +401,31 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       clearInterval(id);
     };
   }, [hasNow]);
+
+  // ── De volgende show ────────────────────────────────────────────────────
+  // Alleen als er een beeld "Volgende show" is of de looptekst hem toont.
+  const hasShow = config.slides.some((s) => s.source === "show") || (look.ticker.on && look.ticker.show);
+  useEffect(() => {
+    if (!hasShow) return;
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/scherm/show", { cache: "no-store" });
+        if (!res.ok || !alive) return;
+        const next = (await res.json()) as ScreenShow | null;
+        showRef.current = next;
+        setShow((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
+      } catch {
+        // Geen verbinding: dan blijft staan wat er stond.
+      }
+    };
+    void load();
+    const id = setInterval(load, SHOW_POLL_MS);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [hasShow]);
 
   // ── Nieuwe instelling ophalen ───────────────────────────────────────────
   useEffect(() => {
@@ -557,7 +598,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     el.style.overflowWrap = "";
   }, []);
 
-  useLayoutEffect(fit, [fit, view, now]);
+  useLayoutEffect(fit, [fit, view, now, show, look.style, look.ticker.on]);
   useEffect(() => {
     if (!frame.current) return;
     const observer = new ResizeObserver(fit);
@@ -624,9 +665,41 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
           artist: now.artist,
           cover: item.slide.cover && now.coverUrl !== badCover ? now.coverUrl : "",
         }
-      : item?.kind === "slide"
-        ? { label: item.slide.label, title: item.slide.title, artist: "", cover: "" }
-        : { label: "", title: "", artist: "", cover: "" };
+      : item?.kind === "slide" && item.slide.source === "show"
+        ? {
+            label: item.slide.label || SHOW_LABEL,
+            title: show?.name ?? "",
+            artist: show ? [show.date, show.time, show.city, show.status].filter(Boolean).join(" · ") : "",
+            cover: "",
+          }
+        : item?.kind === "slide"
+          ? { label: item.slide.label, title: item.slide.title, artist: "", cover: "" }
+          : { label: "", title: "", artist: "", cover: "" };
+  const microduck = look.style === "microduck";
+  // In Microduck: de hoes van "Nu speelt" als kaart naast de tekst, en de
+  // volgende show als showkaart. Zie `.scr--microduck` in styles/screen.css.
+  const nuKaart = microduck && item?.kind === "slide" && item.slide.source === "nu" && Boolean(copy.cover);
+  const showKaart = microduck && item?.kind === "slide" && item.slide.source === "show" && show !== null;
+  const sticker = look.stickers && item?.kind === "slide" ? item.slide.sticker : "";
+  // De kop: in Microduck het laatste woord rood op een eigen regel.
+  const titel = (text: string) => {
+    if (!microduck) return text;
+    const [first, last] = splitHeading(text);
+    return (
+      <>
+        {first && <span>{first} </span>}
+        <span className="scr__accent">{last}</span>
+      </>
+    );
+  };
+  // Wat er in de looptekst staat. Leeg = geen strook.
+  const tickerItems = look.ticker.on
+    ? [
+        look.ticker.now && playing && now.title ? `Nu speelt: ${[now.title, now.artist].filter(Boolean).join(" — ")}` : "",
+        look.ticker.show && show ? `Volgende show: ${show.name} · ${show.date}` : "",
+        look.ticker.text,
+      ].filter(Boolean)
+    : [];
   // Ruis over het staande beeld: per beeld, of bij het wordmark.
   const overlay = !item ? 0 : item.kind === "logo" ? config.logo.noise : item.slide.noise;
   const overlayOn = overlay > 0;
@@ -644,7 +717,11 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
 
   return (
     <main className={`scr${idle ? " is-idle" : ""}`}>
-      <div ref={frame} className={`scr__frame${unrest.on ? " is-unrest" : ""}`} style={frameStyle}>
+      <div
+        ref={frame}
+        className={`scr__frame${unrest.on ? " is-unrest" : ""}${microduck ? " scr--microduck" : ""}${tickerItems.length ? " has-ticker" : ""}`}
+        style={frameStyle}
+      >
         {/* Het beeld. Een nieuwe `key` per beeld: dan begint React met een
             schone tekst, en loopt een decode niet over twee beelden heen. */}
         <div ref={stage} className="scr__stage" key={`${view.n}-${item?.kind === "slide" ? item.slide.id : "logo"}`}>
@@ -658,25 +735,58 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
                   flikkert in .scr__tv, en als het signaal even weg is tekent
                   het canvas ernaast hem golvend en gescheurd (zie het effect
                   "Signaal kwijt" hierboven). */}
-              {(copy.cover || item.slide.photo) && (
+              {((copy.cover && !nuKaart) || item.slide.photo) && (
                 <div className="scr__tv">
-                  <div className="scr__shot">{shot(copy.cover, item.slide.photo, item.slide.opacity)}</div>
+                  <div className="scr__shot">
+                    {shot(nuKaart ? "" : copy.cover, item.slide.photo, item.slide.opacity)}
+                  </div>
                   {look.unrest > 0 && (
                     <canvas className="scr__warp" aria-hidden="true" style={{ opacity: item.slide.opacity / 100 }} />
                   )}
-                </div>
-              )}
-              {(copy.label || copy.title) && (
-                <div className="scr__copy">
-                  {copy.label && <p className="scr__label">{copy.label}</p>}
-                  {copy.title && (
-                    <p className="scr__title" data-decode="">
-                      {copy.title}
-                    </p>
+                  {/* Drukraster over de foto, uit /beheer/scherm. */}
+                  {look.raster > 0 && (
+                    <div className="scr__raster" aria-hidden="true" style={{ opacity: look.raster / 100 }} />
                   )}
-                  {copy.artist && <p className="scr__artist">{copy.artist}</p>}
                 </div>
               )}
+              {nuKaart && (
+                <div className="scr__hoes">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={copy.cover} alt="" onError={() => setBadCover(copy.cover)} />
+                  {look.raster > 0 && (
+                    <div className="scr__raster" aria-hidden="true" style={{ opacity: look.raster / 200 }} />
+                  )}
+                </div>
+              )}
+              {showKaart && show ? (
+                <div className="scr__showkaart" data-soldout={show.soldout || undefined}>
+                  <div className="scr__showkaart-kop">
+                    <p className="scr__showkaart-label">{copy.label}</p>
+                    <p className="scr__showkaart-naam">{show.name}</p>
+                  </div>
+                  <div className="scr__showkaart-body">
+                    <p className="scr__showkaart-datum">{show.date}</p>
+                    {(show.time || show.city) && (
+                      <p className="scr__showkaart-meta">{[show.time, show.city].filter(Boolean).join(" · ")}</p>
+                    )}
+                    <p className="scr__plaat">staticline.nl/agenda</p>
+                  </div>
+                  {look.stickers && <p className="scr__sticker scr__sticker--kaart">{show.status}</p>}
+                </div>
+              ) : (
+                (copy.label || copy.title) && (
+                  <div className={`scr__copy${nuKaart ? " scr__copy--naast" : ""}`}>
+                    {copy.label && <p className="scr__label">{copy.label}</p>}
+                    {copy.title && (
+                      <p className="scr__title" data-decode="">
+                        {titel(copy.title)}
+                      </p>
+                    )}
+                    {copy.artist && <p className="scr__artist">{copy.artist}</p>}
+                  </div>
+                )
+              )}
+              {sticker && <p className="scr__sticker">{sticker}</p>}
             </>
           ) : null}
         </div>
@@ -704,6 +814,28 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
           <i />
           <i />
         </div>
+
+        {/* De looptekst: over alle beelden heen, ook tijdens de wissel. De
+            tekst staat er vier keer in, zodat het doorlopen naadloos rondgaat;
+            zie `.scr__ticker` in styles/screen.css. */}
+        {tickerItems.length > 0 && (
+          <div className="scr__ticker" aria-hidden="true">
+            <div className="scr__ticker-strook">
+              <span className="scr__ticker-track">
+                {[0, 1, 2, 3].map((run) => (
+                  <span key={run} className="scr__ticker-run">
+                    {tickerItems.map((t, index) => (
+                      <span key={index} className="scr__ticker-item">
+                        <span>{t}</span>
+                        <span className="scr__ticker-blok">■</span>
+                      </span>
+                    ))}
+                  </span>
+                ))}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* De ruis en de banden, zoals de loader op de homepage. */}
         <div className="scr__veil" aria-hidden="true">

@@ -53,10 +53,49 @@ export type ScreenSlide = {
    * Waar de tekst vandaan komt. Leeg: zoals ingevuld. "nu": het nummer dat de
    * band op dit moment speelt, uit de podiumweergave van de Band App (zie
    * NowPlaying). Zo'n beeld wordt overgeslagen zolang daar niemand bedient.
+   * "show": de volgende show uit de agenda (zie ScreenShow); overgeslagen
+   * zolang er geen show gepland staat.
    */
-  source: "" | "nu";
+  source: "" | "nu" | "show";
   /** Bij "nu": de hoes van het nummer als foto, als die er is; anders `photo`. */
   cover: boolean;
+  /** Een kort woord als schuine sticker op de hoek ("Vanavond"). Leeg = geen. */
+  sticker: string;
+};
+
+/**
+ * De volgende show, voor een beeld "Volgende show" en de looptekst. Al
+ * opgemaakt op de server (zie /api/scherm/show), zodat het scherm niet hoeft te
+ * rekenen met datums en tijdzones.
+ */
+export type ScreenShow = {
+  name: string;
+  /** "10.11.2026" */
+  date: string;
+  time: string;
+  city: string;
+  /** De status in woorden ("Tickets", "Uitverkocht"). */
+  status: string;
+  soldout: boolean;
+};
+
+/**
+ * De Microduck-laag van het scherm (zie lib/design.ts voor de site): koppen
+ * in Oswald en twee tonen met een teal label, de hoes als kaart, de volgende
+ * show als showkaart. Los van het ontwerp van de site te kiezen.
+ */
+export const SCREEN_STYLES = ["klassiek", "microduck"] as const;
+export type ScreenStyle = (typeof SCREEN_STYLES)[number];
+
+/** De schuine looptekst onderin, over alle beelden heen. */
+export type ScreenTicker = {
+  on: boolean;
+  /** De volgende show uit de agenda. */
+  show: boolean;
+  /** Het nummer dat de bediener van de podiumweergave open heeft. */
+  now: boolean;
+  /** Een eigen tekst erbij, zoals het webadres. */
+  text: string;
 };
 
 /**
@@ -68,10 +107,13 @@ export const NOT_PLAYING: NowPlaying = { live: false, title: "", artist: "", cov
 
 /** Het label boven een nu-speelt-beeld als er niets is ingevuld. */
 export const NOW_LABEL = "Nu speelt";
+/** Het label boven een volgende-show-beeld als er niets is ingevuld. */
+export const SHOW_LABEL = "Volgende show";
 
 /** Of een beeld nu getoond kan worden: een nu-speelt-beeld alleen als er iets speelt. */
-export const showable = (item: ScreenItem, now: NowPlaying) =>
-  item.kind !== "slide" || item.slide.source !== "nu" || (now.live && now.title !== "");
+export const showable = (item: ScreenItem, now: NowPlaying, next: ScreenShow | null = null) =>
+  item.kind !== "slide" ||
+  (item.slide.source === "nu" ? now.live && now.title !== "" : item.slide.source === "show" ? next !== null : true);
 
 export type ScreenPhoto = { url: string; alt: string };
 
@@ -148,6 +190,13 @@ export type ScreenConfig = {
   slides: ScreenSlide[];
   /** Willekeurige volgorde (met `weight` per beeld), of de vaste volgorde van de lijst. */
   shuffle: boolean;
+  /** Klassiek of Microduck: koppen, labels en kaarten. Zie SCREEN_STYLES. */
+  style: ScreenStyle;
+  ticker: ScreenTicker;
+  /** Een drukraster van stippen over de foto's, 0–100. 0 = uit. */
+  raster: number;
+  /** Of de stickers per beeld getoond worden. */
+  stickers: boolean;
 };
 
 export const LIMITS = {
@@ -161,6 +210,8 @@ export const LIMITS = {
   title: 200,
   label: 60,
   weight: [1, 5],
+  sticker: 24,
+  tickerText: 120,
 } as const;
 
 export const DEFAULT_OPACITY = 20;
@@ -283,10 +334,14 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   logo: { on: true, every: 3, noise: 0 },
   photos: [],
   slides: [
-    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true },
-    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true },
+    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "" },
+    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "" },
   ],
   shuffle: true,
+  style: "klassiek",
+  ticker: { on: false, show: true, now: true, text: "staticline.nl" },
+  raster: 0,
+  stickers: true,
 };
 
 /**
@@ -326,6 +381,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
   const raw = record(input);
   const logo = record(raw.logo);
   const custom = record(raw.custom);
+  const ticker = record(raw.ticker);
 
   const photos: ScreenPhoto[] = [];
   const seen = new Set<string>();
@@ -344,7 +400,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     const title = text(r.title, LIMITS.title);
     const photoUrl = text(r.photo, 500);
     const photo = isPhotoUrl(photoUrl) ? photoUrl : "";
-    const source = r.source === "nu" ? "nu" : "";
+    const source = r.source === "nu" ? "nu" : r.source === "show" ? "show" : "";
     // Zonder tekst én zonder foto is er niets te tonen, behalve bij een
     // nu-speelt-beeld: die tekst komt live binnen.
     if (!title && !photo && !source) continue;
@@ -361,6 +417,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
       weight: clampInt(r.weight, LIMITS.weight, 1),
       source,
       cover: r.cover !== false,
+      sticker: text(r.sticker, LIMITS.sticker),
     });
     if (slides.length >= LIMITS.slides) break;
   }
@@ -394,6 +451,15 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     // Een instelling van vóór deze keuze krijgt de willekeurige volgorde: dat
     // was precies de vraag waarmee hij erbij kwam.
     shuffle: typeof raw.shuffle === "boolean" ? raw.shuffle : true,
+    style: SCREEN_STYLES.includes(raw.style as ScreenStyle) ? (raw.style as ScreenStyle) : "klassiek",
+    ticker: {
+      on: ticker.on === true,
+      show: ticker.show !== false,
+      now: ticker.now !== false,
+      text: typeof ticker.text === "string" ? text(ticker.text, LIMITS.tickerText) : DEFAULT_SCREEN.ticker.text,
+    },
+    raster: clampInt(raw.raster, [0, 100], 0),
+    stickers: raw.stickers !== false,
   };
 }
 
@@ -530,10 +596,15 @@ export function createPlaylist(
  * te tonen hebben worden overgeslagen. Staan er alleen zulke beelden in de
  * lijst en speelt er niets, dan het wordmark, in plaats van eindeloos zoeken.
  */
-export function nextShowable(list: { next(): ScreenItem }, now: NowPlaying, tries = 200): ScreenItem {
+export function nextShowable(
+  list: { next(): ScreenItem },
+  now: NowPlaying,
+  next: ScreenShow | null = null,
+  tries = 200,
+): ScreenItem {
   for (let k = 0; k < tries; k++) {
     const item = list.next();
-    if (showable(item, now)) return item;
+    if (showable(item, now, next)) return item;
   }
   return { kind: "logo" };
 }

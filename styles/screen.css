@@ -409,6 +409,261 @@
   88% { filter: brightness(calc(1 + var(--flicker) * 0.4)); }
 }
 
+/* ── De posterlaag, naar Microduck ── *
+ * Elk onderdeel apart aan en uit in /beheer/scherm (zie lib/screen.ts): de
+ * stijl (`.scr--microduck`: koppen in Oswald met het laatste woord rood, een
+ * teal label, de hoes als kaart, de volgende show als showkaart), de
+ * looptekst, het drukraster en de stickers. Naar het Microduck-ontwerp van
+ * de site (styles/microduck.css), met dezelfde twee uitzonderingen: de plaat
+ * achter een kaart is een harde box-shadow, en sticker en looptekst staan
+ * schuin. Maten in container-eenheden, zodat het in elk formaat klopt. */
+
+/* Koppen en label */
+.scr--microduck .scr__label {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--accent-alt);
+}
+.scr--microduck .scr__label::before {
+  content: "";
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  background: currentColor;
+}
+.scr--microduck .scr__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: 0.005em;
+}
+.scr__accent {
+  display: block;
+  color: var(--accent);
+}
+
+/* Sticker op de hoek */
+.scr__sticker {
+  position: absolute;
+  top: 6cqmin;
+  right: 6cqmin;
+  z-index: 1;
+  margin: 0;
+  padding: 0.15em 0.5em;
+  background: var(--text-primary);
+  color: var(--bg-inset);
+  border: max(3px, 0.5cqmin) solid var(--bg-inset);
+  transform: rotate(5deg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(18px, 6cqmin, 96px);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Drukraster over de foto; de sterkte staat inline. */
+.scr__raster {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--bg-base) 32%, transparent 36%);
+  background-size: max(6px, 1.1cqmin) max(6px, 1.1cqmin);
+}
+
+/* "Nu speelt": de hoes als kaart met een teal plaat, de tekst ernaast. */
+.scr__hoes {
+  position: absolute;
+  left: 6cqmin;
+  top: 50%;
+  translate: 0 -50%;
+  width: min(58cqh, 40cqw);
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border: max(4px, 0.7cqmin) solid var(--bg-inset);
+  box-shadow: 2cqmin 2cqmin 0 0 var(--accent-alt);
+}
+.scr__hoes img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scr__copy--naast {
+  left: calc(12cqmin + min(58cqh, 40cqw));
+  top: 50%;
+  bottom: auto;
+  translate: 0 -50%;
+}
+@container (orientation: portrait) {
+  .scr__hoes {
+    top: 8cqmin;
+    width: calc(100cqw - 16cqmin);
+    translate: none;
+  }
+  .scr__copy--naast {
+    left: 6cqmin;
+    top: auto;
+    bottom: 6cqmin;
+    translate: none;
+  }
+}
+
+/* "Volgende show" als showkaart */
+.scr__showkaart {
+  position: absolute;
+  inset: 6cqmin 8cqmin 9cqmin 6cqmin;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  background: var(--bg-surface);
+  border: max(4px, 0.7cqmin) solid var(--bg-inset);
+  box-shadow: 2cqmin 2cqmin 0 0 var(--accent-alt);
+}
+.scr__showkaart-kop {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1.5cqmin;
+  min-width: 0;
+  padding: 4cqmin;
+  border-right: max(4px, 0.7cqmin) solid var(--bg-inset);
+  background-color: var(--accent);
+  background-image: radial-gradient(rgba(13, 15, 18, 0.28) 30%, transparent 34%);
+  background-size: 1.6cqmin 1.6cqmin;
+  color: var(--text-on-accent);
+}
+.scr__showkaart-label,
+.scr__showkaart-meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(14px, 3.2cqmin, 52px);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.scr__showkaart-naam {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(32px, 15cqmin, 240px);
+  line-height: 0.86;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.scr__showkaart[data-soldout] .scr__showkaart-naam {
+  text-decoration: line-through;
+  text-decoration-thickness: 0.06em;
+  text-decoration-color: var(--bg-inset);
+}
+.scr__showkaart-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2cqmin;
+  min-width: 0;
+  padding: 4cqmin;
+}
+.scr__showkaart-datum {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(28px, 11cqmin, 180px);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+.scr__showkaart-meta {
+  color: var(--text-muted);
+}
+.scr__plaat {
+  align-self: flex-start;
+  margin: 2cqmin 0 0;
+  padding: 0.3em 0.6em;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border: max(3px, 0.5cqmin) solid var(--bg-inset);
+  box-shadow: 1.2cqmin 1.2cqmin 0 0 var(--accent-alt);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(14px, 3.6cqmin, 60px);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.scr__sticker--kaart {
+  top: -2cqmin;
+  right: 3cqmin;
+}
+@container (orientation: portrait) {
+  .scr__showkaart {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .scr__showkaart-kop {
+    border-right: 0;
+    border-bottom: max(4px, 0.7cqmin) solid var(--bg-inset);
+  }
+}
+
+/* De looptekst: onderin, boven de wissel (z-index 3, de wissel is 2), onder
+   de hulplijnen. Loopt alleen met JavaScript en zonder minder beweging. Staat
+   hij aan, dan schuift de tekst van een beeld omhoog om vrij te blijven. */
+.scr__ticker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3cqmin;
+  z-index: 3;
+  overflow: hidden;
+  padding-block: 3cqmin;
+  pointer-events: none;
+}
+.scr__ticker-strook {
+  margin-inline: -4cqw;
+  transform: rotate(-2deg);
+  overflow: hidden;
+  white-space: nowrap;
+  padding-block: 1.2cqmin;
+  background: var(--accent);
+  border-block: max(3px, 0.6cqmin) solid var(--bg-inset);
+  color: var(--text-on-accent);
+}
+.scr__ticker-track,
+.scr__ticker-run,
+.scr__ticker-item {
+  display: inline-flex;
+  align-items: center;
+}
+.scr__ticker-item {
+  gap: 2.4cqmin;
+  padding-right: 2.4cqmin;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(18px, 5.4cqmin, 80px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.scr__ticker-blok {
+  font-size: 0.6em;
+  color: var(--bg-inset);
+}
+.js:not(.reduce-motion) .scr__ticker-track {
+  animation: scr-ticker 48s linear infinite;
+}
+@keyframes scr-ticker {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.has-ticker .scr__copy {
+  bottom: 20cqmin;
+}
+.has-ticker .scr__showkaart {
+  bottom: 22cqmin;
+}
+
 /* ── Hulplijnen bij "eigen maat" ── *
  * Om het kader passend te maken in de opening van een beeldbuistelevisie: de
  * rand van het kader, een kruis door het midden en de maten erbij. Boven
@@ -416,7 +671,7 @@
 .scr__guides {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 4;
   pointer-events: none;
   border: 2px solid var(--accent-alt);
 }
