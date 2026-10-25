@@ -80,6 +80,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
 
   const dirty = JSON.stringify(config) !== saved;
   const set = (patch: Partial<ScreenConfig>) => setConfig((c) => ({ ...c, ...patch }));
+  const stickerCount = config.slides.filter((s) => s.sticker.trim()).length;
   const setSlide = (id: string, patch: Partial<ScreenSlide>) =>
     setConfig((c) => ({ ...c, slides: c.slides.map((s) => (s.id === id ? { ...s, ...patch } : s)) }));
 
@@ -481,7 +482,19 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
               [false, "Verbergen"],
             ]}
             onChange={(v) => set({ stickers: v })}
-            hint="Per beeld kun je hieronder een kort woord als schuine sticker op de hoek zetten, zoals Vanavond of Live. Hier zet je ze allemaal tegelijk uit."
+            hint={
+              <>
+                De tekst van een sticker vul je per beeld in, in het veld “Sticker” bij elk beeld onder Beelden,
+                onderaan deze pagina: een kort woord zoals Vanavond of Live. Leeg is geen sticker. Hier zet je ze
+                allemaal tegelijk uit.{" "}
+                {stickerCount === 0
+                  ? "Nu heeft nog geen enkel beeld een sticker."
+                  : `Nu ${stickerCount === 1 ? "heeft 1 beeld" : `hebben ${stickerCount} beelden`} een sticker.`}{" "}
+                <a href="#beelden" className="text-accent-alt underline underline-offset-4 hover:text-primary">
+                  Naar de beelden ↓
+                </a>
+              </>
+            }
           />
         </fieldset>
 
@@ -618,7 +631,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
       </section>
 
       {/* ── Beelden ── */}
-      <section className="flex flex-col gap-4">
+      <section id="beelden" className="flex scroll-mt-24 flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="font-mono text-11 text-faint uppercase">Beelden</h2>
           <p className="text-muted">
@@ -1103,7 +1116,7 @@ function Choice<T extends string | boolean>({
   value: T;
   options: readonly (readonly [T, string])[];
   onChange: (value: T) => void;
-  hint?: string;
+  hint?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1">
