@@ -23,6 +23,7 @@ import {
   glitchTiming,
   noiseBrightness,
   nextShowable,
+  waiting,
   noiseDuration,
   transitionTiming,
   unrestTiming,
@@ -168,6 +169,10 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   // Of er op dit moment echt iets speelt, voor de looptekst (`now` houdt het
   // laatste nummer vast, ook als de bediener gestopt is).
   const [playing, setPlaying] = useState(false);
+  // Wanneer er voor het laatst bediend werd, voor de wachtstand (zie waiting).
+  const liveAt = useRef(-Infinity);
+  // Of het scherm in de wachtstand staat: dan alleen ruis, geen looptekst.
+  const [standby, setStandby] = useState(false);
   // De volgende show, voor een beeld "Volgende show" en de looptekst.
   const [show, setShow] = useState<ScreenShow | null>(null);
   const showRef = useRef<ScreenShow | null>(null);
@@ -338,6 +343,37 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
           list = createPlaylist(cfg, Math.random, idOf(current));
           upcoming = pick();
         }
+        // Wachtstand: alleen ruis tot iemand in de Band App de podiumweergave
+        // bedient. De ruis van de vorige wissel blijft gewoon staan. Niet in
+        // het voorbeeld in het beheer: daar wil je de beelden zien.
+        const asleep = () => !preview && waiting(cfg, nowRef.current, performance.now() - liveAt.current);
+        if (asleep()) {
+          setStandby(true);
+          setReadout(DEFAULT_LABEL);
+          if (count.current) count.current.textContent = "000";
+          let style = noiseStyle.current;
+          while (alive && asleep()) {
+            await hold(1000);
+            if (pending.current) {
+              cfg = pending.current;
+              pending.current = null;
+              setConfig(cfg);
+            }
+            // Een andere soort ruis gaat in de wachtstand meteen in.
+            if (motion && style !== noiseStyle.current) {
+              style = noiseStyle.current;
+              noise();
+            }
+          }
+          if (!alive) return;
+          setStandby(false);
+          // Opnieuw beginnen met de lijst: het nummer speelt nu, dus een
+          // nu-speelt-beeld kan meteen.
+          list = createPlaylist(cfg, Math.random, null);
+          current = pick();
+          upcoming = pick();
+        }
+
         setView({ n, item: current, next: upcoming });
         setReadout(labelOf(current));
         await painted();
@@ -369,13 +405,14 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       skip.current();
       stopNoise();
     };
-  }, []);
+    // `preview` ligt vast per scherm; hij staat hier alleen voor de linter.
+  }, [preview]);
 
   // ── Het nummer dat nu gespeeld wordt ────────────────────────────────────
   // Alleen als er een nu-speelt-beeld in de lijst staat. De stand houdt het
   // laatste nummer vast, zodat een beeld dat al staat niet leeg valt als de
   // bediener net stopt; de lus kijkt naar de ref, en slaat het beeld daarna over.
-  const hasNow = config.slides.some((s) => s.source === "nu") || (look.ticker.on && look.ticker.now);
+  const hasNow = config.standby || config.slides.some((s) => s.source === "nu") || (look.ticker.on && look.ticker.now);
   useEffect(() => {
     if (!hasNow) {
       nowRef.current = NOT_PLAYING;
@@ -388,6 +425,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         if (!res.ok || !alive) return;
         const next = (await res.json()) as NowPlaying;
         nowRef.current = next;
+        if (next.live) liveAt.current = performance.now();
         setPlaying(next.live);
         if (next.live) setNow((cur) => (cur.title === next.title && cur.artist === next.artist && cur.coverUrl === next.coverUrl ? cur : next));
       } catch {
@@ -631,7 +669,9 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const guides = custom.guides;
   const pctText = (n: number) => `${String(n).replace(".", ",")}%`;
 
-  const { item } = view;
+  // In de wachtstand staat er niets onder de ruis: geen foto die de hele
+  // avond onzichtbaar trilt, en bij minder beweging een leeg scherm.
+  const item = standby ? undefined : view.item;
   // De foto van een beeld. De hoes van het nummer is een gewone <img>, want
   // die staat op Spotify en next.config.ts laat alleen de eigen opslag toe.
   const shot = (cover: string, photo: string, opacity: number) =>
@@ -693,7 +733,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
     );
   };
   // Wat er in de looptekst staat. Leeg = geen strook.
-  const tickerItems = look.ticker.on
+  const tickerItems = look.ticker.on && !standby
     ? [
         look.ticker.now && playing && now.title ? `Nu speelt: ${[now.title, now.artist].filter(Boolean).join(" — ")}` : "",
         look.ticker.show && show ? `Volgende show: ${show.name} · ${show.date}` : "",

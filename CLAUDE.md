@@ -373,7 +373,16 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   sticker, via `/api/scherm/show`; zonder komende show slaat het scherm dat
   beeld over. Alle opmaak staat in `styles/screen.css` onder `.scr--microduck`
   en de andere `scr__`-klassen van de posterlaag; met alles uit ziet het
-  scherm er precies zo uit als ervoor
+  scherm er precies zo uit als ervoor. De wachtstand (`standby`, standaard
+  uit) is voor een tv die de hele avond aan blijft: zolang niemand in de Band
+  App de podiumweergave bedient, toont het scherm alleen ruis, zonder
+  looptekst en zonder beeld eronder. Start iemand de bediening, dan beginnen
+  de beelden; stopt hij, dan gaat het scherm na het beeld dat er staat terug.
+  Het scherm leest dat uit `live` van `/api/scherm/nu`, dus de Band App weet
+  er niets van. Pas na 20 s zonder bediening telt hij als gestopt
+  (`STANDBY_GRACE_MS`), zodat een gemiste verbinding in de zaal het scherm niet
+  midden in de set naar ruis zet. Het voorbeeld in het beheer negeert de
+  wachtstand
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

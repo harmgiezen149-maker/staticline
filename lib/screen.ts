@@ -105,6 +105,21 @@ export type ScreenTicker = {
 export type NowPlaying = { live: boolean; title: string; artist: string; coverUrl: string };
 export const NOT_PLAYING: NowPlaying = { live: false, title: "", artist: "", coverUrl: "" };
 
+/**
+ * Zo lang moet de bediening weg zijn voor het scherm teruggaat naar de
+ * wachtstand. Haalt de site de Band App een keer niet (een trage verbinding in
+ * de zaal), dan valt het scherm niet midden in de set terug naar ruis.
+ */
+export const STANDBY_GRACE_MS = 20_000;
+
+/**
+ * Of het scherm in de wachtstand staat: alleen ruis, tot iemand in de Band App
+ * de podiumweergave bedient. Zie `standby` in ScreenConfig. `sinceLive` is
+ * hoe lang het geleden is dat er voor het laatst bediend werd (Infinity: nog nooit).
+ */
+export const waiting = (config: Pick<ScreenConfig, "standby">, now: NowPlaying, sinceLive = Infinity) =>
+  config.standby && !now.live && sinceLive >= STANDBY_GRACE_MS;
+
 /** Het label boven een nu-speelt-beeld als er niets is ingevuld. */
 export const NOW_LABEL = "Nu speelt";
 /** Het label boven een volgende-show-beeld als er niets is ingevuld. */
@@ -197,6 +212,13 @@ export type ScreenConfig = {
   raster: number;
   /** Of de stickers per beeld getoond worden. */
   stickers: boolean;
+  /**
+   * Wachtstand: alleen ruis zolang niemand in de Band App de podiumweergave
+   * bedient. Begint iemand te bedienen, dan beginnen de beelden; stopt de
+   * bediening, dan gaat het scherm na het beeld dat er staat terug naar ruis.
+   * Voor een tv die de hele avond aan blijft.
+   */
+  standby: boolean;
 };
 
 export const LIMITS = {
@@ -342,6 +364,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   ticker: { on: false, show: true, now: true, text: "staticline.nl" },
   raster: 0,
   stickers: true,
+  standby: false,
 };
 
 /**
@@ -460,6 +483,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     },
     raster: clampInt(raw.raster, [0, 100], 0),
     stickers: raw.stickers !== false,
+    standby: raw.standby === true,
   };
 }
 

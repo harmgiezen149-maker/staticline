@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SCREEN, NOT_PLAYING, createPlaylist, unrestTiming, glitchTiming, nextShowable, showable, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence } from "./screen.ts";
+import { DEFAULT_SCREEN, NOT_PLAYING, createPlaylist, unrestTiming, glitchTiming, nextShowable, showable, transitionTiming, noiseBrightness, noiseDuration, shuffledRound, normalizeScreen, parseScreen, pickFormat, ratioOf, sequence, waiting } from "./screen.ts";
 import { bandAt, drawColorNoise } from "./screen-noise.ts";
 import { pickBands, waveAt } from "./screen-warp.ts";
 
@@ -331,6 +331,20 @@ test("posterlaag: standaard alles uit of klassiek, en terug te lezen", () => {
   assert.equal(c.slides[1].source, "show");
   assert.equal(normalizeScreen({ style: "roze" }).style, "klassiek");
   assert.equal(normalizeScreen({ ticker: { text: "" } }).ticker.text, "");
+});
+
+test("wachtstand: standaard uit, en alleen ruis zolang niemand bedient", () => {
+  assert.equal(normalizeScreen({}).standby, false);
+  assert.equal(normalizeScreen({ standby: "ja" }).standby, false);
+  const c = normalizeScreen({ standby: true });
+  assert.equal(c.standby, true);
+  const live = { live: true, title: "Song 2", artist: "Blur", coverUrl: "" };
+  assert.equal(waiting(c, NOT_PLAYING), true);
+  assert.equal(waiting(c, live), false);
+  assert.equal(waiting(normalizeScreen({}), NOT_PLAYING), false);
+  // Even geen antwoord van de Band App: niet meteen terug naar ruis.
+  assert.equal(waiting(c, NOT_PLAYING, 5_000), false);
+  assert.equal(waiting(c, NOT_PLAYING, 20_000), true);
 });
 
 test("volgende show: het beeld komt alleen als er een show gepland staat", () => {

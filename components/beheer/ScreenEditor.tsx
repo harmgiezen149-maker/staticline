@@ -2,7 +2,7 @@
 
 import { upload } from "@vercel/blob/client";
 import Image from "next/image";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { saveScreen } from "@/app/(beheer)/beheer/scherm/actions";
 import {
@@ -81,6 +81,26 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   const dirty = JSON.stringify(config) !== saved;
   const set = (patch: Partial<ScreenConfig>) => setConfig((c) => ({ ...c, ...patch }));
   const stickerCount = config.slides.filter((s) => s.sticker.trim()).length;
+  // Of er nu bediend wordt, bij de wachtstand: zo zie je hier wat het scherm doet.
+  const [live, setLive] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!config.standby) return;
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/scherm/nu", { cache: "no-store" });
+        if (res.ok && alive) setLive(((await res.json()) as { live?: boolean }).live === true);
+      } catch {
+        // Geen verbinding: dan blijft staan wat er stond.
+      }
+    };
+    void load();
+    const id = setInterval(load, 5000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [config.standby]);
   const setSlide = (id: string, patch: Partial<ScreenSlide>) =>
     setConfig((c) => ({ ...c, slides: c.slides.map((s) => (s.id === id ? { ...s, ...patch } : s)) }));
 
@@ -202,6 +222,33 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
       {/* ── Instellingen ── */}
       <section className="flex flex-col gap-6">
         <h2 className="font-mono text-11 text-faint uppercase">Instellingen</h2>
+
+        {/* Bovenaan, omdat dit bepaalt of er überhaupt beelden komen. */}
+        <div className="flex flex-col gap-2 border-l-2 border-accent-alt pl-3">
+          <Choice
+            label="Wachtstand — alleen ruis tot het optreden"
+            value={config.standby}
+            options={[
+              [true, "Aan"],
+              [false, "Uit"],
+            ]}
+            onChange={(v) => set({ standby: v })}
+            hint={
+              config.standby
+                ? "Het scherm toont alleen ruis zolang niemand in de Band App de podiumweergave bedient. Start iemand daar de bediening, dan beginnen de beelden binnen een paar seconden. Stopt de bediening, dan gaat het scherm na het beeld dat er staat terug naar alleen ruis. Voor een tv die de hele avond aan blijft. Het voorbeeld hierboven laat altijd de beelden zien."
+                : "De beelden lopen altijd, of er nu bediend wordt of niet."
+            }
+          />
+          {config.standby && (
+            <p className="font-mono text-12 text-muted uppercase">
+              {live === null
+                ? "Band App: kijken…"
+                : live
+                  ? "● Band App: er wordt bediend — de beelden lopen"
+                  : "○ Band App: niemand bedient — alleen ruis"}
+            </p>
+          )}
+        </div>
 
         <Slider
           label="Hoe lang een beeld staat"
