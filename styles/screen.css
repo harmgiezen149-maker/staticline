@@ -735,3 +735,36 @@
 .scr.is-idle .scr__button {
   opacity: 0;
 }
+/* Of het scherm wakker blijft (zie "Wakker blijven" in ScreenLoop.tsx). Naast
+   de knop, en in volledig scherm op de plek van de knop; verdwijnt mee met
+   de cursor. */
+.scr__awake {
+  position: fixed;
+  top: 20px;
+  right: 200px;
+  z-index: 2;
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: opacity 160ms linear;
+}
+.scr__awake.is-fullscreen {
+  right: 16px;
+}
+.scr.is-idle .scr__awake {
+  opacity: 0;
+}
+/* Het stille filmpje: twee pixels in een hoek, bijna doorzichtig. Helemaal
+   onzichtbaar (display of visibility) telt voor Android niet als afspelen. */
+.scr__wakker {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  height: 2px;
+  opacity: 0.01;
+  pointer-events: none;
+}

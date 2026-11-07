@@ -180,6 +180,10 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   // foto van het beeld, in plaats van een kapot plaatje.
   const [badCover, setBadCover] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
+  // Of de wake lock er is, voor de regel naast de knop; zie "Wakker blijven".
+  const [awake, setAwake] = useState<boolean | null>(null);
+  const awakeVideo = useRef<HTMLVideoElement>(null);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   // De lus houdt zijn eigen stand bij en begint bij wat de server meegaf; een
   // nieuwe instelling komt via `pending` binnen (zie de lus).
@@ -494,22 +498,54 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   }, [preview]);
 
   // ── Wakker blijven, cursor, toetsen ─────────────────────────────────────
+  // Een scherm dat de hele avond draait, op een laptop of een telefoon in
+  // Samsung DeX, mag niet op stand-by gaan. Twee lagen:
+  //  1. De Screen Wake Lock. Android trekt die soms zelf in (en bij een
+  //     wissel naar volledig scherm of een andere app); dan vragen we hem
+  //     opnieuw aan, bij het loslaten, bij volledig scherm, bij elke tik of
+  //     toets, en elke halve minuut voor de zekerheid.
+  //  2. Een klein, stil filmpje dat onzichtbaar meeloopt. Een video die
+  //     afspeelt houdt Android ook wakker, ook waar de wake lock niet werkt
+  //     of niet mag.
   useEffect(() => {
     if (preview) return;
-    type Sentinel = { release: () => Promise<void> };
+    type Sentinel = { released?: boolean; release: () => Promise<void>; addEventListener?: (type: "release", cb: () => void) => void };
     type WakeLockApi = { request: (type: "screen") => Promise<Sentinel> };
     let lock: Sentinel | null = null;
+    let asking = false;
+    let alive = true;
     const nav = navigator as Navigator & { wakeLock?: WakeLockApi };
     const keepAwake = async () => {
-      if (document.visibilityState !== "visible" || !nav.wakeLock) return;
+      if (!alive || document.visibilityState !== "visible") return;
+      const video = awakeVideo.current;
+      if (video?.paused) void video.play().catch(() => {});
+      if (!nav.wakeLock) {
+        setAwake(false);
+        return;
+      }
+      if (asking || (lock && !lock.released)) return;
+      asking = true;
       try {
         lock = await nav.wakeLock.request("screen");
+        lock.addEventListener?.("release", () => {
+          lock = null;
+          setAwake(false);
+          void keepAwake();
+        });
+        setAwake(true);
       } catch {
-        // Niet toegestaan (energiebesparing, geen https): dan maar zonder.
+        // Niet toegestaan (energiebesparing, geen https): dan het filmpje.
+        setAwake(false);
+      } finally {
+        asking = false;
       }
     };
     void keepAwake();
+    const check = setInterval(keepAwake, 30_000);
     document.addEventListener("visibilitychange", keepAwake);
+    document.addEventListener("fullscreenchange", keepAwake);
+    window.addEventListener("pointerdown", keepAwake);
+    window.addEventListener("keydown", keepAwake);
 
     let timer = setTimeout(() => setIdle(true), IDLE_MS);
     const wake = () => {
@@ -532,7 +568,12 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
       window.removeEventListener("pointerdown", wake);
       window.removeEventListener("keydown", onKey);
       document.removeEventListener("fullscreenchange", onFs);
+      document.removeEventListener("fullscreenchange", keepAwake);
+      window.removeEventListener("pointerdown", keepAwake);
+      window.removeEventListener("keydown", keepAwake);
+      clearInterval(check);
       clearTimeout(timer);
+      alive = false;
       void lock?.release().catch(() => {});
     };
   }, [preview]);
@@ -924,6 +965,33 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         <button type="button" className="scr__button" onClick={toggleFullscreen}>
           Volledig scherm <span aria-hidden="true">· F</span>
         </button>
+      )}
+      {/* Zichtbaar zolang de cursor of een vinger beweegt, ook in volledig
+          scherm: zo zie je bij het opzetten of het scherm wakker blijft. */}
+      {!preview && awake !== null && (
+        <p className={`scr__awake${fullscreen ? " is-fullscreen" : ""}`}>
+          {awake ? "Blijft wakker" : videoPlaying ? "Blijft wakker via video" : "Stand-by niet tegen te houden · tik op het scherm"}
+        </p>
+      )}
+      {/* Het stille filmpje van "Wakker blijven": klein, stil en onzichtbaar,
+          maar wel in beeld, anders telt het voor Android niet als afspelen. */}
+      {!preview && (
+        <video
+          ref={awakeVideo}
+          className="scr__wakker"
+          muted
+          playsInline
+          loop
+          autoPlay
+          preload="auto"
+          aria-hidden="true"
+          tabIndex={-1}
+          onPlaying={() => setVideoPlaying(true)}
+          onPause={() => setVideoPlaying(false)}
+        >
+          <source src="/assets/scherm-wakker.webm" type="video/webm" />
+          <source src="/assets/scherm-wakker.mp4" type="video/mp4" />
+        </video>
       )}
     </main>
   );

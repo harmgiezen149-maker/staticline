@@ -389,7 +389,12 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   een draaiend scherm bij de volgende ophaalronde laat doorspringen). De Band
   App praat met `/api/scherm/bediening` met `SITE_API_TOKEN`, zoals bij
   `/api/abonnees`; wat er mag staat in `lib/screen-remote.ts`, en opslaan gaat
-  voor beheer en app via `storeScreen` in `lib/screen-store.ts`
+  voor beheer en app via `storeScreen` in `lib/screen-store.ts`. Het scherm
+  houdt het apparaat wakker (ook een telefoon in Samsung DeX): de Screen Wake
+  Lock, opnieuw aangevraagd zodra Android hem intrekt, bij volledig scherm en
+  bij elke tik, met daarnaast een stil filmpje van twee pixels
+  (`public/assets/scherm-wakker.*`) als reserve. Bij een cursorbeweging staat
+  rechtsboven of dat lukt
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
