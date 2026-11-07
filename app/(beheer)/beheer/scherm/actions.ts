@@ -1,11 +1,8 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
-
-import { log } from "@/lib/portal/audit";
-import { CONTENT_TAG, saveContent } from "@/lib/portal/content";
 import { getSession } from "@/lib/portal/session";
-import { SCREEN_KEY, normalizeScreen, type ScreenConfig } from "@/lib/screen";
+import { normalizeScreen, type ScreenConfig } from "@/lib/screen";
+import { storeScreen } from "@/lib/screen-store";
 
 export type ScreenSaveState = { ok: boolean; message: string; config?: ScreenConfig } | null;
 
@@ -29,15 +26,8 @@ export async function saveScreen(json: string): Promise<ScreenSaveState> {
     return { ok: false, message: "Dat kon niet gelezen worden. Probeer het nog eens." };
   }
 
-  const saved = await saveContent([{ key: SCREEN_KEY, locale: "", value: JSON.stringify(config) }], session.email);
+  const saved = await storeScreen(config, session.email, `${config.slides.length} beelden`);
   if (!saved) return { ok: false, message: "Opslaan mislukt. Kijk in de logs van Vercel." };
-
-  await log({ actor: session.email, action: "screen.save", detail: `${config.slides.length} beelden` });
-  // Zie refreshPublicPages in app/(beheer)/beheer/inhoud/actions.ts over
-  // `{ expire: 0 }`. Een scherm dat al draait haalt het binnen tien seconden op.
-  revalidateTag(CONTENT_TAG, { expire: 0 });
-  revalidatePath("/scherm");
-  revalidatePath("/beheer/scherm");
 
   return { ok: true, message: "Opgeslagen. Een scherm dat al draait neemt het binnen tien seconden over.", config };
 }

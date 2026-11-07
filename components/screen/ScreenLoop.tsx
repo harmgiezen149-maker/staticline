@@ -187,6 +187,7 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
   const pending = useRef<ScreenConfig | null>(null);
   const current = useRef(JSON.stringify(initial));
   const skip = useRef<() => void>(() => {});
+  const lastSkip = useRef(initial.skip);
 
   const frame = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -473,6 +474,12 @@ export function ScreenLoop({ initial, wordmark, format, preview }: Props) {
         const res = await fetch("/api/scherm", { cache: "no-store" });
         if (!res.ok) return;
         const next = (await res.json()) as ScreenConfig;
+        // "Volgende beeld" uit de Band App: een nieuwe tijdstempel. Meteen
+        // overslaan, en niet wachten tot de wissel zoals bij een instelling.
+        if (next.skip !== lastSkip.current) {
+          lastSkip.current = next.skip;
+          skip.current();
+        }
         const json = JSON.stringify(next);
         if (json === current.current) return;
         current.current = json;

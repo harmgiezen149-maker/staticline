@@ -54,6 +54,13 @@ export const loadContent = unstable_cache(readContent, ["site-content"], {
   tags: [CONTENT_TAG],
 });
 
+/**
+ * Zonder cache, voor lezen-en-meteen-schrijven: twee snelle wijzigingen na
+ * elkaar (de snelbediening van het scherm) mogen niet op een oude stand
+ * voortbouwen en de eerste ongedaan maken.
+ */
+export const loadContentFresh = readContent;
+
 export type MediaRow = {
   id: number;
   kind: string;

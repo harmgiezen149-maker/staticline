@@ -61,6 +61,12 @@ export type ScreenSlide = {
   cover: boolean;
   /** Een kort woord als schuine sticker op de hoek ("Vanavond"). Leeg = geen. */
   sticker: string;
+  /**
+   * Of het beeld meedoet. Uit = het blijft in de lijst staan maar wordt
+   * overgeslagen; zo zet je het vanaf het podium even weg zonder het kwijt te
+   * raken.
+   */
+  on: boolean;
 };
 
 /**
@@ -219,6 +225,13 @@ export type ScreenConfig = {
    * Voor een tv die de hele avond aan blijft.
    */
   standby: boolean;
+  /**
+   * "Nu naar het volgende beeld", vanuit de Band App: een tijdstempel. Een
+   * draaiend scherm dat een nieuwe waarde ziet, slaat het beeld dat er staat
+   * over. Geen instelling maar een signaal; het staat hier omdat het scherm
+   * deze waarde toch al elke tien seconden ophaalt.
+   */
+  skip: number;
 };
 
 export const LIMITS = {
@@ -356,8 +369,8 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   logo: { on: true, every: 3, noise: 0 },
   photos: [],
   slides: [
-    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "" },
-    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "" },
+    { id: "s1", label: "Signaal zoeken", title: "Static Line", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "", on: true },
+    { id: "s2", label: "Live", title: "staticline.nl", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "", on: true },
   ],
   shuffle: true,
   style: "klassiek",
@@ -365,6 +378,7 @@ export const DEFAULT_SCREEN: ScreenConfig = {
   raster: 0,
   stickers: true,
   standby: false,
+  skip: 0,
 };
 
 /**
@@ -441,6 +455,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
       source,
       cover: r.cover !== false,
       sticker: text(r.sticker, LIMITS.sticker),
+      on: r.on !== false,
     });
     if (slides.length >= LIMITS.slides) break;
   }
@@ -484,6 +499,7 @@ export function normalizeScreen(input: unknown): ScreenConfig {
     raster: clampInt(raw.raster, [0, 100], 0),
     stickers: raw.stickers !== false,
     standby: raw.standby === true,
+    skip: typeof raw.skip === "number" && Number.isFinite(raw.skip) && raw.skip > 0 ? Math.floor(raw.skip) : 0,
   };
 }
 
@@ -522,14 +538,18 @@ export type ScreenItem = { kind: "slide"; slide: ScreenSlide } | { kind: "logo" 
  * het eind, anders zou het nooit voorbijkomen. Leeg is het nooit: zonder
  * beelden staat het logo er.
  */
+/** De beelden die meedoen: wie in het beheer of de Band App uit staat, valt weg. */
+export const activeSlides = (config: Pick<ScreenConfig, "slides">) => config.slides.filter((slide) => slide.on);
+
 export function sequence(config: ScreenConfig): ScreenItem[] {
   const items: ScreenItem[] = [];
   const { on, every } = config.logo;
-  config.slides.forEach((slide, i) => {
+  const slides = activeSlides(config);
+  slides.forEach((slide, i) => {
     items.push({ kind: "slide", slide });
     if (on && (i + 1) % every === 0) items.push({ kind: "logo" });
   });
-  if (on && config.slides.length > 0 && config.slides.length < every) items.push({ kind: "logo" });
+  if (on && slides.length > 0 && slides.length < every) items.push({ kind: "logo" });
   return items.length ? items : [{ kind: "logo" }];
 }
 
@@ -587,9 +607,14 @@ export function createPlaylist(
   /** Het beeld dat nu al in beeld staat: dat komt dan niet meteen nog een keer. */
   after: string | null = null,
 ) {
-  if (!config.shuffle || config.slides.length === 0) {
+  const slides = activeSlides(config);
+  if (!config.shuffle || slides.length === 0) {
     const fixed = sequence(config);
-    let i = 0;
+    // Verder na het beeld dat er staat, en niet weer vooraan: anders begint
+    // de vaste volgorde na elke wijziging (en elk "volgende beeld" uit de
+    // Band App) opnieuw bij het eerste beeld.
+    const at = fixed.findIndex((item) => item.kind === "slide" && item.slide.id === after);
+    let i = at + 1;
     return { next: (): ScreenItem => fixed[i++ % fixed.length] };
   }
 
@@ -605,7 +630,7 @@ export function createPlaylist(
         logoDue = false;
         return { kind: "logo" };
       }
-      if (deck.length === 0) deck = shuffledRound(config.slides, random, last);
+      if (deck.length === 0) deck = shuffledRound(slides, random, last);
       const slide = deck.shift()!;
       last = slide.id;
       shown += 1;

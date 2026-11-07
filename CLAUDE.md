@@ -382,7 +382,14 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   er niets van. Pas na 20 s zonder bediening telt hij als gestopt
   (`STANDBY_GRACE_MS`), zodat een gemiste verbinding in de zaal het scherm niet
   midden in de set naar ruis zet. Het voorbeeld in het beheer negeert de
-  wachtstand
+  wachtstand. Vanaf het podium is het scherm bij te sturen in de Band App
+  (📺 in de podiumweergave, of `/scherm` daar), zodat niemand aan de browser
+  hoeft die presenteert: wachtstand, looptekst, stijl, tempo, per beeld aan
+  of uit (`on`) en "nu naar het volgende beeld" (`skip`, een tijdstempel die
+  een draaiend scherm bij de volgende ophaalronde laat doorspringen). De Band
+  App praat met `/api/scherm/bediening` met `SITE_API_TOKEN`, zoals bij
+  `/api/abonnees`; wat er mag staat in `lib/screen-remote.ts`, en opslaan gaat
+  voor beheer en app via `storeScreen` in `lib/screen-store.ts`
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)

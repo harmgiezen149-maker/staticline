@@ -125,7 +125,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "" }],
+      slides: [...c.slides, { id: newId(), label: "", title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 1, source: "", cover: true, sticker: "", on: true }],
     }));
   }
 
@@ -134,7 +134,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addNowSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: NOW_LABEL, title: "", photo: "", opacity: 60, noise: 0, weight: 2, source: "nu", cover: true, sticker: "" }],
+      slides: [...c.slides, { id: newId(), label: NOW_LABEL, title: "", photo: "", opacity: 60, noise: 0, weight: 2, source: "nu", cover: true, sticker: "", on: true }],
     }));
   }
 
@@ -143,7 +143,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
   function addShowSlide() {
     setConfig((c) => ({
       ...c,
-      slides: [...c.slides, { id: newId(), label: SHOW_LABEL, title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 2, source: "show", cover: true, sticker: "" }],
+      slides: [...c.slides, { id: newId(), label: SHOW_LABEL, title: "", photo: "", opacity: DEFAULT_OPACITY, noise: 0, weight: 2, source: "show", cover: true, sticker: "", on: true }],
     }));
   }
 
@@ -735,6 +735,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                     {String(i + 1).padStart(2, "0")}
                     {now && <span className="ml-3 text-accent-alt">Nu speelt · uit de Band App</span>}
                     {show && <span className="ml-3 text-accent-alt">Volgende show · uit de agenda</span>}
+                    {!slide.on && <span className="ml-3 text-warning">Overgeslagen</span>}
                   </span>
                   <span className="flex items-center gap-4">
                     <button type="button" className={small} onClick={() => move(i, -1)} disabled={i === 0}>
@@ -752,6 +753,17 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
                     </button>
                   </span>
                 </div>
+
+                {/* Ook vanaf het podium te zetten, in de Band App. */}
+                <label className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={slide.on}
+                    onChange={(e) => setSlide(slide.id, { on: e.target.checked })}
+                    className="h-5 w-5 shrink-0 accent-[var(--accent-alt)]"
+                  />
+                  <span>Dit beeld doet mee {slide.on ? "" : "— staat uit en wordt overgeslagen"}</span>
+                </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="font-mono text-11 text-faint uppercase">
@@ -955,7 +967,7 @@ export function ScreenEditor({ initial, sitePhotos }: Props) {
               slides: asSlides
                 ? [
                     ...c.slides,
-                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0, weight: 1, source: "" as const, cover: true, sticker: "" })),
+                    ...fresh.map((p) => ({ id: newId(), label: "", title: "", photo: p.url, opacity: 100, noise: 0, weight: 1, source: "" as const, cover: true, sticker: "", on: true })),
                   ].slice(0, LIMITS.slides)
                 : c.slides,
             };
