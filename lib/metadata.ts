@@ -30,6 +30,7 @@ export const PUBLIC_PATHS = [
   "/video",
   "/fotos",
   "/boeken",
+  "/grunge",
 ] as const;
 
 /**

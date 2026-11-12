@@ -43,6 +43,10 @@
   --color-success: #4f9d69;
   --color-warning: #d9a441;
   --color-danger: #d9503c;
+  /* Het geel uit de grunge-slides, alleen op /grunge (CLAUDE.md, "Waar we
+     vandaan komen"). Dezelfde waarde als --warning, maar een eigen naam: daar
+     betekent het "let op", hier is het een vlakkleur. */
+  --color-geel: #d9a441;
 
   /* Letters. De drie variabelen worden gevuld door next/font in de root layout. */
   --font-display: var(--font-oswald), "Arial Narrow", system-ui, sans-serif;

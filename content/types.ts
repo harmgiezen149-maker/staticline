@@ -92,6 +92,20 @@ export type Copy = {
     social: string;
     /** De link naar het besloten deel. */
     portal: string;
+    /** De link naar /grunge. */
+    origins: string;
+  };
+
+  /**
+   * Het instapblok op de homepage naar /grunge ("Waar we vandaan komen").
+   * De kanalen eronder komen uit content/grunge.
+   */
+  origins: {
+    kicker: string;
+    title: string;
+    text: string;
+    cta: string;
+    ctaList: string;
   };
 
   /**

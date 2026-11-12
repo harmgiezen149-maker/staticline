@@ -1,7 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { getSiteCopy, getSocials } from "@/lib/site-content";
-import type { Locale } from "@/lib/i18n";
+import { localePath, type Locale } from "@/lib/i18n";
 
 import wordmarkFlat from "@/public/assets/staticline-wordmark-flat.png";
 
@@ -70,6 +71,14 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
       )}
 
       <div className="flex flex-col items-start gap-1 sm:ml-auto sm:flex-row sm:items-center sm:gap-6">
+        {/* Het verhaal achter de muziek (/grunge). Staat niet in het menu,
+            daar zijn vijf items vol. */}
+        <Link
+          href={localePath(locale, "/grunge")}
+          className="inline-flex min-h-11 items-center font-mono text-12 tracking-wide14 text-primary uppercase sm:min-h-0"
+        >
+          <span className="link-line">{copy.footer.origins}</span>
+        </Link>
         <a
           href={`mailto:${copy.footer.mail}`}
           className="inline-flex min-h-11 items-center font-mono text-12 tracking-wide14 text-accent-alt uppercase sm:min-h-0"

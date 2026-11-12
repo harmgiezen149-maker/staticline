@@ -2,6 +2,7 @@ import { BandSection } from "@/components/BandSection";
 import { Hero } from "@/components/Hero";
 import { InstagramFeed } from "@/components/InstagramFeed";
 import { Newsletter } from "@/components/Newsletter";
+import { OriginsTeaser } from "@/components/OriginsTeaser";
 import { NextShow } from "@/components/NextShow";
 import { PhotoGrid } from "@/components/PhotoGrid";
 import { getPhotos, getSiteCopy, localiseBand } from "@/lib/site-content";
@@ -49,6 +50,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
         <ShowList locale={locale} shows={upcoming} hasPlayed={hasPlayed} />
         <InstagramFeed locale={locale} />
         <BandSection locale={locale} bio={band.bio} members={band.members} />
+        <OriginsTeaser locale={locale} />
         <PhotoGrid locale={locale} photos={photos} />
         <Newsletter
           locale={locale}

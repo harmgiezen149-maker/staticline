@@ -68,6 +68,15 @@ export const en: Copy = {
     mail: "boeking@staticline.nl",
     social: "Follow us",
     portal: "Band portal",
+    origins: "Where we come from",
+  },
+
+  origins: {
+    kicker: "Where our sound comes from",
+    title: "Grunge",
+    text: "A scene from a rainy port city that took over the world in three years. The story, the bands and a listening list to start with.",
+    cta: "Read the whole story →",
+    ctaList: "To the listening list",
   },
 
   motion: {

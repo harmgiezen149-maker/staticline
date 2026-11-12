@@ -395,6 +395,22 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   bij elke tik, met daarnaast een stil filmpje van twee pixels
   (`public/assets/scherm-wakker.*`) als reserve. Bij een cursorbeweging staat
   rechtsboven of dat lukt
+- "Waar we vandaan komen" op `/grunge` (`components/pages/GrungePage.tsx`),
+  naar het verslag en de slides van de band, met een instapblok op de
+  homepage tussen de band en de foto's (`components/OriginsTeaser.tsx`) en een
+  link in de voettekst; niet in het menu, daar zijn vijf items vol. Het ontwerp
+  staat op claude.ai ("Grunge-pagina voor staticline.nl"). Een zender met elf
+  kanalen, zoals de slides: een kanaalkiezer onder de kop en per kanaal een
+  monolabel "CH 01 · …". De inhoud staat in `content/grunge/` (nl uit het
+  verslag, en uit de slides) en niet in `/beheer/inhoud`, omdat het vooral
+  lijsten zijn; alleen de teksten van het instapblok en de voetlink wel.
+  "Uit onze set" zoekt in de setlist uit de Band App naar nummers van bands
+  die op de pagina staan (`songsFromPage` in `lib/grunge.ts`). De knop naar de
+  Spotify-lijst verschijnt zodra `top12.spotify` een adres heeft. **Eén
+  goedgekeurde uitzondering, alleen op deze pagina:** het geel uit de slides
+  (`bg-geel`/`text-geel`, `--color-geel` in `globals.css`, dezelfde waarde als
+  `--warning`) als vlakkleur naast rood, teal en crème, met donkere tekst
+  erop. Elders op de site komt dat geel niet voor
 - Alle publieke pagina's behalve de homepage — het omhulsel staat in
   `components/Page.tsx`, de pagina's zelf in `components/pages/`
 - Het boekingsformulier (`components/BookingForm.tsx`)
