@@ -286,7 +286,7 @@ export const nl: GrungeCopy = {
   },
   top12: {
     intro: "Speel ze op volgorde en je hoort de sound ontstaan, ontploffen en veranderen.",
-    spotify: "",
+    spotify: "https://open.spotify.com/playlist/66pQvsxSuc8qo5bVPeSMvh",
     spotifyLabel: "▶ Luister de lijst op Spotify",
     items: [
       { title: "Green River – Swallow My Pride", note: "De blauwdruk", year: "1987" },
