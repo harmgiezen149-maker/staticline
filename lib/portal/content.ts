@@ -91,6 +91,9 @@ export const loadMedia = unstable_cache(readMedia, ["site-media"], {
   tags: [CONTENT_TAG],
 });
 
+/** Zonder cache: voor een lijst die meteen na een wijziging weer gelezen wordt. */
+export const loadMediaFresh = readMedia;
+
 /**
  * Waarden opslaan.
  *

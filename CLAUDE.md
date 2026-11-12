@@ -559,6 +559,13 @@ Vercel neemt hooguit 4,5 MB aan verzoek aan, en daar zit een persfoto zo
 overheen. `next.config.ts` staat alleen die ene host toe bij `images`; verruim die
 lijst niet, dan wordt deze site een gratis afbeeldingsproxy.
 
+Foto's kunnen ook vanuit de Band App (`/website-fotos` daar): elk lid voegt toe,
+alleen een beheerder haalt weg. De app praat met `/api/fotos` en
+`/api/fotos/upload` hier, met `SITE_API_TOKEN`, en verkleint de foto vooraf op
+de telefoon (2400px, zonder locatiegegevens). Toevoegen en weghalen gaan voor
+beheer en app door dezelfde functies in `lib/portal/photos.ts`, met dezelfde
+regels uit `lib/portal/upload-rules.ts`.
+
 ## Voor wie dit is
 
 Harm is de beheerder en degene die dit laat bouwen. Hij werkt in functioneel

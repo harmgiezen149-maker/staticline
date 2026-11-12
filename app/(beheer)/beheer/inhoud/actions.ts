@@ -18,6 +18,8 @@ import {
   isImageSlot,
   storageKey,
 } from "@/lib/portal/content-keys";
+import { addSitePhoto } from "@/lib/portal/photos";
+import { BLOB_URL } from "@/lib/portal/upload-rules";
 import { getSession } from "@/lib/portal/session";
 import { codeText } from "@/lib/portal/copy-text";
 import { dutchText, siteHashKey, siteTextStale } from "@/lib/portal/site-texts";
@@ -27,8 +29,6 @@ import { youtubeId } from "@/lib/portal/youtube";
 
 export type SaveState = { ok: boolean; message: string } | null;
 
-/** Alleen adressen uit de eigen Blob-opslag; zie next.config.ts bij `images`. */
-const BLOB_URL = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
 
 const LOCALES = ["nl", "en"] as const;
 const MAX_LENGTH = 2000;
@@ -188,31 +188,10 @@ export async function addPhoto(
   const { error, session } = await admin();
   if (error) return { ok: false, message: error };
 
-  const url = String(formData.get("url") ?? "").trim();
-  const alt = String(formData.get("alt") ?? "").trim().slice(0, 300);
-  const caption = String(formData.get("caption") ?? "").trim().slice(0, 300);
-
-  // Alleen adressen uit de eigen Blob-opslag. Die host staat als enige in
-  // next.config.ts; een ander adres zou next/image toch weigeren, en deze
-  // controle zorgt dat je dat meteen te horen krijgt in plaats van later op een
-  // kapotte fotopagina.
-  if (!BLOB_URL.test(url)) {
-    return { ok: false, message: "Dat adres komt niet uit de eigen opslag." };
-  }
-  if (!alt) {
-    return {
-      ok: false,
-      message: "Beschrijf wat er op de foto te zien is. Dat is wat een blinde bezoeker voorgelezen krijgt.",
-    };
-  }
-
-  const added = await addMedia({ kind: "photo", url, alt, caption }, session.email);
-  if (!added) return { ok: false, message: "Toevoegen mislukt." };
-
-  await log({ actor: session.email, action: "photo.add", subject: url, detail: alt });
-  refreshPublicPages();
-
-  return { ok: true, message: "De foto staat erbij." };
+  return addSitePhoto(
+    { url: formData.get("url"), alt: formData.get("alt"), caption: formData.get("caption") },
+    session.email,
+  );
 }
 
 /**

@@ -2,6 +2,7 @@ import { type HandleUploadBody, handleUpload } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
 import { getSession } from "@/lib/portal/session";
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/portal/upload-rules";
 
 /**
  * De sleutelafgifte voor het uploaden van een foto.
@@ -21,12 +22,6 @@ import { getSession } from "@/lib/portal/session";
  * binnen. De rij in de database wordt daarom door de browser aangemeld, via een
  * server action die opnieuw op beheerdersrechten controleert.
  */
-
-/** Wat een browser mag tonen zonder dat er iets uitgevoerd wordt. */
-const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-
-/** Tien megabyte. Ruim voor een persfoto, krap genoeg om misbruik te beperken. */
-const MAX_BYTES = 10 * 1024 * 1024;
 
 export async function POST(request: Request) {
   let body: HandleUploadBody;
@@ -49,8 +44,8 @@ export async function POST(request: Request) {
         }
 
         return {
-          allowedContentTypes: ALLOWED,
-          maximumSizeInBytes: MAX_BYTES,
+          allowedContentTypes: ALLOWED_IMAGE_TYPES,
+          maximumSizeInBytes: MAX_IMAGE_BYTES,
           // Twee foto's die toevallig "band.jpg" heten mogen elkaar niet
           // overschrijven.
           addRandomSuffix: true,
