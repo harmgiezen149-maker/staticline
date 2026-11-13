@@ -320,7 +320,11 @@ bewegingen bijgekomen. Elk bestand zegt bovenaan dat het extrapolatie is.
   beweging en altijd stil te zetten is. `/band` heeft dezelfde rij, met bredere
   kaarten omdat daar per lid een tekst onder staat. De homepage linkt daar per
   lid naartoe met een anker (`/band#lid-5`): dan staat die kaart links in de
-  rij, 32px onder de kop, en schuift de rij niet vanzelf verder. Dat
+  rij, 32px onder de kop, en schuift de rij niet vanzelf verder. De volgorde
+  van de kaarten is bij elke lading anders (op verzoek, anders staat steeds
+  dezelfde vooraan): geschud in de browser met `shuffledOrder` uit
+  `lib/shuffle.ts`, omdat de pagina's gecachet worden. Bij een anker staat die
+  kaart vooraan. Dat
   uitlijnen doet `arriveAtHash` in `lib/motion/reveal.ts`, omdat de browser
   het mis rekende terwijl de sectie nog binnenkwam
 - Het Instagram-blok op de homepage (`components/InstagramFeed.tsx`), direct onder

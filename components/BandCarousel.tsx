@@ -1,14 +1,17 @@
 "use client";
 
 import {
+  Children,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 
 import { reduced } from "@/lib/motion/env";
+import { shuffledOrder } from "@/lib/shuffle";
 
 /**
  * De ledenkaarten als één schuivende rij, op de homepage en op /band.
@@ -34,6 +37,16 @@ import { reduced } from "@/lib/motion/env";
  * - begint niet als je via een anker bij één kaart binnenkomt (de homepage
  *   linkt naar /band#lid-5): dan staat die kaart links in de rij en blijft hij
  *   daar, in plaats van na vijf seconden weg te schuiven.
+ *
+ * De kaarten staan bij elke paginalading in een andere volgorde, op verzoek:
+ * uit de Band App komen ze altijd in dezelfde, en dan staat steeds dezelfde
+ * persoon vooraan. Schudden gebeurt hier en niet op de server, omdat de
+ * pagina's gecachet worden: dan zou iedereen een uur lang dezelfde volgorde
+ * zien. Het gebeurt in een layout-effect, dus vóór de browser tekent na het
+ * laden van het script, en vóór de entree van de sectie en het uitlijnen op een
+ * anker (/band#lid-5). De kaart van dat anker komt vooraan. React verplaatst
+ * de kaarten zelf; er wordt geen knoop buiten React om verschoven. Zonder
+ * JavaScript blijft de volgorde van de app.
  *
  * Zonder JavaScript is het een gewone horizontaal scrollende rij met een
  * zichtbare scrollbalk. Passen alle kaarten naast elkaar, dan verdwijnen de
@@ -63,6 +76,26 @@ export function BandCarousel({ children, labels, aside }: Props) {
   const thumbRef = useRef<HTMLSpanElement>(null);
   const [overflow, setOverflow] = useState(false);
   const [playing, setPlaying] = useState(false);
+
+  // De volgorde van de kaarten: eerst die van de server (anders klopt de
+  // hydratatie niet), meteen daarna geschud.
+  const cards = Children.toArray(children);
+  const [order, setOrder] = useState<number[] | null>(null);
+  useLayoutEffect(() => {
+    const next = shuffledOrder(cards.length);
+    // Kom je binnen via een anker naar één kaart, dan staat die vooraan: een
+    // kaart die achteraan belandt, kan niet meer links in de rij staan.
+    const track = trackRef.current;
+    const target = track ? targetCard(track) : null;
+    if (track && target) {
+      const at = [...track.children].indexOf(target);
+      if (at >= 0) next.splice(0, next.length, at, ...next.filter((i) => i !== at));
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bewust: pas na de hydratatie schudden
+    setOrder(next);
+  }, [cards.length]);
+  const shown =
+    order && order.length === cards.length ? order.map((i) => cards[i]) : cards;
 
   // Wat het automatisch doorschuiven tegenhoudt, zonder opnieuw te renderen.
   const hold = useRef({ hover: false, focus: false, inView: false });
@@ -200,7 +233,7 @@ export function BandCarousel({ children, labels, aside }: Props) {
         }}
         onKeyDown={takeOver}
       >
-        {children}
+        {shown}
       </ul>
 
       {/* Geen knoppen en geen lijn als er niets te schuiven valt. `invisible`
