@@ -515,11 +515,39 @@ neerzet blijft staan.
 
 ---
 
-## 9. Instagram op de homepage — `INSTAGRAM_ACCESS_TOKEN`
+## 9. Instagram op de homepage — `INSTAGRAM_FEED_URL` of `INSTAGRAM_ACCESS_TOKEN`
 
 Onder de shows staat een blok met de laatste zes posts van het Instagram-account
 van de band. Zonder deze sleutel staat daar alleen de link naar het profiel (uit
 `/beheer/inhoud`, veld Instagram); staat ook die er niet, dan blijft het blok weg.
+
+Er zijn twee manieren. **Begin met Behold (9.0)**: daar is geen Facebook-account
+voor nodig. De sleutel rechtstreeks bij Meta (9.1 t/m 9.4) liep vast op precies
+dat: Meta wil een Facebook-account dat het vertrouwt. Staan ze allebei in
+Vercel, dan wint Behold.
+
+### 9.0 Via Behold — `INSTAGRAM_FEED_URL`
+
+[Behold](https://behold.so) is een tussendienst. Iemand met de inlog van het
+bandaccount maakt daar een gratis account, koppelt het Instagram-account (een
+"basic source", inloggen met Instagram zelf) en maakt een feed met als uitvoer
+**JSON**. Op de pagina van die feed staat een adres dat begint met
+`https://feeds.behold.so/`. Dat adres zet je als `INSTAGRAM_FEED_URL` bij het
+`staticline`-project, en dan deploy je opnieuw.
+
+- Het account moet professioneel zijn, net als hieronder in 9.1.
+- Het gratis abonnement: één feed, hooguit zes posts (precies wat de site
+  toont), één keer per dag ververst, 1.200 keer ophalen per maand. De site
+  haalt de feed om de drie uur, zo'n 240 keer per maand. Wordt de grens toch
+  gehaald, dan pauzeert Behold tot de volgende maand en toont de site alleen de
+  link naar het profiel.
+- De beelden komen dan van Behold, verkleind, en verlopen niet.
+- Verandert het wachtwoord van het bandaccount, dan moet de koppeling bij
+  Behold opnieuw. Het feed-adres blijft hetzelfde.
+- Een adres dat niet met `https://feeds.behold.so/` begint, negeert de site,
+  met een regel `[instagram]` in het log.
+
+### Rechtstreeks bij Meta — `INSTAGRAM_ACCESS_TOKEN`
 
 Instagram geeft posts alleen af via zijn eigen API, met een sleutel die je één
 keer zelf aanmaakt. Dat is een handvol stappen bij Meta. De menu's daar worden

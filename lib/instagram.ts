@@ -6,6 +6,12 @@
  * en welke sleutel er geldt. Het ophalen en het vernieuwen van de sleutel staan
  * in lib/instagram-feed.ts.
  *
+ * Er zijn twee bronnen. De eerste die is ingesteld, wint:
+ * - INSTAGRAM_FEED_URL: een feed bij Behold, een tussendienst. Daar is geen
+ *   Facebook-account voor nodig, en dat bleek bij Meta het struikelblok.
+ * - INSTAGRAM_ACCESS_TOKEN: rechtstreeks bij Instagram, met een sleutel die je
+ *   bij Meta maakt. Daarover gaat de rest van deze uitleg.
+ *
  * Over de sleutel: Instagram geeft een toegangssleutel die zestig dagen geldig
  * is en die je vóór die tijd kunt inruilen voor een nieuwe. De eerste zet de
  * beheerder als INSTAGRAM_ACCESS_TOKEN bij het Vercel-project; elke week ruilt
@@ -84,6 +90,77 @@ export function parsePosts(json: unknown, limit = POST_LIMIT): InstagramPost[] {
       href,
       image,
       alt: shortCaption(item.caption),
+      isVideo,
+    });
+    if (posts.length >= limit) break;
+  }
+  return posts;
+}
+
+/**
+ * Het adres van een feed bij Behold (behold.so), of null als het dat niet is.
+ *
+ * Behold is een tussendienst: de band koppelt daar het Instagram-account,
+ * zonder Facebook-account of app bij Meta, en krijgt een openbaar adres met de
+ * laatste posts als JSON. Alleen dat ene domein, over https: wat hier staat,
+ * haalt de server op, dus geen willekeurig adres.
+ */
+export function beholdFeedUrl(value: string | undefined): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:" || url.hostname !== "feeds.behold.so") return null;
+    if (!/^\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+type BeholdSize = { mediaUrl?: unknown };
+type BeholdPost = {
+  id?: unknown;
+  permalink?: unknown;
+  mediaType?: unknown;
+  mediaUrl?: unknown;
+  thumbnailUrl?: unknown;
+  caption?: unknown;
+  prunedCaption?: unknown;
+  sizes?: { small?: BeholdSize; medium?: BeholdSize; large?: BeholdSize; full?: BeholdSize };
+};
+
+/**
+ * Het antwoord van een Behold-feed omzetten naar dezelfde tegels.
+ *
+ * Een feed is `{ posts: [...] }` (versie 2) of een kale lijst (versie 1). Per
+ * post de verkleinde webp-versie van Behold als die er is (`sizes.medium`,
+ * anders `large`): die blijft staan, anders dan de adressen van Instagram zelf,
+ * die na een paar dagen verlopen. Anders het origineel, bij een video het
+ * stilstaande voorbeeld. Dezelfde controles als bij Instagram zelf.
+ */
+export function parseBeholdPosts(json: unknown, limit = POST_LIMIT): InstagramPost[] {
+  const list = Array.isArray(json) ? json : (json as { posts?: unknown })?.posts;
+  if (!Array.isArray(list)) return [];
+
+  const posts: InstagramPost[] = [];
+  for (const item of list as BeholdPost[]) {
+    const isVideo = item?.mediaType === "VIDEO";
+    const candidates = [
+      item?.sizes?.medium?.mediaUrl,
+      item?.sizes?.large?.mediaUrl,
+      isVideo ? item?.thumbnailUrl : item?.mediaUrl,
+    ];
+    const image = candidates.find(isHttps);
+    const href = item?.permalink;
+    if (!image || !isHttps(href)) continue;
+    if (!/^https:\/\/(www\.)?instagram\.com\//i.test(href)) continue;
+
+    posts.push({
+      id: String(item.id ?? href),
+      href,
+      image,
+      alt: shortCaption(item.prunedCaption ?? item.caption),
       isVideo,
     });
     if (posts.length >= limit) break;

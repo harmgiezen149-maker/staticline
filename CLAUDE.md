@@ -470,7 +470,8 @@ sleutel ontbreekt.
 | `ANTHROPIC_API_KEY` | de teksten uit de Band App naar het Engels vertalen in `/beheer/vertalingen`, en de herschrijfmodule op `/beheer/tov`; zonder deze kan het vertalen nog met de hand |
 | `TOV_MODEL` | optioneel; welk model de herschrijfmodule gebruikt, standaard `claude-opus-5` |
 | `CRON_SECRET` | de sleutel waarmee Vercel de ochtendronde van de nieuwsbrief aanroept; zonder deze draait de ronde niet |
-| `INSTAGRAM_ACCESS_TOKEN` | de laatste posts onder de shows op de homepage; zonder deze staat daar alleen de link naar het profiel. De site vernieuwt de sleutel elke week zelf (`/api/cron/instagram`) en bewaart hem in `site_content` |
+| `INSTAGRAM_FEED_URL` | de laatste posts onder de shows op de homepage, via een JSON-feed bij Behold (`https://feeds.behold.so/…`). Geen Facebook-account nodig, en daarom de eerste keus; wint van de sleutel hieronder. Om de drie uur opgehaald, binnen de 1.200 per maand van het gratis abonnement |
+| `INSTAGRAM_ACCESS_TOKEN` | hetzelfde, rechtstreeks bij Instagram; zonder deze of de feed staat daar alleen de link naar het profiel. Vraagt een app bij Meta, en dus een Facebook-account dat Meta vertrouwt: daar liep het op vast. De site vernieuwt de sleutel elke week zelf (`/api/cron/instagram`) en bewaart hem in `site_content` |
 
 De eerste vijf zijn optioneel: ontbreken ze, dan logt de site een waarschuwing en
 gaat hij door. De laatste drie werken omgekeerd. Een inlogcontrole zonder sleutel

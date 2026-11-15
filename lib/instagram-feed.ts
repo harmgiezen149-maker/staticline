@@ -2,7 +2,9 @@ import "server-only";
 
 import { getDb } from "@/lib/db";
 import {
+  beholdFeedUrl,
   fingerprint,
+  parseBeholdPosts,
   parsePosts,
   pickToken,
   POST_LIMIT,
@@ -13,9 +15,15 @@ import {
 /**
  * Instagram ophalen, en de sleutel daarvoor vernieuwen.
  *
- * Via de Instagram API met Instagram-login: dat werkt voor een zakelijk of
- * creator-account, zonder Facebook-pagina erbij. Hoe je aan de eerste sleutel
- * komt, staat in docs/07-instellen.md. Het rekenwerk staat in lib/instagram.ts.
+ * Twee bronnen, in deze volgorde:
+ * - een feed bij Behold (INSTAGRAM_FEED_URL). Een tussendienst die de koppeling
+ *   met Instagram regelt; de band logt daar alleen in met Instagram, zonder
+ *   Facebook-account. Het gratis abonnement telt 1.200 keer ophalen per maand
+ *   en ververst zelf één keer per dag, dus deze site haalt hem om de drie uur.
+ * - de Instagram API met Instagram-login (INSTAGRAM_ACCESS_TOKEN). Daarvoor
+ *   moet iemand een app bij Meta maken, en dat vraagt een Facebook-account.
+ * Hoe je aan beide komt, staat in docs/07-instellen.md. Het rekenwerk staat in
+ * lib/instagram.ts.
  *
  * Niets hiervan mag de homepage laten omvallen. Geen sleutel, een verlopen
  * sleutel, Instagram die niet antwoordt: dan komt er een lege lijst terug en
@@ -65,7 +73,32 @@ async function reason(res: Response): Promise<string> {
   }
 }
 
+/**
+ * Drie uur voor Behold: die ververst op het gratis abonnement één keer per
+ * dag, en telt elke keer ophalen mee voor de 1.200 per maand (zo: ±240).
+ */
+const BEHOLD_REVALIDATE_S = 3 * 3600;
+
+async function getBeholdPosts(feed: string): Promise<InstagramPost[]> {
+  try {
+    const res = await fetch(feed, { next: { revalidate: BEHOLD_REVALIDATE_S, tags: ["instagram"] } });
+    if (!res.ok) {
+      console.error("[instagram] Behold-feed niet opgehaald:", res.status);
+      return [];
+    }
+    return parseBeholdPosts(await res.json());
+  } catch (error) {
+    console.error("[instagram] Behold-feed niet opgehaald:", error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
 export async function getInstagramPosts(): Promise<InstagramPost[]> {
+  const raw = process.env.INSTAGRAM_FEED_URL;
+  const feed = beholdFeedUrl(raw);
+  if (feed) return getBeholdPosts(feed);
+  if (raw?.trim()) console.error("[instagram] INSTAGRAM_FEED_URL is geen adres van feeds.behold.so");
+
   const token = await currentToken();
   if (!token) return [];
 
