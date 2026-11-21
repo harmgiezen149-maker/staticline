@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { localePath, locales, type Locale } from "@/lib/i18n";
+import { MENU_PATHS } from "@/lib/motion/routes";
 import { getSiteCopy, getWordmark } from "@/lib/site-content";
 import { MobileNav } from "./MobileNav";
 
@@ -45,6 +46,12 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
     { href: localePath(locale, "/muziek"), label: copy.nav.music },
     { href: localePath(locale, "/video"), label: copy.nav.video },
   ];
+
+  // Het menupaneel nummert zijn items 01–05, in de volgorde van MENU_PATHS:
+  // dezelfde lijst waar de overgang tussen pagina's zijn kanaalnummer uit haalt.
+  const menuLinks = MENU_PATHS.map(
+    (p) => [...primary, ...desktopOnly].find((link) => link.href === localePath(locale, p))!,
+  );
 
   const booking = {
     href: localePath(locale, "/boeken"),
@@ -139,7 +146,7 @@ export async function SiteHeader({ locale, path = "/" }: Props) {
       <MobileNav
         locale={locale}
         path={path}
-        links={[primary[0], ...desktopOnly, ...primary.slice(1)]}
+        links={menuLinks}
         cta={booking}
         labels={{ nav: copy.nav.menu, open: copy.nav.menuOpen, close: copy.nav.menuClose }}
         mail={copy.footer.mail}

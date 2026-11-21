@@ -86,19 +86,30 @@ export function classifyLink({ href, current, target, download, modified }: Link
 }
 
 /**
- * Het label midden in beeld tijdens een overgang: "CH 02 · SHOWS".
- *
- * Elk onderdeel van de site is een kanaal, in de volgorde van de navigatie. De
- * naam komt van de aanroeper (uit de copy), zodat hij in beide talen klopt.
+ * De pagina's in het menu, in de volgorde waarin ze daar staan en genummerd
+ * worden (01–05). Het menu in components/SiteHeader.tsx bouwt zijn lijst
+ * hieruit, zodat het nummer in het menu en het kanaal in de overgang niet uit
+ * elkaar kunnen lopen. Dat deden ze eerst wel: Muziek was 02 in het menu en
+ * CH 05 in de overgang.
  */
-const CHANNELS = ["/", "/agenda", "/fotos", "/band", "/muziek", "/video", "/boeken"];
+export const MENU_PATHS = ["/agenda", "/muziek", "/video", "/fotos", "/band"] as const;
+
+/**
+ * Het label midden in beeld tijdens een overgang: "CH 01 · SHOWS".
+ *
+ * Elk onderdeel van de site is een kanaal, met hetzelfde nummer als in het
+ * menu. De homepage staat niet in het menu en is kanaal 00; Boeken, de knop
+ * naast het menu, komt erachter. De naam komt van de aanroeper (uit de copy),
+ * zodat hij in beide talen klopt.
+ */
+const CHANNELS: readonly string[] = ["/", ...MENU_PATHS, "/boeken"];
 
 export function channelFor(path: string): number {
   const bare = stripLocale(path);
   const index = CHANNELS.findIndex(
     (channel) => channel === bare || (channel !== "/" && bare.startsWith(`${channel}/`)),
   );
-  return index === -1 ? CHANNELS.length + 1 : index + 1;
+  return index === -1 ? CHANNELS.length : index;
 }
 
 export function channelLabel(path: string, name: string): string {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { channelFor, channelLabel, classifyLink, localeOfPath, stripLocale } from "./routes.ts";
+import { MENU_PATHS, channelFor, channelLabel, classifyLink, localeOfPath, stripLocale } from "./routes.ts";
 
 const HOME = "https://www.staticline.nl/";
 const AGENDA = "https://www.staticline.nl/agenda";
@@ -53,10 +53,20 @@ test("taal en pad uit een adres", () => {
   assert.equal(stripLocale("/agenda"), "/agenda");
 });
 
-test("kanalen volgen de navigatie, in beide talen", () => {
-  assert.equal(channelFor("/"), 1);
-  assert.equal(channelFor("/agenda"), 2);
-  assert.equal(channelFor("/en/agenda"), 2);
-  assert.equal(channelFor("/band"), 4);
-  assert.equal(channelLabel("/agenda", "SHOWS"), "CH 02 · SHOWS");
+test("kanalen hebben het nummer uit het menu, in beide talen", () => {
+  // Het menu: 01 Shows, 02 Muziek, 03 Video, 04 Foto's, 05 Band.
+  MENU_PATHS.forEach((path, i) => {
+    assert.equal(channelFor(path), i + 1, path);
+    assert.equal(channelFor(`/en${path}`), i + 1, `/en${path}`);
+  });
+  assert.equal(channelFor("/muziek"), 2);
+  assert.equal(channelLabel("/muziek", "MUZIEK"), "CH 02 · MUZIEK");
+  assert.equal(channelLabel("/agenda", "SHOWS"), "CH 01 · SHOWS");
+});
+
+test("de homepage is kanaal 00, Boeken komt na het menu", () => {
+  assert.equal(channelFor("/"), 0);
+  assert.equal(channelFor("/en"), 0);
+  assert.equal(channelFor("/boeken"), 6);
+  assert.equal(channelFor("/agenda/iets"), 1);
 });

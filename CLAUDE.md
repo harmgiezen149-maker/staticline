@@ -237,7 +237,9 @@ is de v1-versie en staat er alleen nog voor de geschiedenis.
   maakt dezelfde verkleiningen zelf, van het ongewijzigde bronbestand.
 - **Geen Lenis.** Zie hierboven.
 - **Het menu heeft vijf items en geen drie**: Muziek en Video bestaan als pagina,
-  dus ze staan er ook in, met index 01–05.
+  dus ze staan er ook in, met index 01–05. Het kanaal in de overgang tussen
+  pagina's ("CH 02 · MUZIEK") heeft hetzelfde nummer: beide komen uit
+  `MENU_PATHS` in `lib/motion/routes.ts`. De homepage is CH 00, Boeken CH 06.
 - **De loader en de paginawissel zijn ruim twee keer zo traag** als MOTION.md
   voorschrijft, op verzoek: zo waren ze nauwelijks te zien. De tijden staan als
   `--loader-*` en `--pt-*` in `styles/motion.css`, op één plek. Overslaan blijft
